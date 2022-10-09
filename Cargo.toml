@@ -9,3 +9,6 @@ edition = "2021"
 version = "*"
 default-features = false
 features = ["image", "mixer", "ttf"]
+
+[dependencies]
+rand = "*"

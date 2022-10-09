@@ -1,3 +1,5 @@
+mod mapgen;
+
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color};
 use std::time::Duration;
 

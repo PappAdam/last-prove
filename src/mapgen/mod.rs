@@ -1,2 +1,2 @@
+pub mod generate;
 pub mod perlin;
-pub mod mapgen;
