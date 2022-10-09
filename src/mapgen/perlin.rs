@@ -40,7 +40,7 @@ fn noise2d(x: f32, y: f32) -> f32 {
     smooth_inter(low, high, y_frac)
 }
 
-fn perlin2d(x: f32, y: f32, freq: f32, depth: u8) -> f32 {
+pub fn perlin2d(x: f32, y: f32, freq: f32, depth: u8) -> f32 {
     let mut xa = x * freq;
     let mut ya = y * freq;
     let amp = 1.0;
