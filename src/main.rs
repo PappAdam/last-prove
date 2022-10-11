@@ -1,4 +1,5 @@
 mod mapgen;
+pub mod perlin;
 
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color};
 use std::time::Duration;
@@ -17,8 +18,11 @@ fn main() {
 
     canvas.set_draw_color(Color::RGB(0, 255, 255));
 
-    let mut event_pump = sdl_cont.event_pump().unwrap();
+    let mut map = mapgen::generate::Map::new().with_random_seed();
 
+    print!("{}", map);
+
+    let mut event_pump = sdl_cont.event_pump().unwrap();
     'running: loop {
         canvas.clear();
 
