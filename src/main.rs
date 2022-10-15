@@ -1,32 +1,18 @@
 mod mapgen;
 pub mod perlin;
+mod game;
 
-use sdl2::{event::Event, keyboard::Keycode, pixels::Color};
-use std::time::Duration;
+use sdl2::{event::Event, keyboard::Keycode};
 
 fn main() {
-    let sdl_cont = sdl2::init().expect("couldn't crate sdl context");
-    let video_subsys = sdl_cont.video().expect("couldn't create video subsystem");
+    let mut game = game::Game::new();
 
-    let window = video_subsys
-        .window("title", 800, 600)
-        .position_centered()
-        .build()
-        .unwrap();
+    print!("{}", game.map);
 
-    let mut canvas = window.into_canvas().build().unwrap();
-
-    canvas.set_draw_color(Color::RGB(0, 255, 255));
-
-    let mut map = mapgen::generate::Map::new().with_random_seed();
-
-    print!("{}", map);
-
-    let mut event_pump = sdl_cont.event_pump().unwrap();
     'running: loop {
-        canvas.clear();
+        game.canvas.clear();
 
-        for event in event_pump.poll_iter() {
+        for event in game.event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
@@ -39,6 +25,6 @@ fn main() {
             }
         }
 
-        canvas.present();
+        game.canvas.present();
     }
 }
