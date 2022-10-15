@@ -18,14 +18,16 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn new(seed: u16) -> Self {
+    pub fn new(seed: Option<u16>) -> Self {
         Self {
             size_x: 100,
             size_y: 100,
             matr: [[None; SIZE_X as usize]; SIZE_Y as usize],
             seed : {
-                if seed == 0 {rand::thread_rng().gen::<u16>()}
-                else {seed}
+                match seed {
+                    None => rand::thread_rng().gen::<u16>(),
+                    Some(i) => i
+                }
             },
         }
     }

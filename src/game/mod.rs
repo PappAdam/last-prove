@@ -23,7 +23,7 @@ impl Game {
 
         canvas.set_draw_color(Color::RGB(0, 255, 255));
 
-        let mut map = mapgen::generate::Map::new(0).generate();
+        let mut map = mapgen::generate::Map::new(None).generate();
 
         let event_pump = context.event_pump().unwrap();
 
