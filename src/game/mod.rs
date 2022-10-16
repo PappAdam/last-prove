@@ -1,14 +1,16 @@
-use sdl2::{Sdl, render::{Canvas}, video::Window, pixels::Color};
-use crate::{mapgen, input};
+use crate::input;
+use crate::map;
+use sdl2::{pixels::Color, render::Canvas, video::Window, Sdl};
 
 pub struct Game {
     pub context: Sdl,
     pub canvas: Canvas<Window>,
-    pub map: mapgen::generate::Map,
+    pub map: map::Map,
     pub event_pump: sdl2::EventPump,
     pub input: input::Input,
     //camera: <T>,
 }
+
 impl Game {
     pub fn new() -> Self {
         let context = sdl2::init().expect("couldn't crate sdl context");
@@ -23,13 +25,18 @@ impl Game {
         let mut canvas = window.into_canvas().build().unwrap();
 
         canvas.set_draw_color(Color::RGB(0, 255, 255));
-
-        let mut map = mapgen::generate::Map::new(None).generate();
-
         let event_pump = context.event_pump().unwrap();
-
         let input = input::Input::init();
 
-        Self { context, canvas, map, event_pump, input }
+        let mut map = map::Map::new(100, Some(20));
+        map.generate();
+
+        Self {
+            context,
+            canvas,
+            map,
+            event_pump,
+            input,
+        }
     }
 }
