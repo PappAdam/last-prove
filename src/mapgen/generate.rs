@@ -74,6 +74,6 @@ impl fmt::Display for Map { // Print
             res = write!(f, "\n");
         }
 
-        return res;
+        res
     }
 }

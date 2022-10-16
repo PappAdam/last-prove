@@ -1,11 +1,12 @@
 use sdl2::{Sdl, render::{Canvas}, video::Window, pixels::Color};
-use crate::mapgen;
+use crate::{mapgen, input};
 
 pub struct Game {
     pub context: Sdl,
     pub canvas: Canvas<Window>,
     pub map: mapgen::generate::Map,
     pub event_pump: sdl2::EventPump,
+    pub input: input::Input,
     //camera: <T>,
 }
 impl Game {
@@ -27,6 +28,8 @@ impl Game {
 
         let event_pump = context.event_pump().unwrap();
 
-        Self { context, canvas, map, event_pump }
+        let input = input::Input::init();
+
+        Self { context, canvas, map, event_pump, input }
     }
 }
