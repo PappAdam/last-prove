@@ -1,7 +1,5 @@
 use core::fmt;
-
-use crate::perlin;
-
+use super::perlin;
 use rand::Rng;
 
 const SIZE_X: u16 = 100;

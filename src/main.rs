@@ -1,5 +1,4 @@
 mod mapgen;
-pub mod perlin;
 mod game;
 
 use sdl2::{event::Event, keyboard::Keycode};
