@@ -46,7 +46,6 @@ fn main() {
             }
         }
 
-        game.input.print_pressed_buttons();
         game.input.refresh_input();
         game.canvas.present();
     }
