@@ -10,7 +10,7 @@ pub struct TileTextures<'a> {
 }
 
 impl<'a> TileTextures<'a> {
-    pub fn init(texture_creator: &'a mut render::TextureCreator<WindowContext>) -> Self {
+    pub fn init(texture_creator: &'a render::TextureCreator<WindowContext>) -> Self {
         let texture = texture_creator.load_texture("Assets/base.png").unwrap();
         Self {
             base_texture: texture,

@@ -9,8 +9,8 @@ use sdl2::event::Event;
 
 fn main() {
     let mut game = game::Game::new();
-    let mut texture_creator = game.canvas.texture_creator();
-    let textures = TileTextures::init(&mut texture_creator);
+    let texture_creator = game.canvas.texture_creator();
+    let textures = TileTextures::init(&texture_creator);
 
     'running: loop {
         game.canvas.clear();
