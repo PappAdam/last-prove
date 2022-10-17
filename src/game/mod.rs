@@ -1,12 +1,21 @@
 use crate::input;
 use crate::map;
-use sdl2::{pixels::Color, render::Canvas, video::Window, Sdl};
+use sdl2::{
+    image::LoadTexture,
+    pixels::Color,
+    render::Canvas,
+    render::{self, Texture},
+    video::Window,
+    video::WindowContext,
+    Sdl,
+};
 
 pub struct Game {
     pub context: Sdl,
     pub canvas: Canvas<Window>,
     pub map: map::Map,
     pub event_pump: sdl2::EventPump,
+    pub texture_creator: render::TextureCreator<WindowContext>,
     pub input: input::Input,
     //camera: <T>,
 }
@@ -27,11 +36,12 @@ impl Game {
         canvas.set_draw_color(Color::RGB(0, 255, 255));
         let event_pump = context.event_pump().unwrap();
         let input = input::Input::init();
-
+        let texture_creator = canvas.texture_creator();
         let mut map = map::Map::new(100, Some(20));
         map.generate();
 
         Self {
+            texture_creator,
             context,
             canvas,
             map,

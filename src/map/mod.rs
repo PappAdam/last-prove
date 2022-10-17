@@ -7,8 +7,8 @@ pub mod perlin;
 pub struct Tile;
 
 pub struct Map {
-    size: u16,
-    matr: Vec<Vec<Option<Tile>>>,
+    pub size: u16,
+    pub matr: Vec<Vec<Option<Tile>>>,
     seed: u16,
 }
 
