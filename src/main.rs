@@ -1,6 +1,7 @@
 mod game;
 mod input;
 mod map;
+mod engine;
 
 use sdl2::event::Event;
 
