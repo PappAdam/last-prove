@@ -1,7 +1,3 @@
 .gitignore
 /target
 Cargo.lock
-SDL2.dll
-SDL_mixer.dll
-SDL_image.dll
-SDL2_ttf.dll
