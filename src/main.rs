@@ -5,7 +5,7 @@ mod render;
 mod engine;
 
 use crate::render::{Render, TileTextures};
-use sdl2::event::Event;
+use sdl2::{event::Event, sys::SDL_GetPerformanceCounter};
 
 fn main() {
     let mut game = game::Game::new();
@@ -14,8 +14,9 @@ fn main() {
 
     'running: loop {
         game.canvas.clear();
+        unsafe { game.calculate_delta_time(SDL_GetPerformanceCounter()); }
 
-        game.render_objects(&textures);
+        game.render_objects(&textures).expect("Something went wrong while rendering!");
 
         for event in game.event_pump.poll_iter() {
             match event {
@@ -50,6 +51,8 @@ fn main() {
                 _ => {}
             }
         }
+
+        println!("FPS: {}", (1.0 / game.delta_time) as i32);
 
         game.input.refresh_input();
         game.canvas.present();

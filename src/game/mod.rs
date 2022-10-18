@@ -1,6 +1,6 @@
 use crate::input;
 use crate::map;
-use sdl2::{pixels::Color, render, render::Canvas, video::Window, video::WindowContext, Sdl};
+use sdl2::{pixels::Color, render::Canvas, video::Window, Sdl, sys::SDL_GetPerformanceFrequency};
 
 pub struct Game {
     pub context: Sdl,
@@ -8,6 +8,8 @@ pub struct Game {
     pub map: map::Map,
     pub event_pump: sdl2::EventPump,
     pub input: input::Input,
+    pub delta_time: f64,
+    last: u64,
     //camera: <T>,
 }
 
@@ -30,12 +32,24 @@ impl Game {
         let mut map = map::Map::new(100, Some(20));
         map.generate();
 
+        let delta_time = 0.0;
+        let last = 0;
+
         Self {
             context,
             canvas,
             map,
             event_pump,
             input,
+            delta_time,
+            last
+        }
+    }
+
+    pub fn calculate_delta_time(&mut self, now: u64) {
+        unsafe {
+            self.delta_time = (now - self.last) as f64 / SDL_GetPerformanceFrequency() as f64;
+            self.last = now;
         }
     }
 }
