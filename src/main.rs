@@ -1,6 +1,7 @@
 mod game;
 mod input;
 mod map;
+mod engine;
 
 use sdl2::event::Event;
 
@@ -45,7 +46,6 @@ fn main() {
             }
         }
 
-        game.input.print_pressed_buttons();
         game.input.refresh_input();
         game.canvas.present();
     }
