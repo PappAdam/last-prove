@@ -1,10 +1,9 @@
-pub mod game;
-pub mod input;
-pub mod map;
-pub mod render;
+mod game;
+mod input;
+mod map;
+mod render;
 
 use crate::render::{Render, TileTextures};
-
 use sdl2::event::Event;
 
 fn main() {
