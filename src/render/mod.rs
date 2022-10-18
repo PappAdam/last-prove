@@ -1,3 +1,5 @@
+pub mod camera;
+
 use crate::game::Game;
 use sdl2::{
     image::LoadTexture,

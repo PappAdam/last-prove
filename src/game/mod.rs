@@ -1,14 +1,16 @@
-use crate::input;
+use crate::input::Input;
 use crate::map;
-use sdl2::{pixels::Color, render::Canvas, video::Window, Sdl, sys::SDL_GetPerformanceFrequency};
+use crate::render::camera::Camera;
+use sdl2::{pixels::Color, render::Canvas, video::Window, Sdl, sys::{SDL_GetPerformanceFrequency, SDL_GetPerformanceCounter}};
 
 pub struct Game {
     pub context: Sdl,
     pub canvas: Canvas<Window>,
     pub map: map::Map,
     pub event_pump: sdl2::EventPump,
-    pub input: input::Input,
-    pub delta_time: f64,
+    pub input: Input,
+    pub camera: Camera,
+    pub delta_time: f32,
     last: u64,
     //camera: <T>,
 }
@@ -28,10 +30,12 @@ impl Game {
 
         canvas.set_draw_color(Color::RGB(0, 255, 255));
         let event_pump = context.event_pump().unwrap();
-        let input = input::Input::init();
+        let input = Input::init();
         let mut map = map::Map::new(100, Some(20));
         map.generate();
-
+        
+        let camera = Camera::new();
+        
         let delta_time = 0.0;
         let last = 0;
 
@@ -41,14 +45,20 @@ impl Game {
             map,
             event_pump,
             input,
+            camera,
             delta_time,
             last
         }
     }
-
-    pub fn calculate_delta_time(&mut self, now: u64) {
+    pub fn refresh_game(&mut self) {
+        self.input.refresh_input();
+        self.refresh_delta_time();
+        self.camera.refresh_camera(self.delta_time);
+    }
+    pub fn refresh_delta_time(&mut self) {
         unsafe {
-            self.delta_time = (now - self.last) as f64 / SDL_GetPerformanceFrequency() as f64;
+            let now = SDL_GetPerformanceCounter();
+            self.delta_time = (now - self.last) as f32 / SDL_GetPerformanceFrequency() as f32;
             self.last = now;
         }
     }
