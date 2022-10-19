@@ -117,7 +117,7 @@ impl Input {
         }
     }
 
-    fn get_mousebutton_state(&self, mouse_btn: MouseButton) -> &Keystate {
+    pub fn get_mousebutton_state(&self, mouse_btn: MouseButton) -> &Keystate {
         match self.mousebuttons.get(&mouse_btn) {
             Some(mouse_btn) => mouse_btn,
             None => &Keystate::Up,

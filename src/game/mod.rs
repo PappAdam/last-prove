@@ -1,7 +1,7 @@
 use crate::input::Input;
 use crate::map;
 use crate::render::camera::Camera;
-use sdl2::{pixels::Color, render::Canvas, video::Window, Sdl, sys::{SDL_GetPerformanceFrequency, SDL_GetPerformanceCounter}};
+use sdl2::{pixels::Color, render::Canvas, video::Window, Sdl, sys::{SDL_GetPerformanceFrequency, SDL_GetPerformanceCounter}, mouse::MouseButton};
 
 pub struct Game {
     pub context: Sdl,
@@ -55,8 +55,8 @@ impl Game {
         }
     }
     pub fn refresh_game(&mut self) {
+        self.camera.refresh_camera(self.delta_time, self.input.get_mouse_position(), self.input.get_mousebutton_state(MouseButton::Middle));
         self.input.refresh_input();
-        self.camera.refresh_camera(self.delta_time, self.input.get_rel_mouse_position(self.window_size));
         self.refresh_delta_time();
     }
     pub fn refresh_delta_time(&mut self) {

@@ -1,4 +1,4 @@
-use std::{ops::{Add, Sub, Mul}, fmt::Display};
+use std::{ops::{Add, Sub, Mul, AddAssign}, fmt::Display};
 
 #[derive(Clone, Copy)]
 pub struct Vector2 {
@@ -11,6 +11,12 @@ impl Add<Vector2> for Vector2 {
 
     fn add(self, rhs: Self) -> Self::Output {
         Vector2::new(self.x + rhs.x, self.y + rhs.y)
+    }
+}
+impl AddAssign for Vector2 {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
     }
 }
 
