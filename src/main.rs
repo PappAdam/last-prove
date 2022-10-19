@@ -52,6 +52,7 @@ fn main() {
 
         println!("FPS: {}", (1.0 / game.delta_time) as i32);
         game.refresh_game();
+
         game.canvas.present();
     }
 }
