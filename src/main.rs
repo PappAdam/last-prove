@@ -45,7 +45,7 @@ fn main() {
                 _ => {}
             }
         }
-
+        
         game.input.refresh_input();
         game.canvas.present();
     }
