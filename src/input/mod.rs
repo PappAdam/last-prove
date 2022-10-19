@@ -144,6 +144,10 @@ impl Input {
     pub fn get_mouse_position(&self) -> (u16, u16) {
         self.mouse_position
     }
+    pub fn get_rel_mouse_position(&self, window_size: (u16, u16)) -> (f32, f32) {
+        let mouse_position = self.get_mouse_position();
+        ((mouse_position.0 as f32) / (window_size.0 as f32 - 1.0), (mouse_position.1 as f32) / (window_size.1 as f32 - 1.0))
+    }
     pub fn get_mouse_wheel(&self) -> Option<i8> {
         self.mouse_wheel
     }
