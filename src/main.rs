@@ -4,8 +4,8 @@ mod map;
 mod render;
 mod engine;
 
-use crate::render::{Render, TileTextures};
-use sdl2::{event::Event}};
+use crate::{render::{Render, TileTextures}, engine::vector2::Vector2};
+use sdl2::event::Event;
 
 fn main() {
     let mut game = game::Game::new();
@@ -40,7 +40,7 @@ fn main() {
                     x,
                     y,
                     ..
-                } => game.input.on_mouse_moved((x as u16, y as u16)),
+                } => game.input.on_mouse_moved(Vector2::new(x as f32, y as f32)),
                 Event::MouseWheel {
                     y,
                     ..
