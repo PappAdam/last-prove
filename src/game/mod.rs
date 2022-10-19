@@ -33,7 +33,7 @@ impl Game {
 
         canvas.set_draw_color(Color::RGB(0, 255, 255));
         let event_pump = context.event_pump().unwrap();
-        let input = Input::init();
+        let input = Input::init(window_size);
         let mut map = map::Map::new(100, Some(20));
         map.generate();
         
@@ -56,8 +56,8 @@ impl Game {
     }
     pub fn refresh_game(&mut self) {
         self.input.refresh_input();
+        self.camera.refresh_camera(self.delta_time, self.input.get_rel_mouse_position(self.window_size));
         self.refresh_delta_time();
-        self.camera.refresh_camera(self.delta_time);
     }
     pub fn refresh_delta_time(&mut self) {
         unsafe {

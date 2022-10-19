@@ -19,9 +19,9 @@ pub struct Input {
 }
 #[allow(dead_code)]
 impl Input {
-    pub fn init() -> Self {
+    pub fn init(window_size: (u16, u16)) -> Self {
         let mouse_wheel = None;
-        let mouse_position = (0, 0);
+        let mouse_position = (window_size.0 / 2, window_size.1 / 2);
         let mousebuttons = HashMap::new();
         let buttons = HashMap::new();
         Self {

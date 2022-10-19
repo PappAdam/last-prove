@@ -5,16 +5,16 @@ mod render;
 mod engine;
 
 use crate::render::{Render, TileTextures};
-use sdl2::event::Event;
+use sdl2::{event::Event, sys::{SDL_CaptureMouse, SDL_bool}};
 
 fn main() {
     let mut game = game::Game::new();
     let texture_creator = game.canvas.texture_creator();
     let textures = TileTextures::init(&texture_creator);
-
+    unsafe {SDL_CaptureMouse(SDL_bool::SDL_TRUE)};
     'running: loop {
         game.canvas.clear();
-        game.render_objects(&textures).expect("Something went wrong while rendering!");
+        
 
         for event in game.event_pump.poll_iter() {
             match event {
@@ -50,9 +50,11 @@ fn main() {
             }
         }
 
-        println!("FPS: {}", (1.0 / game.delta_time) as i32);
+        //println!("FPS: {}", (1.0 / game.delta_time) as i32);
+        //println!("Camera position: {}", game.camera.position);
+        println!("Relative mouse position: {:?}", game.input.get_rel_mouse_position(game.window_size));
+        game.render_objects(&textures, game.camera.position).expect("Something went wrong while rendering!");
         game.refresh_game();
-
         game.canvas.present();
     }
 }

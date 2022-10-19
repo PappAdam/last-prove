@@ -1,8 +1,9 @@
-use std::ops::{Add, Sub, Mul};
+use std::{ops::{Add, Sub, Mul}, fmt::Display};
 
+#[derive(Clone, Copy)]
 pub struct Vector2 {
-    x: f32,
-    y: f32,
+    pub x: f32,
+    pub y: f32,
 }
 
 impl Add<Vector2> for Vector2 {
@@ -25,6 +26,13 @@ impl Mul<f32> for Vector2 {
 
     fn mul(self, rhs: f32) -> Self::Output {
         Vector2::new(self.x * rhs, self.y * rhs)
+    }
+}
+
+impl Display for Vector2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let res = write!(f, "x: {}, y: {}", self.x, self.y);
+        res
     }
 }
 

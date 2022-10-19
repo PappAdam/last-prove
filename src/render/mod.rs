@@ -1,6 +1,6 @@
 pub mod camera;
 
-use crate::game::Game;
+use crate::{game::Game, engine::vector2::Vector2};
 use sdl2::{
     image::LoadTexture,
     render::{self, Texture},
@@ -21,20 +21,20 @@ impl<'a> TileTextures<'a> {
 }
 
 pub trait Render {
-    fn render_objects(&mut self, textures: &TileTextures) -> Result<(), String>;
+    fn render_objects(&mut self, textures: &TileTextures, camera_position: Vector2) -> Result<(), String>;
 }
 
 //                        dstR.x = x*dstR.w/2 - y*dstR.h/2 + cam->xoffset;
 //                        dstR.y = y*dstR.h/4 + x*dstR.w/4 - z*dstR.h/2 + cam->yoffset;
 
 impl Render for Game {
-    fn render_objects(&mut self, textures: &TileTextures) -> Result<(), String> {
+    fn render_objects(&mut self, textures: &TileTextures, camera_position: Vector2) -> Result<(), String> {
         let mut dst_rect = sdl2::rect::Rect::new(0, 0, 64, 64);
         for y in 0..self.map.size as i32 {
             for x in 0..self.map.size as i32 {
                 if let Some(_) = self.map.matr[y as usize][x as usize] {
-                    dst_rect.x = x * dst_rect.w / 2 - y * dst_rect.h / 2;
-                    dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4;
+                    dst_rect.x = x * dst_rect.w / 2 - y * dst_rect.h / 2 - camera_position.x as i32;
+                    dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4 - camera_position.y as i32;
                     self.canvas
                         .copy(&textures.base_texture, None, Some(dst_rect))?;
                 }
