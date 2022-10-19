@@ -11,7 +11,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn new() -> Self{
-        Self{ position: Vector2::default(), zoom: 1.0, target_zoom: 1.0, drag_origin: Vector2::new(0.0, 0.0), dragging: false}
+        Self{ position: Vector2::new(-400.0, 200.0), zoom: 0.3, target_zoom: 0.3, drag_origin: Vector2::default(), dragging: false}
     }
     pub fn refresh_camera(&mut self, delta_time: f32, mouse_position: Vector2, middle_mouse_btn_state: &Keystate, mouse_wheel: i8) {
         match middle_mouse_btn_state {
