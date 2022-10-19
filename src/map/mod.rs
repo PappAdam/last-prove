@@ -1,8 +1,8 @@
-use std::fmt::{self, Display};
-
 pub mod generate;
 pub mod perlin;
+pub mod tile;
 
+use std::fmt::{self, Display};
 #[derive(Copy, Clone)]
 pub struct Tile;
 
