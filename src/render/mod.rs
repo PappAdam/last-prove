@@ -1,6 +1,6 @@
 pub mod camera;
 
-use crate::{game::Game, engine::vector2::Vector2};
+use crate::{game::Game};
 use sdl2::{
     image::LoadTexture,
     render::{self, Texture},
