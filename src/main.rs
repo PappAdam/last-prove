@@ -5,13 +5,12 @@ mod render;
 mod engine;
 
 use crate::render::{Render, TileTextures};
-use sdl2::{event::Event, sys::{SDL_CaptureMouse, SDL_bool}};
+use sdl2::{event::Event}};
 
 fn main() {
     let mut game = game::Game::new();
     let texture_creator = game.canvas.texture_creator();
     let textures = TileTextures::init(&texture_creator);
-    unsafe {SDL_CaptureMouse(SDL_bool::SDL_TRUE)};
     'running: loop {
         game.canvas.clear();
         
