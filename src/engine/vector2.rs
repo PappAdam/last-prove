@@ -1,6 +1,6 @@
 use std::{ops::{Add, Sub, Mul, AddAssign}, fmt::Display};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
@@ -27,6 +27,7 @@ impl Sub<Vector2> for Vector2 {
         Vector2::new(self.x - rhs.x, self.y - rhs.y)
     }
 }
+
 impl Mul<f32> for Vector2 {
     type Output = Self;
 

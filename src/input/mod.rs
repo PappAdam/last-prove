@@ -14,7 +14,7 @@ pub enum Keystate {
 }
 
 pub struct Input {
-    mouse_wheel: Option<i8>,
+    mouse_wheel: i8,
     mouse_position: Vector2,
     mousebuttons: HashMap<MouseButton, Keystate>,
     buttons: HashMap<Keycode, Keystate>,
@@ -22,7 +22,7 @@ pub struct Input {
 #[allow(dead_code)]
 impl Input {
     pub fn init(window_size: (u16, u16)) -> Self {
-        let mouse_wheel = None;
+        let mouse_wheel = 0;
         let mouse_position = Vector2::new((window_size.0 / 2) as f32, (window_size.0 / 2) as f32);
         let mousebuttons = HashMap::new();
         let buttons = HashMap::new();
@@ -67,7 +67,7 @@ impl Input {
         }
     }
     pub fn on_mousewheel_scrolled(&mut self, y: i8) {
-        self.mouse_wheel = Some(y);
+        self.mouse_wheel = y;
     }
     pub fn on_mouse_moved(&mut self, mouse_position: Vector2) {
         self.mouse_position = mouse_position;
@@ -88,7 +88,7 @@ impl Input {
                 _ => {}
             }
         }
-        self.mouse_wheel = None;
+        self.mouse_wheel = 0;
     }
 
     fn get_key_state(&self, keycode: Keycode) -> &Keystate {
@@ -150,7 +150,7 @@ impl Input {
         let mouse_position = self.get_mouse_position();
         ((mouse_position.x as f32) / (window_size.0 as f32 - 1.0), (mouse_position.y as f32) / (window_size.1 as f32 - 1.0))
     }
-    pub fn get_mouse_wheel(&self) -> Option<i8> {
+    pub fn get_mouse_wheel(&self) -> i8 {
         self.mouse_wheel
     }
 
