@@ -3,8 +3,9 @@ use std::vec;
 
 use crate::engine::vector2::Vector2;
 
+
 use super::perlin;
-use super::{Map, Tile};
+use super::{Map, tile::{Tile, TileType}};
 
 impl Map {
     pub fn new(size: u16, seed: Option<u16>) -> Self {
@@ -27,8 +28,9 @@ impl Map {
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
                 let treshold: f32 = Vector2::distance(center, Vector2::new(x as f32, y as f32)) / center_axis;
-                if perlin_noise.perlin2d(x as f32, y as f32, 0.1, 2) > treshold {
-                    self.matr[y][x] = Some(Tile);
+                let value = perlin_noise.perlin2d(x as f32, y as f32, 0.1, 2);
+                if value > treshold {
+                    self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), TileType::debug , (value / 0.2) as u8));
                 }
             }
         }

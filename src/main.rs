@@ -11,6 +11,9 @@ fn main() {
     let mut game = game::Game::new();
     let texture_creator = game.canvas.texture_creator();
     let textures = TileTextures::init(&texture_creator);
+
+    println!("{}", game.map);
+
     'running: loop {
         game.canvas.clear();
         

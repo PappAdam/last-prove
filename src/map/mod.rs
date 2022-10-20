@@ -3,12 +3,10 @@ pub mod perlin;
 pub mod tile;
 
 use std::fmt::{self, Display};
-#[derive(Copy, Clone)]
-pub struct Tile;
 
 pub struct Map {
     pub size: u16,
-    pub matr: Vec<Vec<Option<Tile>>>,
+    pub matr: Vec<Vec<Option<tile::Tile>>>,
     seed: u16,
 }
 
@@ -18,10 +16,9 @@ impl Display for Map {
 
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
-                if let Some(_) = self.matr[y][x] {
-                    res = write!(f, "X ");
-                } else {
-                    res = write!(f, "_ ");
+                match self.matr[y][x] {
+                    None => res = write!(f, "_ "),
+                    Some(tile) => res = write!(f, "{} ", tile.height),
                 }
 
                 if let Err(_) = res {
