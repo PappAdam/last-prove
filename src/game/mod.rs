@@ -1,6 +1,7 @@
-use crate::input;
+use crate::input::Input;
 use crate::map;
-use sdl2::{pixels::Color, render::Canvas, video::Window, Sdl};
+use crate::render::camera::Camera;
+use sdl2::{pixels::Color, render::Canvas, video::Window, Sdl, sys::{SDL_GetPerformanceFrequency, SDL_GetPerformanceCounter}, mouse::MouseButton};
 
 pub struct Game {
     pub context: Sdl,
@@ -8,7 +9,10 @@ pub struct Game {
     pub canvas: Canvas<Window>,
     pub map: map::Map,
     pub event_pump: sdl2::EventPump,
-    pub input: input::Input,
+    pub input: Input,
+    pub camera: Camera,
+    pub delta_time: f32,
+    last: u64,
     //camera: <T>,
 }
 
@@ -17,7 +21,7 @@ impl Game {
         let context = sdl2::init().expect("couldn't crate sdl context");
         let video_subsys = context.video().expect("couldn't create video subsystem");
         
-        let window_size = (800, 600);
+        let window_size = (1920, 1080);
         
         let window = video_subsys
             .window("title", window_size.0 as u32, window_size.1 as u32)
@@ -29,10 +33,14 @@ impl Game {
 
         canvas.set_draw_color(Color::RGB(0, 255, 255));
         let event_pump = context.event_pump().unwrap();
-        let input = input::Input::init();
-
-        let mut map = map::Map::new(100, Some(20));
+        let input = Input::init(window_size);
+        let mut map = map::Map::new(500, None);
         map.generate();
+        
+        let camera = Camera::new();
+        
+        let delta_time = 0.0;
+        let last = 0;
 
         Self {
             context,
@@ -41,6 +49,26 @@ impl Game {
             map,
             event_pump,
             input,
+            camera,
+            delta_time,
+            last
+        }
+    }
+    pub fn refresh_game(&mut self) {
+        self.camera.refresh_camera(
+            self.delta_time,
+            self.input.get_mouse_position(),
+            self.input.get_mousebutton_state(MouseButton::Middle),
+            self.input.get_mouse_wheel()
+        );
+        self.input.refresh_input();
+        self.refresh_delta_time();
+    }
+    pub fn refresh_delta_time(&mut self) {
+        unsafe {
+            let now = SDL_GetPerformanceCounter();
+            self.delta_time = (now - self.last) as f32 / SDL_GetPerformanceFrequency() as f32;
+            self.last = now;
         }
     }
 }

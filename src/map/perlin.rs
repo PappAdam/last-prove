@@ -23,23 +23,20 @@ impl Perlin2D {
         Self { seed }
     }
 
-
-        pub fn perlin2d(&self, x: f32, y: f32, freq: f32, depth: u8) -> f32 {
-            let mut xa = x * freq;
-            let mut ya = y * freq;
-            let amp = 1.0;
-            let mut fin = 0.0;
-            let mut div = 0.0;
-
-            for _ in 0..depth {
-                div += 256f32 * amp;
-                fin += self.noise2d(xa, ya) * amp;
-                xa *= 2f32;
-                ya *= 2f32;
-            }
-
-            fin / div
+    pub fn perlin2d(&self, x: f32, y: f32, freq: f32, depth: u8) -> f32 {
+        let mut xa = x * freq;
+        let mut ya = y * freq;
+        let amp = 1.0;
+        let mut fin = 0.0;
+        let mut div = 0.0;
+        for _ in 0..depth {
+            div += 256f32 * amp;
+            fin += self.noise2d(xa, ya) * amp;
+            xa *= 2f32;
+            ya *= 2f32;
         }
+        fin / div
+    }
 
     fn noise2(&self, x: i32, y: i32) -> i32 {
         let tmp = HASH[((y + self.seed as i32) % 256) as usize] as i32;

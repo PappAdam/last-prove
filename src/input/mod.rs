@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
+use crate::engine::vector2::Vector2;
+
 
 #[derive(Debug)]
 pub enum Keystate {
@@ -12,16 +14,16 @@ pub enum Keystate {
 }
 
 pub struct Input {
-    mouse_wheel: Option<i8>,
-    mouse_position: (u16, u16),
+    mouse_wheel: i8,
+    mouse_position: Vector2,
     mousebuttons: HashMap<MouseButton, Keystate>,
     buttons: HashMap<Keycode, Keystate>,
 }
 #[allow(dead_code)]
 impl Input {
-    pub fn init() -> Self {
-        let mouse_wheel = None;
-        let mouse_position = (0, 0);
+    pub fn init(window_size: (u16, u16)) -> Self {
+        let mouse_wheel = 0;
+        let mouse_position = Vector2::new((window_size.0 / 2) as f32, (window_size.0 / 2) as f32);
         let mousebuttons = HashMap::new();
         let buttons = HashMap::new();
         Self {
@@ -65,9 +67,9 @@ impl Input {
         }
     }
     pub fn on_mousewheel_scrolled(&mut self, y: i8) {
-        self.mouse_wheel = Some(y);
+        self.mouse_wheel = y;
     }
-    pub fn on_mouse_moved(&mut self, mouse_position: (u16, u16)) {
+    pub fn on_mouse_moved(&mut self, mouse_position: Vector2) {
         self.mouse_position = mouse_position;
     }
 
@@ -86,7 +88,7 @@ impl Input {
                 _ => {}
             }
         }
-        self.mouse_wheel = None;
+        self.mouse_wheel = 0;
     }
 
     fn get_key_state(&self, keycode: Keycode) -> &Keystate {
@@ -115,7 +117,7 @@ impl Input {
         }
     }
 
-    fn get_mousebutton_state(&self, mouse_btn: MouseButton) -> &Keystate {
+    pub fn get_mousebutton_state(&self, mouse_btn: MouseButton) -> &Keystate {
         match self.mousebuttons.get(&mouse_btn) {
             Some(mouse_btn) => mouse_btn,
             None => &Keystate::Up,
@@ -141,14 +143,14 @@ impl Input {
         }
     }
 
-    pub fn get_mouse_position(&self) -> (u16, u16) {
+    pub fn get_mouse_position(&self) -> Vector2 {
         self.mouse_position
     }
     pub fn get_rel_mouse_position(&self, window_size: (u16, u16)) -> (f32, f32) {
         let mouse_position = self.get_mouse_position();
-        ((mouse_position.0 as f32) / (window_size.0 as f32 - 1.0), (mouse_position.1 as f32) / (window_size.1 as f32 - 1.0))
+        ((mouse_position.x as f32) / (window_size.0 as f32 - 1.0), (mouse_position.y as f32) / (window_size.1 as f32 - 1.0))
     }
-    pub fn get_mouse_wheel(&self) -> Option<i8> {
+    pub fn get_mouse_wheel(&self) -> i8 {
         self.mouse_wheel
     }
 
