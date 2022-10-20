@@ -21,7 +21,7 @@ impl Game {
         let context = sdl2::init().expect("couldn't crate sdl context");
         let video_subsys = context.video().expect("couldn't create video subsystem");
         
-        let window_size = (800, 600);
+        let window_size = (1920, 1080);
         
         let window = video_subsys
             .window("title", window_size.0 as u32, window_size.1 as u32)
@@ -34,7 +34,7 @@ impl Game {
         canvas.set_draw_color(Color::RGB(0, 255, 255));
         let event_pump = context.event_pump().unwrap();
         let input = Input::init(window_size);
-        let mut map = map::Map::new(100, None);
+        let mut map = map::Map::new(500, None);
         map.generate();
         
         let camera = Camera::new();
