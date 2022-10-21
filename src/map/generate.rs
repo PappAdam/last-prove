@@ -18,7 +18,7 @@ impl Map {
         }
     }
 
-    pub fn generate(&mut self) {
+    pub fn generate(mut self) -> Self {
         let perlin_noise = perlin::Perlin2D::new(self.seed as i32);
 
         for y in 0..self.size as usize {
@@ -28,5 +28,17 @@ impl Map {
                 }
             }
         }
+
+        self
+    }
+
+    pub fn flat(mut self) -> Self {
+        for y in 0..self.size as usize {
+            for x in 0..self.size as usize {
+                self.matr[y][x] = Some(Tile);
+            }
+        }
+
+        self
     }
 }

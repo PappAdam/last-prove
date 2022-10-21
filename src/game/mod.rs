@@ -1,7 +1,14 @@
 use crate::input::Input;
 use crate::map;
 use crate::render::camera::Camera;
-use sdl2::{pixels::Color, render::Canvas, video::Window, Sdl, sys::{SDL_GetPerformanceFrequency, SDL_GetPerformanceCounter}, mouse::MouseButton};
+use sdl2::{
+    mouse::MouseButton,
+    pixels::Color,
+    render::Canvas,
+    sys::{SDL_GetPerformanceCounter, SDL_GetPerformanceFrequency},
+    video::Window,
+    Sdl,
+};
 
 pub struct Game {
     pub context: Sdl,
@@ -20,9 +27,9 @@ impl Game {
     pub fn new() -> Self {
         let context = sdl2::init().expect("couldn't crate sdl context");
         let video_subsys = context.video().expect("couldn't create video subsystem");
-        
-        let window_size = (800, 600);
-        
+
+        let window_size = (960, 540);
+
         let window = video_subsys
             .window("title", window_size.0 as u32, window_size.1 as u32)
             .position_centered()
@@ -34,11 +41,10 @@ impl Game {
         canvas.set_draw_color(Color::RGB(0, 255, 255));
         let event_pump = context.event_pump().unwrap();
         let input = Input::init(window_size);
-        let mut map = map::Map::new(100, Some(20));
-        map.generate();
-        
+        let mut map = map::Map::new(100, Some(20)).generate(); //.flat();
+
         let camera = Camera::new();
-        
+
         let delta_time = 0.0;
         let last = 0;
 
@@ -51,19 +57,21 @@ impl Game {
             input,
             camera,
             delta_time,
-            last
+            last,
         }
     }
+
     pub fn refresh_game(&mut self) {
         self.camera.refresh_camera(
             self.delta_time,
             self.input.get_mouse_position(),
             self.input.get_mousebutton_state(MouseButton::Middle),
-            self.input.get_mouse_wheel()
+            self.input.get_mouse_wheel(),
         );
         self.input.refresh_input();
         self.refresh_delta_time();
     }
+
     pub fn refresh_delta_time(&mut self) {
         unsafe {
             let now = SDL_GetPerformanceCounter();

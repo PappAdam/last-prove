@@ -1,6 +1,6 @@
 pub mod camera;
 
-use crate::{game::Game};
+use crate::game::Game;
 use sdl2::{
     image::LoadTexture,
     render::{self, Texture},
@@ -29,14 +29,45 @@ pub trait Render {
 
 impl Render for Game {
     fn render_objects(&mut self, textures: &TileTextures) -> Result<(), String> {
-        let mut dst_rect = sdl2::rect::Rect::new(0, 0, (64 as f32 * self.camera.zoom) as u32, (64 as f32 * self.camera.zoom) as u32);
-        for y in 0..self.map.size as i32 {
-            for x in 0..self.map.size as i32 {
-                if let Some(_) = self.map.matr[y as usize][x as usize] {
-                    dst_rect.x = x * dst_rect.w / 2 - y * dst_rect.h / 2 - self.camera.position.x as i32;
-                    dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4 - self.camera.position.y as i32;
-                    self.canvas
-                        .copy(&textures.base_texture, None, Some(dst_rect))?;
+        let mut dst_rect = sdl2::rect::Rect::new(
+            0,
+            0,
+            (64 as f32 * self.camera.zoom) as u32,
+            (64 as f32 * self.camera.zoom) as u32,
+        );
+
+        let max_size = (
+            self.window_size.0 as i32 / dst_rect.w + 2,
+            self.window_size.1 as i32 / dst_rect.h * 4 + 6,
+        );
+
+        let cam_offset: (i32, i32) = {
+            let (cx, cy) = (
+                self.camera.position.x as i32 / dst_rect.w,
+                self.camera.position.x as i32 / dst_rect.h * 2,
+            );
+
+            (0, 0)
+        };
+
+        for i in 0..max_size.1 as i32 {
+            for j in 0..max_size.0 as i32 {
+                let x = (i - 1) / 2 + 1 + j;
+                let y = i / 2 - j;
+
+                if x + cam_offset.0 > 0
+                    && y + cam_offset.1 > 0
+                    && x + cam_offset.0 < self.map.size as i32
+                    && y + cam_offset.1 < self.map.size as i32
+                {
+                    if let Some(_) =
+                        self.map.matr[(y + cam_offset.1) as usize][(x + cam_offset.0) as usize]
+                    {
+                        dst_rect.x = x * dst_rect.w / 2 - y * dst_rect.h / 2 - dst_rect.w;
+                        dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4 - dst_rect.h / 2;
+                        self.canvas
+                            .copy(&textures.base_texture, None, Some(dst_rect))?;
+                    }
                 }
             }
         }
