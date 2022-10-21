@@ -38,7 +38,7 @@ impl Render for Game {
 
         let max_size = (
             self.window_size.0 as i32 / dst_rect.w + 2,
-            self.window_size.1 as i32 / dst_rect.h * 4 + 6,
+            self.window_size.1 as i32 / dst_rect.h * 4 - 6,
         );
 
         let cam_offset: (i32, i32) = {
@@ -50,6 +50,7 @@ impl Render for Game {
             (0, 0)
         };
 
+        let mut rendered_tiles = 0;
         for i in 0..max_size.1 as i32 {
             for j in 0..max_size.0 as i32 {
                 let x = (i - 1) / 2 + 1 + j;
@@ -60,17 +61,22 @@ impl Render for Game {
                     && x + cam_offset.0 < self.map.size as i32
                     && y + cam_offset.1 < self.map.size as i32
                 {
-                    if let Some(_) =
+                    if let Some(tile) =
                         self.map.matr[(y + cam_offset.1) as usize][(x + cam_offset.0) as usize]
                     {
-                        dst_rect.x = x * dst_rect.w / 2 - y * dst_rect.h / 2 - dst_rect.w;
-                        dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4 - dst_rect.h / 2;
-                        self.canvas
-                            .copy(&textures.base_texture, None, Some(dst_rect))?;
+                        for z in tile.min_z..tile.max_z {
+                            dst_rect.x = x * dst_rect.w / 2 - y * dst_rect.h / 2 - dst_rect.w;
+                            dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4 - dst_rect.h / 2- z as i32 * dst_rect.h / 2;
+                            self.canvas
+                                .copy(&textures.base_texture, None, Some(dst_rect))?;
+                            rendered_tiles += 1;
+                        }
+                        
                     }
                 }
             }
         }
+        println!("Rendered tiles: {}", rendered_tiles);
         Ok(())
     }
 }

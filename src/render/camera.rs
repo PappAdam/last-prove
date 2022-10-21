@@ -47,7 +47,7 @@ impl Camera {
             self.zoom = self.target_zoom
         }
         if mouse_wheel != 0 {
-            self.target_zoom += 0.1 * mouse_wheel as f32
+            self.target_zoom += 0.01 * mouse_wheel as f32
         }
     }
 }

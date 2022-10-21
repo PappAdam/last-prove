@@ -18,7 +18,7 @@ impl Display for Map {
             for x in 0..self.size as usize {
                 match self.matr[y][x] {
                     None => res = write!(f, "_ "),
-                    Some(tile) => res = write!(f, "{} ", tile.height),
+                    Some(tile) => res = write!(f, "{} ", tile.max_z),
                 }
 
                 if let Err(_) = res {

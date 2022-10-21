@@ -30,21 +30,49 @@ impl Map {
                 let treshold: f32 = Vector2::distance(center, Vector2::new(x as f32, y as f32)) / center_axis;
                 let value = perlin_noise.perlin2d(x as f32, y as f32, 0.1, 2);
                 if value > treshold {
-                    self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), TileType::debug , ((value - treshold) / 0.03) as u8));
+                    self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), TileType::debug, 0,  ((value - treshold) / 0.1) as u8));
                 }
             }
         }
+        //calculate_min_z(&mut self);
 
         self
     }
 
-    pub fn flat(mut self) -> Self {
+    pub fn flat(mut self, z: u8) -> Self {
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
-                self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), TileType::debug , 1));
+                self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), TileType::debug , 0, z));
             }
         }
+        calculate_min_z(&mut self);
 
         self
+    }
+}
+
+fn calculate_min_z(map: &mut Map) {
+    for x in 0..map.size as usize {
+        for y in 0..map.size as usize {
+            if let Some(tile) = &map.matr[x][y] {
+                if tile.max_z > 0 {
+                    let mut z_down = tile.max_z;
+                    let mut z_up = 0;
+                    let x = tile.position.x as usize;
+                    let y = tile.position.y as usize;
+
+                    while z_down > 0 && y > z_up && x > z_up {
+                        z_up += 1;
+                        z_down -= 1;
+                        if let Some(mut tile) = &map.matr[x - z_up][y - z_up] {
+                            if tile.min_z < z_down {
+                                tile.min_z = z_down;
+                            }
+                            map.matr[x - z_up][y - z_up] = Some(tile);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
