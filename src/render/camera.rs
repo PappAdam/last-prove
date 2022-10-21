@@ -1,6 +1,7 @@
-use crate::engine::{vector2::Vector2, float::EngineFloat};
+use crate::engine::{float::EngineFloat, vector2::Vector2};
 use crate::input::Keystate;
 
+#[derive(Debug)]
 pub struct Camera {
     pub position: Vector2,
     pub zoom: f32,
@@ -10,23 +11,43 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new() -> Self{
-        Self{ position: Vector2::new(-400.0, 200.0), zoom: 0.3, target_zoom: 0.3, drag_origin: Vector2::default(), dragging: false}
+    pub fn new() -> Self {
+        Self {
+            position: Vector2::default(),
+            zoom: 1.0,
+            target_zoom: 1.0,
+            drag_origin: Vector2::default(),
+            dragging: false,
+        }
     }
-    pub fn refresh_camera(&mut self, delta_time: f32, mouse_position: Vector2, middle_mouse_btn_state: &Keystate, mouse_wheel: i8) {
+    pub fn refresh_camera(
+        &mut self,
+        delta_time: f32,
+        mouse_position: Vector2,
+        middle_mouse_btn_state: &Keystate,
+        mouse_wheel: i8,
+    ) {
         match middle_mouse_btn_state {
-            Keystate::Pressed => { self.dragging = true; self.drag_origin = mouse_position},
-            Keystate::Released => { self.dragging = false},
-            _ => {},
+            Keystate::Pressed => {
+                self.dragging = true;
+                self.drag_origin = mouse_position
+            }
+            Keystate::Released => self.dragging = false,
+            _ => {}
         }
         if self.dragging {
             let dir = mouse_position - self.drag_origin;
             self.position += dir * delta_time;
         }
-        
 
-        if self.target_zoom != self.zoom { self.zoom = f32::lerp(self.zoom, self.target_zoom, 0.03);}
-        if (self.target_zoom - self.zoom).abs() < 0.01 { self.zoom = self.target_zoom }
-        if mouse_wheel != 0 { self.target_zoom += 0.1 * mouse_wheel as f32}
+        if self.target_zoom != self.zoom {
+            self.zoom = f32::lerp(self.zoom, self.target_zoom, 0.03);
+        }
+        if (self.target_zoom - self.zoom).abs() < 0.01 {
+            self.zoom = self.target_zoom
+        }
+        if mouse_wheel != 0 {
+            self.target_zoom += 0.1 * mouse_wheel as f32
+        }
     }
 }

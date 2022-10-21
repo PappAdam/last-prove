@@ -1,6 +1,9 @@
-use std::{ops::{Add, Sub, Mul, AddAssign}, fmt::Display};
+use std::{
+    fmt::Display,
+    ops::{Add, AddAssign, Mul, Sub},
+};
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
