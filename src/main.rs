@@ -14,6 +14,9 @@ fn main() {
     let mut game = game::Game::new();
     let texture_creator = game.canvas.texture_creator();
     let textures = TileTextures::init(&texture_creator);
+
+    println!("{}", game.map);
+
     'running: loop {
         game.canvas.clear();
 
@@ -47,7 +50,7 @@ fn main() {
         //println!("Camera position: {}", game.camera.position);
         //println!("Relative mouse position: {:?}", game.input.get_rel_mouse_position(game.window_size));
         println!("FPS: {}", (1.0 / game.delta_time) as i32);
-        //println!("Target zoom: {}, zoom: {}", game.camera.target_zoom, game.camera.zoom);
+        //println!("Zoom: {}", game.camera.zoom);
 
         game.render_objects(&textures)
             .expect("Something went wrong while rendering!");

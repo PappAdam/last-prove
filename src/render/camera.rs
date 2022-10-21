@@ -16,7 +16,7 @@ impl Camera {
             position: Vector2::default(),
             zoom: 1.0,
             target_zoom: 1.0,
-            drag_origin: Vector2::new(0.0, 0.0),
+            drag_origin: Vector2::default(),
             dragging: false,
         }
     }

@@ -41,8 +41,9 @@ impl Game {
         canvas.set_draw_color(Color::RGB(0, 255, 255));
         let event_pump = context.event_pump().unwrap();
         let input = Input::init(window_size);
+        
         let mut map = map::Map::new(100, Some(20)).generate(); //.flat();
-
+        
         let camera = Camera::new();
 
         let delta_time = 0.0;
