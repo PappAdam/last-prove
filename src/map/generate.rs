@@ -41,7 +41,7 @@ impl Map {
     pub fn flat(mut self) -> Self {
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
-                self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), TileType::debug , 1));
+                self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), TileType::debug , 10));
             }
         }
 

@@ -42,7 +42,8 @@ impl Game {
         let event_pump = context.event_pump().unwrap();
         let input = Input::init(window_size);
         
-        let mut map = map::Map::new(100, None).generate().flat();
+        #[warn(unused_mut)]
+        let mut map = map::Map::new(100, None).generate();
         
         let camera = Camera::new();
 
