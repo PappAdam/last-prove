@@ -13,7 +13,9 @@ pub struct TileTextures<'a> {
 
 impl<'a> TileTextures<'a> {
     pub fn init(texture_creator: &'a render::TextureCreator<WindowContext>) -> Self {
-        let texture = texture_creator.load_texture("Assets/base.png").unwrap();
+        let texture = texture_creator
+            .load_texture("Assets/debug_tiles/4.png")
+            .unwrap();
         Self {
             base_texture: texture,
         }
@@ -47,10 +49,15 @@ impl Render for Game {
                 self.camera.position.x as i32 / dst_rect.w,
             );
 
-            ((cx+cy, cx-cy), (- self.camera.position.x as i32 % dst_rect.w, -self.camera.position.y as i32 % dst_rect.h))
+            (
+                (cx + cy, cx - cy),
+                (
+                    -self.camera.position.x as i32 % dst_rect.w,
+                    -self.camera.position.y as i32 % dst_rect.h,
+                ),
+            )
         };
 
-        //let mut rendered_tiles = 0;
         for i in 0..max_size.1 as i32 {
             for j in 0..max_size.0 as i32 {
                 let x = (i - 1) / 2 + 1 + j;
@@ -67,7 +74,7 @@ impl Render for Game {
                         for z in tile.min_z..tile.max_z + 1 {
                             dst_rect.x = x * dst_rect.w / 2 - y * dst_rect.h / 2 - dst_rect.w * 2
                                 + tile_offset.0;
-                            dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4 - dst_rect.h / 2
+                            dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4 - dst_rect.h
                                 + tile_offset.1
                                 - z as i32 * dst_rect.h / 2;
                             self.canvas
