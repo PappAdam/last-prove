@@ -43,11 +43,14 @@ impl Camera {
         if self.target_zoom != self.zoom {
             self.zoom = f32::lerp(self.zoom, self.target_zoom, 0.03);
         }
+        
         if (self.target_zoom - self.zoom).abs() < 0.01 {
             self.zoom = self.target_zoom
         }
+        
         if mouse_wheel != 0 {
             self.target_zoom += 0.1 * mouse_wheel as f32
         }
+        
     }
 }

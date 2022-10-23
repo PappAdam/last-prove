@@ -28,11 +28,12 @@ impl Game {
         let context = sdl2::init().expect("couldn't crate sdl context");
         let video_subsys = context.video().expect("couldn't create video subsystem");
 
-        let window_size = (960, 540);
+        let window_size = ((960f32*2f32) as u16, (540f32*2f32) as u16);
 
         let window = video_subsys
             .window("title", window_size.0 as u32, window_size.1 as u32)
             .position_centered()
+            .fullscreen()
             .build()
             .unwrap();
 
@@ -42,7 +43,8 @@ impl Game {
         let event_pump = context.event_pump().unwrap();
         let input = Input::init(window_size);
         
-        let mut map = map::Map::new(100, None).generate().flat();
+        #[warn(unused_mut)]
+        let mut map = map::Map::new(300, None).generate();
         
         let camera = Camera::new();
 
