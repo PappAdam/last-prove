@@ -47,13 +47,7 @@ impl Render for Game {
                 self.camera.position.x as i32 / dst_rect.w,
             );
 
-            (
-                (cx + cy, cx - cy),
-                (
-                    -self.camera.position.x as i32 % dst_rect.w,
-                    -self.camera.position.y as i32 % dst_rect.h,
-                ),
-            )
+            ((cx+cy, cx-cy), (- self.camera.position.x as i32 % dst_rect.w, -self.camera.position.y as i32 % dst_rect.h))
         };
 
         //let mut rendered_tiles = 0;
@@ -67,7 +61,7 @@ impl Render for Game {
                     && x + cam_offset.0 < self.map.size as i32
                     && y + cam_offset.1 < self.map.size as i32
                 {
-                    if let Some(tile) =
+                    if let Some(_) =
                         self.map.matr[(y + cam_offset.1) as usize][(x + cam_offset.0) as usize]
                     {
                         for z in tile.min_z..tile.max_z + 1 {
