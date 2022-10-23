@@ -15,9 +15,9 @@ impl Camera {
     pub fn new() -> Self {
         Self {
             position: Vector2::default(),
-            zoom: 1.0,
+            zoom: 0.0,
             zoom_inc: 4,
-            target_zoom: 1.0,
+            target_zoom: 0.0,
             drag_origin: Vector2::default(),
             dragging: false,
         }

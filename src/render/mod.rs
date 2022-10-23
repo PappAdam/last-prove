@@ -39,7 +39,7 @@ impl Render for Game {
         );
 
         let max_size = (
-            self.window_size.0 as i32 / dst_rect.w + 4,
+            self.window_size.0 as i32 / dst_rect.w + 5,
             self.window_size.1 as i32 / dst_rect.h * 4 + 16,
         );
 
@@ -58,7 +58,7 @@ impl Render for Game {
             )
         };
 
-        for i in 0..max_size.1 as i32 {
+        for i in 1..max_size.1 as i32 {
             for j in 0..max_size.0 as i32 {
                 let x = (i - 1) / 2 + 1 + j;
                 let y = i / 2 - j;
@@ -77,6 +77,7 @@ impl Render for Game {
                             dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4 - dst_rect.h
                                 + tile_offset.1
                                 - z as i32 * dst_rect.h / 2;
+
                             self.canvas
                                 .copy(&textures.base_texture, None, Some(dst_rect))?;
                             //rendered_tiles += 1
