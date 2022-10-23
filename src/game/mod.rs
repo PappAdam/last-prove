@@ -44,7 +44,7 @@ impl Game {
         let input = Input::init(window_size);
         
         #[warn(unused_mut)]
-        let mut map = map::Map::new(300, None).generate();
+        let mut map = map::Map::new(300, None).generate().flat();
         
         let camera = Camera::new();
 
