@@ -34,9 +34,7 @@ impl Map {
                 }
             }
         }
-        //calculate_min_z(&mut self);
-
-        self
+        self.calculate_min_z()
     }
 
     pub fn flat(mut self, z: u8) -> Self {
@@ -45,34 +43,59 @@ impl Map {
                 self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), TileType::debug , 0, z));
             }
         }
-        calculate_min_z(&mut self);
-
         self
     }
-}
 
-fn calculate_min_z(map: &mut Map) {
-    for x in 0..map.size as usize {
-        for y in 0..map.size as usize {
-            if let Some(tile) = &map.matr[x][y] {
-                if tile.max_z > 0 {
-                    let mut z_down = tile.max_z;
-                    let mut z_up = 0;
-                    let x = tile.position.x as usize;
-                    let y = tile.position.y as usize;
-
-                    while z_down > 0 && y > z_up && x > z_up {
-                        z_up += 1;
-                        z_down -= 1;
-                        if let Some(mut tile) = &map.matr[x - z_up][y - z_up] {
-                            if tile.min_z < z_down {
-                                tile.min_z = z_down;
+    pub fn calculate_min_z(mut self) -> Self{
+        for y in 0..self.size as usize {
+            for x in 0..self.size as usize {
+                if let Some(mut tile) = self.matr[y][x] {
+                    //Calculate min_z for tiles behid this one
+                    if tile.max_z > 0 {
+                        let mut z_down = tile.max_z;
+                        let mut z_up = 0;
+    
+                        while z_down > 0 {
+                            z_up += 1;
+                            if let Some(mut other_tile) = self.matr[y - z_up][x - z_up] {
+                                if other_tile.min_z < z_down{
+                                    other_tile.min_z = z_down;
+                                }
+                                self.matr[y - z_up][x - z_up] = Some(other_tile);
                             }
-                            map.matr[x - z_up][y - z_up] = Some(tile);
+                            else {break;}
+                            z_down -= 1;
                         }
                     }
+
+
+                    //Calculate min_z for tiles that are blocked by neighbors
+                    let left_neighbor: Option<u8>;
+                    match self.matr[y + 1][x] {
+                        Some(tile) => {left_neighbor = Some(tile.max_z)},
+                        None => left_neighbor = None,
+                    }
+
+                    let right_neighbor: Option<u8>;
+                    match self.matr[y][x + 1] {
+                        Some(tile) => {right_neighbor = Some(tile.max_z)},
+                        None => right_neighbor = None,
+                    }
+                    if let Some(left_neighbor) = left_neighbor {
+                        if let Some(right_neighbor) = right_neighbor {
+                            let neighbor_lowest_z = if left_neighbor < right_neighbor {left_neighbor} else {right_neighbor};
+                            if neighbor_lowest_z >= tile.max_z {
+                                tile.min_z = neighbor_lowest_z;
+                            }
+                            if tile.max_z > neighbor_lowest_z {
+                                tile.min_z = neighbor_lowest_z + 1;
+                            }
+                        }
+                    }
+                    self.matr[y][x] = Some(tile);
                 }
             }
         }
+        self
     }
 }
