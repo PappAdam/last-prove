@@ -61,7 +61,7 @@ impl Render for Game {
                     && x + cam_offset.0 < self.map.size as i32
                     && y + cam_offset.1 < self.map.size as i32
                 {
-                    if let Some(_) =
+                    if let Some(tile) =
                         self.map.matr[(y + cam_offset.1) as usize][(x + cam_offset.0) as usize]
                     {
                         for z in tile.min_z..tile.max_z + 1 {
