@@ -37,18 +37,19 @@ impl Render for Game {
         );
 
         let max_size = (
-            self.window_size.0 as i32 / dst_rect.w + 2,
-            self.window_size.1 as i32 / dst_rect.h * 4 - 6,
+            self.window_size.0 as i32 / dst_rect.w + 3,
+            self.window_size.1 as i32 / dst_rect.h * 4 + 10,
         );
 
-        let cam_offset: (i32, i32) = {
+        let (cam_offset, tile_offset) = {
             let (cx, cy) = (
+                self.camera.position.y as i32 / dst_rect.h * 2,
                 self.camera.position.x as i32 / dst_rect.w,
-                self.camera.position.x as i32 / dst_rect.h * 2,
             );
-
-            (0, 0)
+            
+            ((cx+cy, cx-cy), (- self.camera.position.x as i32 % dst_rect.w, -self.camera.position.y as i32 % dst_rect.h))
         };
+        
 
         let mut rendered_tiles = 0;
         for i in 0..max_size.1 as i32 {
@@ -64,14 +65,10 @@ impl Render for Game {
                     if let Some(tile) =
                         self.map.matr[(y + cam_offset.1) as usize][(x + cam_offset.0) as usize]
                     {
-                        for z in tile.min_z..tile.max_z {
-                            dst_rect.x = x * dst_rect.w / 2 - y * dst_rect.h / 2 - dst_rect.w;
-                            dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4 - dst_rect.h / 2- z as i32 * dst_rect.h / 2;
-                            self.canvas
-                                .copy(&textures.base_texture, None, Some(dst_rect))?;
-                            rendered_tiles += 1;
-                        }
-                        
+                        dst_rect.x = x * dst_rect.w / 2 - y * dst_rect.h / 2 - dst_rect.w*2 + tile_offset.0;
+                        dst_rect.y = y * dst_rect.h / 4 + x * dst_rect.w / 4 - dst_rect.h/2 + tile_offset.1;
+                        self.canvas
+                            .copy(&textures.base_texture, None, Some(dst_rect))?;
                     }
                 }
             }

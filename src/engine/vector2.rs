@@ -67,4 +67,9 @@ impl Vector2 {
     pub fn abs(&self) -> Self {
         Vector2::new(self.x.abs(), self.y.abs())
     }
+    
+    pub fn to_debug_info(&self) -> String {
+        format!("Vec2: x: {}f32, y: {}f32", self.x, self.y)
+    }
+    
 }
