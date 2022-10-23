@@ -5,6 +5,7 @@ use crate::input::Keystate;
 pub struct Camera {
     pub position: Vector2,
     pub zoom: f32,
+    zoom_inc: u8,
     target_zoom: f32,
     drag_origin: Vector2,
     dragging: bool,
@@ -15,6 +16,7 @@ impl Camera {
         Self {
             position: Vector2::default(),
             zoom: 1.0,
+            zoom_inc: 4,
             target_zoom: 1.0,
             drag_origin: Vector2::default(),
             dragging: false,
@@ -43,14 +45,15 @@ impl Camera {
         if self.target_zoom != self.zoom {
             self.zoom = f32::lerp(self.zoom, self.target_zoom, 0.03);
         }
-        
+
         if (self.target_zoom - self.zoom).abs() < 0.01 {
             self.zoom = self.target_zoom
         }
-        
+
         if mouse_wheel != 0 {
-            self.target_zoom += 0.01 * mouse_wheel as f32
-        }
         
+            self.target_zoom += mouse_wheel as f32 * self.zoom_inc as f32;
+        }
+
     }
 }

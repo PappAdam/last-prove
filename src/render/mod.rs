@@ -32,13 +32,13 @@ impl Render for Game {
         let mut dst_rect = sdl2::rect::Rect::new(
             0,
             0,
-            (64 as f32 * self.camera.zoom) as u32,
-            (64 as f32 * self.camera.zoom) as u32,
+            (64 as f32 + self.camera.zoom) as u32,
+            (64 as f32 + self.camera.zoom) as u32,
         );
 
         let max_size = (
-            self.window_size.0 as i32 / dst_rect.w + 3,
-            self.window_size.1 as i32 / dst_rect.h * 4 + 10,
+            self.window_size.0 as i32 / dst_rect.w + 4,
+            self.window_size.1 as i32 / dst_rect.h * 4 + 16,
         );
 
         let (cam_offset, tile_offset) = {
