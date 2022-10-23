@@ -49,8 +49,8 @@ fn main() {
 
         //println!("Camera position: {}", game.camera.position);
         //println!("Relative mouse position: {:?}", game.input.get_rel_mouse_position(game.window_size));
-        println!("FPS: {}", (1.0 / game.delta_time) as i32);
-        //println!("Zoom: {}", game.camera.zoom);
+        //println!("FPS: {}", (1.0 / game.delta_time) as i32);
+        println!("Zoom: {}", game.camera.zoom);
 
         game.render_objects(&textures)
             .expect("Something went wrong while rendering!");
