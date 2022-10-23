@@ -51,6 +51,7 @@ impl Camera {
         }
 
         if mouse_wheel != 0 {
+        
             self.target_zoom += mouse_wheel as f32 * self.zoom_inc as f32;
         }
 
