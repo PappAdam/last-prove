@@ -36,6 +36,8 @@ impl Input {
         }
     }
 
+
+
     pub fn on_key_pressed(&mut self, keycode: Option<Keycode>) {
         match keycode {
             None => {}
@@ -68,6 +70,8 @@ impl Input {
             }
         }
     }
+
+
     pub fn on_mousewheel_scrolled(&mut self, y: i8) {
         self.mouse_wheel = y;
     }
@@ -77,6 +81,7 @@ impl Input {
         self.mouse_movement.x = mouse_movement.0;
         self.mouse_movement.y = mouse_movement.1;
     }
+
 
     pub fn refresh_input(&mut self) {
         for key in self.buttons.iter_mut() {
@@ -98,6 +103,10 @@ impl Input {
         self.mouse_movement.y = 0.0;
     }
 
+
+
+
+    //Just functions to get input values.
     fn get_key_state(&self, keycode: Keycode) -> &Keystate {
         match self.buttons.get(&keycode) {
             Some(keycode) => keycode,
@@ -124,7 +133,7 @@ impl Input {
         }
     }
 
-    pub fn get_mousebutton_state(&self, mouse_btn: MouseButton) -> &Keystate {
+    fn get_mousebutton_state(&self, mouse_btn: MouseButton) -> &Keystate {
         match self.mousebuttons.get(&mouse_btn) {
             Some(mouse_btn) => mouse_btn,
             None => &Keystate::Up,

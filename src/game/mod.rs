@@ -8,11 +8,9 @@ use sdl2::{
     render::Canvas,
     sys::{SDL_GetPerformanceCounter, SDL_GetPerformanceFrequency},
     video::Window,
-    Sdl,
 };
 
 pub struct Game<'a> {
-    pub context: Sdl,
     pub window_size: (u16, u16),
     pub canvas: Canvas<Window>,
     pub map: map::Map<'a>,
@@ -20,8 +18,7 @@ pub struct Game<'a> {
     pub input: Input,
     pub camera: Camera,
     pub delta_time: f32,
-    last: u64,
-    //camera: <T>,
+    last_frame: u64,
 }
 
 impl<'a> Game<'a> {
@@ -44,15 +41,14 @@ impl<'a> Game<'a> {
         let event_pump = context.event_pump().unwrap();
         let input = Input::init(window_size);
         
-        let mut map = map::Map::new(200, Some(20)).generate(); //.flat(0);
+        let map = map::Map::new(200, 10, Some(20)).generate(); //.flat(0);
         
         let camera = Camera::new();
 
         let delta_time = 0.0;
-        let last = 0;
+        let last_frame = 0;
 
         Self {
-            context,
             window_size,
             canvas,
             map,
@@ -60,25 +56,28 @@ impl<'a> Game<'a> {
             input,
             camera,
             delta_time,
-            last,
+            last_frame,
         }
     }
 
     pub fn refresh_game(&mut self) {
+
         self.camera.refresh_camera(
             self.input.get_mouse_movement(),
-            self.input.get_mousebutton_state(MouseButton::Middle),
+            self.input.get_mousebutton_down(MouseButton::Middle),
             self.input.get_mouse_wheel(),
         );
+
         self.input.refresh_input();
+
         self.refresh_delta_time();
     }
 
     pub fn refresh_delta_time(&mut self) {
         unsafe {
             let now = SDL_GetPerformanceCounter();
-            self.delta_time = (now - self.last) as f32 / SDL_GetPerformanceFrequency() as f32;
-            self.last = now;
+            self.delta_time = (now - self.last_frame) as f32 / SDL_GetPerformanceFrequency() as f32;
+            self.last_frame = now;
         }
     }
 }

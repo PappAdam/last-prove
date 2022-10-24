@@ -27,7 +27,6 @@ impl<'a> Tile<'a> {
 impl<'a> Display for Tile<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result {
         write!(f, "Tile:\n\tX: {}\n\tY: {}\n\tMax Z: {}\n\tMin Z: {}", self.position.x, self.position.y, self.max_z, self.min_z)?;
-
         Ok(())
     }
 }

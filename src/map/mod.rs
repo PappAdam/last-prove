@@ -3,11 +3,29 @@ pub mod perlin;
 pub mod tile;
 
 use std::fmt::{self, Display};
+use rand::Rng;
+use std::vec;
 
 pub struct Map<'a> {
     pub size: u16,
+    pub height: u8,
     pub matr: Vec<Vec<Option<tile::Tile<'a>>>>,
     seed: u16,
+}
+impl<'a> Map<'a> {
+    pub fn new(size: u16, height:u8, seed: Option<u16>) -> Self {
+        Self {
+            size,
+            height,
+            matr: vec::from_elem(vec::from_elem(None, size as usize), size as usize),
+            seed: {
+                match seed {
+                    None => rand::thread_rng().gen::<u16>(),
+                    Some(i) => i,
+                }
+            },
+        }
+    }
 }
 
 impl<'a> Display for Map<'a> {
