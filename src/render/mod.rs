@@ -57,7 +57,8 @@ impl Render for Game {
                 ),
             )
         };
-
+        
+        let mut rendered_tiles = 0;
         for i in 1..max_size.1 as i32 {
             for j in 0..max_size.0 as i32 {
                 let x = (i - 1) / 2 + 1 + j;
@@ -80,13 +81,13 @@ impl Render for Game {
 
                             self.canvas
                                 .copy(&textures.base_texture, None, Some(dst_rect))?;
-                            //rendered_tiles += 1
+                            rendered_tiles += 1
                         }
                     }
                 }
             }
         }
-        //println!("Rendered tiles: {}", rendered_tiles);
+        println!("Rendered tiles: {}", rendered_tiles);
         Ok(())
     }
 }

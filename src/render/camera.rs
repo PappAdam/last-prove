@@ -1,5 +1,4 @@
 use crate::engine::{float::EngineFloat, vector2::Vector2};
-use crate::input::Keystate;
 
 #[derive(Debug)]
 pub struct Camera {
@@ -7,8 +6,7 @@ pub struct Camera {
     pub zoom: f32,
     zoom_inc: u8,
     target_zoom: f32,
-    drag_origin: Vector2,
-    dragging: bool,
+
 }
 
 impl Camera {
@@ -18,26 +16,16 @@ impl Camera {
             zoom: 0.0,
             zoom_inc: 4,
             target_zoom: 0.0,
-            drag_origin: Vector2::default(),
-            dragging: false,
         }
     }
     pub fn refresh_camera(
         &mut self,
         mouse_movement: Vector2,
-        middle_mouse_btn_state: &Keystate,
+        middle_mouse_btn: bool,
+
         mouse_wheel: i8,
     ) {
-        match middle_mouse_btn_state {
-            Keystate::Pressed => {
-                self.dragging = true;
-            }
-            Keystate::Released => {
-                self.dragging = false;
-            }
-            _ => {}
-        }
-        if self.dragging {
+        if middle_mouse_btn {
             self.position -= mouse_movement;
         }
 
