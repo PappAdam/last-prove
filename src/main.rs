@@ -4,10 +4,7 @@ mod input;
 mod map;
 mod render;
 
-use crate::{
-    engine::vector2::Vector2,
-    render::{Render, TileTextures},
-};
+use crate::render::{Render, TileTextures};
 use sdl2::event::Event;
 
 fn main() {
@@ -15,7 +12,7 @@ fn main() {
     let texture_creator = game.canvas.texture_creator();
     let textures = TileTextures::init(&texture_creator);
 
-    println!("{}", game.map);
+    //println!("{}", game.map);
 
     'running: loop {
         game.canvas.clear();

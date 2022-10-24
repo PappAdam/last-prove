@@ -4,8 +4,7 @@ use crate::engine::vector2::Vector2;
 
 #[derive(Clone, Copy)]
 pub enum TileType {
-    debug,
-    dirt,
+    Debug,
 }
 
 #[derive(Clone, Copy)]
@@ -24,8 +23,8 @@ impl Tile {
 
 impl Display for Tile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result {
-        let mut res: Result = Ok(());
-        write!(f, "Tile:\n\tX: {}\n\tY: {}\n\tMax Z: {}\n\tMin Z: {}", self.position.x, self.position.y, self.max_z, self.min_z);
+        let res: Result = Ok(());
+        write!(f, "Tile:\n\tX: {}\n\tY: {}\n\tMax Z: {}\n\tMin Z: {}", self.position.x, self.position.y, self.max_z, self.min_z).unwrap();
 
         res
     }
