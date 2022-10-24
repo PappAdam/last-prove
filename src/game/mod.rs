@@ -65,8 +65,7 @@ impl Game {
 
     pub fn refresh_game(&mut self) {
         self.camera.refresh_camera(
-            self.delta_time,
-            self.input.get_mouse_position(),
+            self.input.get_mouse_movement(),
             self.input.get_mousebutton_state(MouseButton::Middle),
             self.input.get_mouse_wheel(),
         );

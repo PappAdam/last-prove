@@ -39,8 +39,8 @@ fn main() {
                 Event::MouseButtonUp { mouse_btn, .. } => {
                     game.input.on_mousebutton_released(mouse_btn)
                 }
-                Event::MouseMotion { x, y, .. } => {
-                    game.input.on_mouse_moved(Vector2::new(x as f32, y as f32))
+                Event::MouseMotion { x, y, xrel, yrel, .. } => {
+                    game.input.on_mouse_moved((x as f32, y as f32), (xrel as f32, yrel as f32))
                 }
                 Event::MouseWheel { y, .. } => game.input.on_mousewheel_scrolled(y as i8),
                 _ => {}

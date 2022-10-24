@@ -24,22 +24,21 @@ impl Camera {
     }
     pub fn refresh_camera(
         &mut self,
-        delta_time: f32,
-        mouse_position: Vector2,
+        mouse_movement: Vector2,
         middle_mouse_btn_state: &Keystate,
         mouse_wheel: i8,
     ) {
         match middle_mouse_btn_state {
             Keystate::Pressed => {
                 self.dragging = true;
-                self.drag_origin = mouse_position
             }
-            Keystate::Released => self.dragging = false,
+            Keystate::Released => {
+                self.dragging = false;
+            }
             _ => {}
         }
         if self.dragging {
-            let dir = mouse_position - self.drag_origin;
-            self.position += dir * delta_time;
+            self.position -= mouse_movement;
         }
 
         if self.target_zoom != self.zoom {
