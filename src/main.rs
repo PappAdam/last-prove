@@ -50,7 +50,7 @@ fn main() {
         //println!("FPS: {}", (1.0 / game.delta_time) as i32);
         //println!("Zoom: {}", game.camera.zoom);
 
-        game.render_objects(&textures)
+        game.render_objects()
             .expect("Something went wrong while rendering!");
         game.refresh_game();
         game.canvas.present();

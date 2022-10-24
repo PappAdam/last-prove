@@ -6,18 +6,6 @@ use super::{Map, tile::Tile};
 
 
 impl<'a> Map<'a> {
-    pub fn new(size: u16, seed: Option<u16>) -> Self {
-        Self {
-            size,
-            matr: vec::from_elem(vec::from_elem(None, size as usize), size as usize),
-            seed: {
-                match seed {
-                    None => rand::thread_rng().gen::<u16>(),
-                    Some(i) => i,
-                }
-            },
-        }
-    }
     
     pub fn generate(mut self) -> Self {
         let perlin_noise = perlin::Perlin2D::new(self.seed as i32);
@@ -42,7 +30,7 @@ impl<'a> Map<'a> {
                 if perlin_value > treshold {
                     let tile = Some(Tile::new(
                         Vector2::new(x as f32, y as f32),
-                        TileType::Debug,
+                        None,
                         0,
                         ((perlin_value - treshold) / z_difference_for_height) as u8,
                     ));

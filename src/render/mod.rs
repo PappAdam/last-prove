@@ -58,11 +58,11 @@ impl<'a> TileTextures<'a> {
 }
 
 pub trait Render {
-    fn render_objects(&mut self, textures: &TileTextures) -> Result<(), String>;
+    fn render_objects(&mut self) -> Result<(), String>;
 }
 
 impl<'a> Render for Game<'a> {
-    fn render_objects(&mut self, textures: &TileTextures) -> Result<(), String> {
+    fn render_objects(&mut self) -> Result<(), String> {
         let mut dst_rect = sdl2::rect::Rect::new(
             0,
             0,

@@ -1,4 +1,4 @@
-use crate::engine::{float::EngineFloat, vector2::Vector2};
+use crate::engine::vector2::Vector2;
 
 #[derive(Debug)]
 pub struct Camera {

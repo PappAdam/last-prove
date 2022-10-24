@@ -1,7 +1,6 @@
 use crate::input::Input;
 use crate::map;
 use crate::render::camera::Camera;
-use crate::render::TileTextures;
 use sdl2::{
     mouse::MouseButton,
     pixels::Color,
