@@ -4,13 +4,13 @@ pub mod tile;
 
 use std::fmt::{self, Display};
 
-pub struct Map {
+pub struct Map<'a> {
     pub size: u16,
-    pub matr: Vec<Vec<Option<tile::Tile>>>,
+    pub matr: Vec<Vec<Option<tile::Tile<'a>>>>,
     seed: u16,
 }
 
-impl Display for Map {
+impl<'a> Display for Map<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut res: fmt::Result = Ok(());
 
