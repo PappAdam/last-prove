@@ -1,6 +1,7 @@
 use crate::input::Input;
 use crate::map;
 use crate::render::camera::Camera;
+use crate::render::TileTextures;
 use sdl2::{
     mouse::MouseButton,
     pixels::Color,
@@ -9,10 +10,10 @@ use sdl2::{
     video::Window,
 };
 
-pub struct Game {
+pub struct Game<'a> {
     pub window_size: (u16, u16),
     pub canvas: Canvas<Window>,
-    pub map: map::Map,
+    pub map: map::Map<'a>,
     pub event_pump: sdl2::EventPump,
     pub input: Input,
     pub camera: Camera,
@@ -20,7 +21,7 @@ pub struct Game {
     last_frame: u64,
 }
 
-impl Game {
+impl<'a> Game<'a> {
     pub fn new() -> Self {
         let context = sdl2::init().expect("couldn't crate sdl context");
         let video_subsys = context.video().expect("couldn't create video subsystem");

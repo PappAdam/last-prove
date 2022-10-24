@@ -1,12 +1,24 @@
 use crate::engine::vector2::Vector2;
-
+use crate::render::TileTextures;
 use super::perlin;
-use super::{
-    tile::{Tile, TileType},
-    Map,
-};
+use super::tile::{NeighborLocation};
+use super::{Map, tile::Tile};
 
-impl Map {
+
+impl<'a> Map<'a> {
+    pub fn new(size: u16, seed: Option<u16>) -> Self {
+        Self {
+            size,
+            matr: vec::from_elem(vec::from_elem(None, size as usize), size as usize),
+            seed: {
+                match seed {
+                    None => rand::thread_rng().gen::<u16>(),
+                    Some(i) => i,
+                }
+            },
+        }
+    }
+    
     pub fn generate(mut self) -> Self {
         let perlin_noise = perlin::Perlin2D::new(self.seed as i32);
 
@@ -43,14 +55,14 @@ impl Map {
         self.calculate_min_z()
     }
 
-    //pub fn flat(mut self, z: u8) -> Self {
-    //for y in 0..self.size as usize {
-    //        for x in 0..self.size as usize {
-    //            self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), TileType::debug , 0, z));
-    //        }
-    //    }
-    //    self
-    //}
+    // pub fn flat(mut self, z: u8) -> Self {
+    //     for y in 0..self.size as usize {
+    //         for x in 0..self.size as usize {
+    //             self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), None, 0, z));
+    //         }
+    //     }
+    //     self
+    // }
 
     pub fn calculate_min_z(mut self) -> Self {
         for y in 0..self.size as usize {
@@ -128,5 +140,70 @@ impl Map {
             }
         }
         self
+    }
+    
+    pub fn set_tile_types(&mut self, textures: &'a TileTextures<'a>) {
+        unsafe {
+            for y in 1..self.size as usize - 1{
+                for x in 1..self.size as usize - 1 {
+                    let current_tile_reference: *mut Tile;
+                    let mut neighbors: u8 = 0b0000;
+                    if let Some(tile) = &mut self.matr[y][x] {
+                        current_tile_reference = tile;
+                        
+                        if let Some(other_tile) = self.matr[y - 1][x] {
+                            if other_tile.max_z == (*current_tile_reference).max_z {                                
+                                neighbors |= NeighborLocation::Top as u8;
+                            }
+                        }
+                        
+                        if let Some(other_tile) = self.matr[y + 1][x] {
+                            if other_tile.max_z == (*current_tile_reference).max_z {                                
+                                neighbors |= NeighborLocation::Bottom as u8;
+                            }
+                        }
+                        
+                        if let Some(other_tile) = self.matr[y][x-1] {
+                            if other_tile.max_z == (*current_tile_reference).max_z {                                
+                                neighbors |= NeighborLocation::Left as u8;
+                            }
+                        }
+                        
+                        if let Some(other_tile) = self.matr[y][x+1] {
+                            if other_tile.max_z == (*current_tile_reference).max_z {
+                                neighbors |= NeighborLocation::Right as u8;
+                            }
+                        }
+                                                    
+                        match neighbors {
+                            0b0000 => (*current_tile_reference).tile_type = Some(&textures.t0),
+                            
+                            0b1000 => (*current_tile_reference).tile_type = Some(&textures.t1_tr),
+                            0b0100 => (*current_tile_reference).tile_type = Some(&textures.t1_tl),
+                            0b0010 => (*current_tile_reference).tile_type = Some(&textures.t1_bl),
+                            0b0001 => (*current_tile_reference).tile_type = Some(&textures.t1_br),
+                            
+                            0b1100 => (*current_tile_reference).tile_type = Some(&textures.t2_tl_tr),
+                            0b1010 => (*current_tile_reference).tile_type = Some(&textures.t2_bl_tr),
+                            0b1001 => (*current_tile_reference).tile_type = Some(&textures.t2_br_tr),
+                            
+                            0b0110 => (*current_tile_reference).tile_type = Some(&textures.t2_tl_bl),
+                            0b0101 => (*current_tile_reference).tile_type = Some(&textures.t2_tl_br),
+                            
+                            0b0011 => (*current_tile_reference).tile_type = Some(&textures.t2_bl_br),
+                            
+                            0b1110 => (*current_tile_reference).tile_type = Some(&textures.t3_tl_bl_tr),
+                            0b1101 => (*current_tile_reference).tile_type = Some(&textures.t3_tl_br_tr),
+                            0b1011 => (*current_tile_reference).tile_type = Some(&textures.t3_bl_br_tr),
+                            0b0111 => (*current_tile_reference).tile_type = Some(&textures.t3_tl_bl_br),
+                            
+                            0b1111 => (*current_tile_reference).tile_type = Some(&textures.t4),
+                            _ => ()
+                        }
+                        
+                    }
+                }
+            }
+        }
     }
 }

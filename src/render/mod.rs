@@ -7,19 +7,52 @@ use sdl2::{
     video::WindowContext,
 };
 
-pub struct TileTextures<'a> {
-    //Contains all textures
-    base_texture: Texture<'a>,
+macro_rules! loadtexture {
+    ($texture_creator:expr, $path:expr ) => {
+        $texture_creator.load_texture($path).unwrap()
+    };
 }
+
+pub struct TileTextures<'a> {
+    pub t0: Texture<'a>,
+    pub t1_bl: Texture<'a>,
+    pub t1_br: Texture<'a>,
+    pub t1_tl: Texture<'a>,
+    pub t1_tr: Texture<'a>,
+    pub t2_bl_br: Texture<'a>,
+    pub t2_bl_tr: Texture<'a>,
+    pub t2_br_tr: Texture<'a>,
+    pub t2_tl_bl: Texture<'a>,
+    pub t2_tl_br: Texture<'a>,
+    pub t2_tl_tr: Texture<'a>,
+    pub t3_bl_br_tr: Texture<'a>,
+    pub t3_tl_bl_br: Texture<'a>,
+    pub t3_tl_bl_tr: Texture<'a>,
+    pub t3_tl_br_tr: Texture<'a>,
+    pub t4: Texture<'a>,
+}
+
 
 impl<'a> TileTextures<'a> {
     //Just assigning every texture
     pub fn init(texture_creator: &'a render::TextureCreator<WindowContext>) -> Self {
-        let texture = texture_creator
-            .load_texture("Assets/debug_tiles/4.png")
-            .unwrap();
         Self {
-            base_texture: texture,
+            t0: loadtexture!(texture_creator, "Assets/debug_tiles/0.png"),
+            t1_bl: loadtexture!(texture_creator, "Assets/debug_tiles/1_bl.png"),
+            t1_br: loadtexture!(texture_creator, "Assets/debug_tiles/1_br.png"),
+            t1_tl: loadtexture!(texture_creator, "Assets/debug_tiles/1_tl.png"),
+            t1_tr: loadtexture!(texture_creator, "Assets/debug_tiles/1_tr.png"),
+            t2_bl_br: loadtexture!(texture_creator, "Assets/debug_tiles/2_bl_br.png"),
+            t2_bl_tr: loadtexture!(texture_creator, "Assets/debug_tiles/2_bl_tr.png"),
+            t2_br_tr: loadtexture!(texture_creator, "Assets/debug_tiles/2_br_tr.png"),
+            t2_tl_bl: loadtexture!(texture_creator, "Assets/debug_tiles/2_tl_bl.png"),
+            t2_tl_br: loadtexture!(texture_creator, "Assets/debug_tiles/2_tl_br.png"),
+            t2_tl_tr: loadtexture!(texture_creator, "Assets/debug_tiles/2_tl_tr.png"),
+            t3_bl_br_tr: loadtexture!(texture_creator, "Assets/debug_tiles/3_bl_br_tr.png"),
+            t3_tl_bl_br: loadtexture!(texture_creator, "Assets/debug_tiles/3_tl_bl_br.png"),
+            t3_tl_bl_tr: loadtexture!(texture_creator, "Assets/debug_tiles/3_tl_bl_tr.png"),
+            t3_tl_br_tr: loadtexture!(texture_creator, "Assets/debug_tiles/3_tl_br_tr.png"),
+            t4: loadtexture!(texture_creator, "Assets/debug_tiles/4.png"),
         }
     }
 }
@@ -28,10 +61,7 @@ pub trait Render {
     fn render_objects(&mut self, textures: &TileTextures) -> Result<(), String>;
 }
 
-//                        dstR.x = x*dstR.w/2 - y*dstR.h/2 + cam->xoffset;
-//                        dstR.y = y*dstR.h/4 + x*dstR.w/4 - z*dstR.h/2 + cam->yoffset;
-
-impl Render for Game {
+impl<'a> Render for Game<'a> {
     fn render_objects(&mut self, textures: &TileTextures) -> Result<(), String> {
         let mut dst_rect = sdl2::rect::Rect::new(
             0,
@@ -122,8 +152,10 @@ impl Render for Game {
                                 - dst_rect.h;
                             
                             //Rendering the tile on canvas
-                            self.canvas
-                                .copy(&textures.base_texture, None, Some(dst_rect))?;
+                            if let Some(texture) = tile.tile_type {
+                                self.canvas
+                                    .copy(texture, None, Some(dst_rect))?;
+                            }
 
                             //DEBUG
                             //rendered_tiles += 1
