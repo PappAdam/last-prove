@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Mul, Sub},
+    ops::{Add, AddAssign, Mul, Sub, SubAssign},
 };
 
 #[derive(Clone, Copy, Default, Debug)]
@@ -28,6 +28,13 @@ impl Sub<Vector2> for Vector2 {
 
     fn sub(self, rhs: Vector2) -> Self::Output {
         Vector2::new(self.x - rhs.x, self.y - rhs.y)
+    }
+}
+
+impl SubAssign for Vector2 {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
     }
 }
 
