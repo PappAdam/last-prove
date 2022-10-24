@@ -119,6 +119,10 @@ impl Map {
                             }
                         }
                     }
+
+                    //If only neighbors are blocking vision to a tile, and the tile is not directly behind to neighbors 
+                    //then the tile is still rendered. Very rare case but can happen
+                    //(so yes, they are not neighbors but whatever)
                     self.matr[y][x] = Some(tile);
                 }
             }
