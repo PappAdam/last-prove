@@ -83,33 +83,20 @@ impl<'a> Map<'a> {
                     }
 
                     //Calculate min_z for tiles that are blocked by neighbors
-                    let mut left_neighbor: Option<u8> = match self.matr[y + 1][x] {
-                        Some(other_tile) => Some(other_tile.max_z),
+                    let left_neighbor: Option<u8> = match self.matr[y + 1][x] {
+                        Some(other_tile) => {
+                            let z = if other_tile.max_z + 1 > other_tile.min_z { other_tile.max_z } else { other_tile.min_z };
+                            Some(z)
+                        },
                         None => None,
                     };
-                    let mut right_neighbor: Option<u8> = match self.matr[y][x + 1] {
-                        Some(tiother_tilele) => Some(other_tile.max_z),
+                    let right_neighbor: Option<u8> = match self.matr[y][x + 1] {
+                        Some(other_tile) => {
+                            let z = if other_tile.max_z + 1 > other_tile.min_z { other_tile.max_z } else { other_tile.min_z };
+                            Some(z)
+                        },
                         None => None,
                     };
-                    for forward_offset in 1..(self.height as usize - tile.max_z as usize) {
-                        let offsetted_left_neighbor: Option<u8> =
-                            match self.matr[y + 1 + forward_offset][x + forward_offset] {
-                                Some(other_tile) => Some(other_tile.max_z - forward_offset as u8),
-                                None => None,
-                            };
-                        if offsetted_left_neighbor > left_neighbor {
-                            left_neighbor = offsetted_left_neighbor
-                        };
-
-                        let offsetted_right_neighbor: Option<u8> =
-                            match self.matr[y + forward_offset][x + 1 + forward_offset] {
-                                Some(other_tile) => Some(other_tile.max_z - forward_offset as u8),
-                                None => None,
-                            };
-                        if offsetted_right_neighbor > right_neighbor {
-                            right_neighbor = offsetted_right_neighbor
-                        };
-                    }
 
                     if let Some(left_neighbor) = left_neighbor {
                         if let Some(right_neighbor) = right_neighbor {
