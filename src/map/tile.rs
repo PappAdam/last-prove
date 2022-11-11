@@ -19,8 +19,8 @@ pub struct Tile<'a> {
 }
 
 impl<'a> Tile<'a> {
-    pub fn new(position: Vector2, tile_type: Option<&'a Texture<'a>>, min_z: u8, max_z: u8) -> Self {
-        Self { position, tile_type, max_z, min_z}
+    pub fn new(position: Vector2, tile_type: Option<&'a Texture<'a>>, max_z: u8) -> Self {
+        Self { position, tile_type, max_z, min_z: 0}
     }
 }
 
