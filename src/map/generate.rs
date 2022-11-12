@@ -1,4 +1,4 @@
-use std::{fs, vec};
+use std::fs;
 
 use super::perlin;
 use super::tile::NeighborLocation;
@@ -7,6 +7,7 @@ use crate::engine::vector2::Vector2;
 use crate::render::TileTextures;
 
 impl<'a> Map<'a> {
+    #[allow(unused)]
     pub fn generate(mut self) -> Self {
         let perlin_noise = perlin::Perlin2D::new(self.seed as i32);
 
@@ -42,16 +43,14 @@ impl<'a> Map<'a> {
         self.calculate_min_z()
     }
 
-    pub fn from_file(path: &str) -> Self {
+    #[allow(unused)]
+    pub fn from_file(mut self, path: &str) -> Self {
         let read = fs::read_to_string(&path).unwrap();
         let rows = read.split("\r\n").collect::<Vec<&str>>();
-        println!("{:?}", rows);
-        let size = rows.len();
-        let mut matr: Vec<Vec<Option<Tile<'a>>>> = vec::from_elem(vec::from_elem(None, size), size);
         for (rowindex, row) in rows.iter().enumerate() {
             for (columnindex, column_value) in row.chars().enumerate() {
                 match column_value {
-                    '_' => matr[rowindex][columnindex] = None,
+                    '_' => self.matr[rowindex][columnindex] = None,
                     _ => {
                         println!("{}", column_value);
                         let tile = Some(Tile::new(
@@ -59,17 +58,12 @@ impl<'a> Map<'a> {
                             None,
                             column_value.to_digit(10).unwrap() as u8,
                         ));
-                        matr[rowindex][columnindex] = tile;
+                        self.matr[rowindex][columnindex] = tile;
                     }
                 }
             }
         }
-        Self {
-            size: size as u16,
-            height: 0,
-            matr,
-            seed: 0,
-        }
+        self
     }
 
     pub fn calculate_min_z(mut self) -> Self {

@@ -40,7 +40,7 @@ impl<'a> Game<'a> {
         let event_pump = context.event_pump().unwrap();
         let input = Input::init(window_size);
 
-        let map = map::Map::new(200, 20, Some(20)).calculate_min_z();
+        let map = map::Map::new(200, 20, Some(20)).from_file("debug_map.txt").calculate_min_z();
 
         let camera = Camera::new();
 
