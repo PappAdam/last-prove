@@ -75,7 +75,7 @@ impl<'a> Render for Game<'a> {
         //We add extra tiles, so tiles on the edge of screen don't disappear.
         let max_size = (
             self.window_size.0 as i32 / dst_rect.w + 5,
-            self.window_size.1 as i32 / dst_rect.h * 4 + 16,
+            self.window_size.1 as i32 / dst_rect.h * 4 - 16,
         );
 
         //Cx and Cy = The render row and column that the camera is at (top left corner of screen)

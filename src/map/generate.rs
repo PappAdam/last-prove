@@ -1,3 +1,4 @@
+use std::fs;
 use super::perlin;
 use super::tile::NeighborLocation;
 use super::{tile::Tile, Map};
@@ -5,6 +6,7 @@ use crate::engine::vector2::Vector2;
 use crate::render::TileTextures;
 
 impl<'a> Map<'a> {
+    #[allow(unused)]
     pub fn generate(mut self) -> Self {
         let perlin_noise = perlin::Perlin2D::new(self.seed as i32);
 
@@ -29,7 +31,6 @@ impl<'a> Map<'a> {
                     let tile = Some(Tile::new(
                         Vector2::new(x as f32, y as f32),
                         None,
-                        0,
                         ((perlin_value - treshold) / z_difference_for_height) as u8,
                     ));
 
@@ -41,14 +42,28 @@ impl<'a> Map<'a> {
         self.calculate_min_z()
     }
 
-    // pub fn flat(mut self, z: u8) -> Self {
-    //     for y in 0..self.size as usize {
-    //         for x in 0..self.size as usize {
-    //             self.matr[y][x] = Some(Tile::new(Vector2::new(x as f32, y as f32), None, 0, z));
-    //         }
-    //     }
-    //     self
-    // }
+    #[allow(unused)]
+    pub fn from_file(mut self, path: &str) -> Self {
+        let read = fs::read_to_string(&path).unwrap();
+        let rows = read.split("\r\n").collect::<Vec<&str>>();
+        for (rowindex, row) in rows.iter().enumerate() {
+            for (columnindex, column_value) in row.chars().enumerate() {
+                match column_value {
+                    '_' => self.matr[rowindex][columnindex] = None,
+                    _ => {
+                        println!("{}", column_value);
+                        let tile = Some(Tile::new(
+                            Vector2::new(columnindex as f32, rowindex as f32),
+                            None,
+                            column_value.to_digit(10).unwrap() as u8,
+                        ));
+                        self.matr[rowindex][columnindex] = tile;
+                    }
+                }
+            }
+        }
+        self
+    }
 
     pub fn calculate_min_z(mut self) -> Self {
         for y in 0..self.size as usize {

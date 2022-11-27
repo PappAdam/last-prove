@@ -25,7 +25,7 @@ impl<'a> Game<'a> {
         let context = sdl2::init().expect("couldn't crate sdl context");
         let video_subsys = context.video().expect("couldn't create video subsystem");
 
-        let window_size = ((960f32*2f32) as u16, (540f32*2f32) as u16);
+        let window_size = ((960f32 * 2f32) as u16, (540f32 * 2f32) as u16);
 
         let window = video_subsys
             .window("title", window_size.0 as u32, window_size.1 as u32)
@@ -39,8 +39,8 @@ impl<'a> Game<'a> {
         canvas.set_draw_color(Color::RGB(0, 255, 255));
         let event_pump = context.event_pump().unwrap();
         let input = Input::init(window_size);
-        
-        let map = map::Map::new(200, 10, Some(20)).generate();
+
+        let map = map::Map::new(200, 20, Some(20)).from_file("debug_map.txt").calculate_min_z();
         
         let camera = Camera::new();
 
@@ -60,7 +60,6 @@ impl<'a> Game<'a> {
     }
 
     pub fn refresh_game(&mut self) {
-
         self.camera.refresh_camera(
             self.input.get_mouse_movement(),
             self.input.get_mousebutton_down(MouseButton::Middle),
