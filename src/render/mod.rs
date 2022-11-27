@@ -93,7 +93,7 @@ impl<'a> Render for Game<'a> {
         );
 
         //DEBUG
-        //let mut rendered_tiles = 0;
+        let mut rendered_tiles = 0;
 
         //Going trough every render row (i), and every render column(j)
         for i in 1..max_size.1 as i32 {
@@ -158,7 +158,7 @@ impl<'a> Render for Game<'a> {
                             }
 
                             //DEBUG
-                            //rendered_tiles += 1
+                            rendered_tiles += 1
                         }
                     }
                 }
@@ -166,7 +166,7 @@ impl<'a> Render for Game<'a> {
         }
 
         //DEBUG
-        //println!("Rendered tiles: {}", rendered_tiles);
+        println!("Rendered tiles: {}", rendered_tiles);
 
         Ok(())
     }

@@ -1,5 +1,4 @@
 use std::fs;
-
 use super::perlin;
 use super::tile::NeighborLocation;
 use super::{tile::Tile, Map};
@@ -100,12 +99,17 @@ impl<'a> Map<'a> {
 
                     //Calculate min_z for tiles that are blocked by neighbors
                     let left_neighbor: Option<u8> = match self.matr[y + 1][x] {
-                        Some(tile) => Some(tile.max_z),
+                        Some(other_tile) => {
+                            let z = if other_tile.max_z + 1 > other_tile.min_z { other_tile.max_z } else { other_tile.min_z };
+                            Some(z)
+                        },
                         None => None,
                     };
-
                     let right_neighbor: Option<u8> = match self.matr[y][x + 1] {
-                        Some(tile) => Some(tile.max_z),
+                        Some(other_tile) => {
+                            let z = if other_tile.max_z + 1 > other_tile.min_z { other_tile.max_z } else { other_tile.min_z };
+                            Some(z)
+                        },
                         None => None,
                     };
 
