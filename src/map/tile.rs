@@ -1,4 +1,7 @@
 use std::fmt::{Display, Result};
+use bytemuck::{Pod, Zeroable};
+use vulkano::impl_vertex;
+
 use crate::engine::vector2::Vector2;
 
 pub enum NeighborLocation { // Dir from Top -> counter clockwise
@@ -8,23 +11,27 @@ pub enum NeighborLocation { // Dir from Top -> counter clockwise
     Right = 0b0001,
 }
 
-#[derive(Clone, Copy)]
+#[repr(C)]
+#[derive(Default, Clone, Copy, Pod, Zeroable)]
 pub struct Tile {
-    pub position: Vector2,
+    pub coordinates: [u16; 2],
+    sampler_and_layer: u32, //First 16 bits represent sampler index, last 16 represent the texture layer
     pub max_z: u8, //Max Z also means height.
     pub min_z: u8, //Not range, because range is not copiable
+    filler: u16,
     //status: TileStatus for clicked events and stuff like that maybe
 }
+impl_vertex!(Tile, coordinates, sampler_and_layer);
 
 impl Tile {
-    pub fn new(position: Vector2, max_z: u8) -> Self {
-        Self { position, max_z, min_z: 0}
+    pub fn new(coordinates: [u16; 2], max_z: u8) -> Self {
+        Self { coordinates, max_z, min_z: 0, sampler_and_layer: 0, filler: 0}
     }
 }
 
 impl Display for Tile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result {
-        write!(f, "Tile:\n\tX: {}\n\tY: {}\n\tMax Z: {}\n\tMin Z: {}", self.position.x, self.position.y, self.max_z, self.min_z)?;
+        write!(f, "Tile:\n\tX: {}\n\tY: {}\n\tMax Z: {}\n\tMin Z: {}", self.coordinates[0], self.coordinates[1], self.max_z, self.min_z)?;
         Ok(())
     }
 }

@@ -28,7 +28,7 @@ impl Map {
 
                 if perlin_value > treshold {
                     let tile = Some(Tile::new(
-                        tile_position,
+                        tile_position.into(),
                         ((perlin_value - treshold) / z_difference_for_height) as u8,
                     ));
 
@@ -49,7 +49,7 @@ impl Map {
                     self.matr[y][x] = None;
                 }
                 else {
-                    self.matr[y][x] = Some(Tile::new(Vector2::new_usize(x, y), 0))
+                    self.matr[y][x] = Some(Tile::new([x as u16, y as u16], 0))
                 }
             }} 
         self
@@ -66,7 +66,7 @@ impl Map {
                     _ => {
                         println!("{}", column_value);
                         let tile = Some(Tile::new(
-                            Vector2::new_usize(columnindex, rowindex),
+                            [columnindex as u16, rowindex as u16],
                             column_value.to_digit(10).unwrap() as u8,
                         ));
                         self.matr[rowindex][columnindex] = tile;

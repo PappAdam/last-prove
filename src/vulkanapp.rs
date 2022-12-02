@@ -1,15 +1,36 @@
+use std::io::Cursor;
 use std::{ops::Deref, sync::Arc};
 
+use crate::create_texture;
+use crate::map::tile::Tile;
+use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
+use vulkano::image::ImageAccess;
+use vulkano::pipeline::Pipeline;
+use vulkano::pipeline::graphics::viewport::Viewport;
+use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo};
+use vulkano::sampler::{Sampler, SamplerCreateInfo};
+use vulkano::sync::GpuFuture;
 use vulkano::{
     device::{
         physical::{PhysicalDevice, PhysicalDeviceType},
         Device, DeviceCreateInfo, DeviceExtensions, Queue, QueueCreateInfo,
     },
-    image::{ImageUsage, SwapchainImage},
+    format::Format,
+    image::{view::ImageView, ImageDimensions, ImageUsage, ImmutableImage, SwapchainImage},
     instance::{Instance, InstanceCreateInfo},
+    pipeline::{
+        graphics::{
+            color_blend::ColorBlendState,
+            input_assembly::{InputAssemblyState, PrimitiveTopology},
+            vertex_input::BuffersDefinition,
+            viewport::ViewportState,
+        },
+        GraphicsPipeline,
+    },
+    render_pass::{RenderPass, Subpass},
     shader::ShaderModule,
     swapchain::{Surface, Swapchain, SwapchainCreateInfo},
-    Version, VulkanLibrary, render_pass::{RenderPass, Subpass}, pipeline::{GraphicsPipeline, graphics::input_assembly::{InputAssemblyState, PrimitiveTopology}},
+    Version, VulkanLibrary,
 };
 use vulkano_win::VkSurfaceBuild;
 use winit::{
@@ -17,19 +38,18 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use crate::map::Map;
-
 pub struct VulkanApp {
-    physical: Arc<PhysicalDevice>,
-    device: Arc<Device>,
-    surface: Arc<Surface<Window>>,
     pub event_loop: EventLoop<()>,
-    graphics_queue: Arc<Queue>,
-    swapchain: Arc<Swapchain<Window>>,
-    swapchain_images: Vec<Arc<SwapchainImage<Window>>>,
-    tile_vertex_shader: Arc<ShaderModule>,
-    render_pass: Arc<RenderPass>,
-    map: Map,
+    #[allow(dead_code)]
+    surface: Arc<Surface<Window>>,
+    //physical: Arc<PhysicalDevice>,
+    //device: Arc<Device>,
+    //graphics_queue: Arc<Queue>,
+    //swapchain: Arc<Swapchain<Window>>,
+    //swapchain_images: Vec<Arc<SwapchainImage<Window>>>,
+    //render_pass: Arc<RenderPass>,
+    //map: Map,
+    //NOTHING HAS TO BE STORED YET
 }
 
 impl VulkanApp {
@@ -70,22 +90,50 @@ impl VulkanApp {
         let (swapchain, swapchain_images) = Self::create_swapchain(device.clone(), surface.clone());
 
         let tile_vertex_shader = tile_vertex_shader::load(device.clone()).unwrap();
+        let tile_fragment_shader = tile_fragment_shader::load(device.clone()).unwrap();
 
         let render_pass = Self::create_render_pass(device.clone(), swapchain.clone());
 
-        let pipeline = Self::create_pipeline(device.clone(), render_pass.clone());
+        let pipeline = Self::create_pipeline(
+            device.clone(),
+            render_pass.clone(),
+            tile_vertex_shader,
+            tile_fragment_shader,
+        );
+
+        let (textures, texture_future) = create_texture!(
+            graphics_queue.clone(),
+            "../Assets/debug_tiles/0.png",
+            "../Assets/debug_tiles/4.png"
+        );
+
+        let sampler =
+            Sampler::new(device.clone(), SamplerCreateInfo::simple_repeat_linear()).unwrap();
+
+        let layout = pipeline.layout().set_layouts().get(0).unwrap();
+        let graphics_set = PersistentDescriptorSet::new(
+            layout.clone(),
+            [WriteDescriptorSet::image_view_sampler(
+                0,
+                textures.clone(),
+                sampler.clone(),
+            )],
+        )
+        .unwrap();
+
+        let mut viewport = Viewport {
+            origin: [0.0, 0.0],
+            dimensions: [0.0, 0.0],
+            depth_range: 0.0..1.0,
+        };
+
+        let mut framebuffers = Self::window_size_dependent_setup(&swapchain_images, &mut viewport, render_pass.clone());
+        let mut recreate_swapchain = false;
+        let mut previous_frame_end = Some(texture_future.boxed());
 
         Self {
-            device,
-            physical,
-            surface,
             event_loop,
-            graphics_queue,
-            swapchain,
-            swapchain_images,
-            tile_vertex_shader,
-            render_pass,
-            map: Map::new(200, 10, Some(10)).generate(),
+            surface, //map: Map::new(200, 10, Some(10)).generate(),
         }
     }
 
@@ -178,7 +226,10 @@ impl VulkanApp {
         .unwrap()
     }
 
-    fn create_render_pass(device: Arc<Device>, swapchain: Arc<Swapchain<Window>>) -> Arc<RenderPass> {
+    fn create_render_pass(
+        device: Arc<Device>,
+        swapchain: Arc<Swapchain<Window>>,
+    ) -> Arc<RenderPass> {
         vulkano::single_pass_renderpass!(
             device.clone(),
             attachments: {
@@ -193,23 +244,107 @@ impl VulkanApp {
                 color: [color],
                 depth_stencil: {}
             }
-        ).unwrap()
+        )
+        .unwrap()
     }
 
-    fn create_pipeline(device: Arc<Device>, render_pass: Arc<RenderPass>) -> Arc<GraphicsPipeline> {
+    fn create_pipeline(
+        device: Arc<Device>,
+        render_pass: Arc<RenderPass>,
+        vertex_shader: Arc<ShaderModule>,
+        fragment_shader: Arc<ShaderModule>,
+    ) -> Arc<GraphicsPipeline> {
         GraphicsPipeline::start()
-            //.vertex_input_state(BuffersDefinition::new().instance::<>()) TODO: Create Instance (Tile struct)
+            .vertex_input_state(BuffersDefinition::new().instance::<Tile>())
+            .vertex_shader(vertex_shader.entry_point("main").unwrap(), ())
+            .input_assembly_state(
+                InputAssemblyState::new().topology(PrimitiveTopology::TriangleStrip),
+            )
+            .viewport_state(ViewportState::viewport_dynamic_scissor_irrelevant())
+            .fragment_shader(fragment_shader.entry_point("main").unwrap(), ())
             .render_pass(Subpass::from(render_pass, 0).unwrap())
-            .input_assembly_state(InputAssemblyState::new().topology(PrimitiveTopology::TriangleStrip))
             .build(device.clone())
             .unwrap()
     }
+
+    fn window_size_dependent_setup(
+        images: &[Arc<SwapchainImage<Window>>],
+        viewport: &mut Viewport,
+        render_pass: Arc<RenderPass>,
+    ) -> Vec<Arc<Framebuffer>> {
+        let dimensions = images[0].dimensions().width_height();
+        viewport.dimensions = [dimensions[0] as f32, dimensions[1] as f32];
+    
+        images
+            .iter()
+            .map(|image| {
+                let view = ImageView::new_default(image.clone()).unwrap();
+                Framebuffer::new(
+                    render_pass.clone(),
+                    FramebufferCreateInfo {
+                        attachments: vec![view],
+                        ..Default::default()
+                    },
+                )
+                .unwrap()
+            })
+            .collect::<Vec<_>>()
+    }
 }
 
+#[macro_export]
+macro_rules! create_texture {
+        ($queue:expr, $( $texture:expr ), +) => {
+            {
+                let mut layer_count = 0;
+                $(
+                   $texture;
+                    layer_count += 1;
+                )* 
+                let image_array: Vec<_> = vec![
+                    $(include_bytes!($texture).to_vec()),*
+                ]
+                .iter()
+                .flat_map(|png_bytes| {
+                    let cursor = Cursor::new(png_bytes);
+                    let decoder = png::Decoder::new(cursor);
+                    let mut reader = decoder.read_info().unwrap();
+                    let info = reader.info();
+                    let mut image_data = Vec::new();
+                    image_data.resize((info.width * info.height * 4) as usize, 0);
+                    reader.next_frame(&mut image_data).unwrap();
+                    image_data
+                })
+                .collect();
+                let dimensions = ImageDimensions::Dim2d {
+                    width: 64,
+                    height: 64,
+                    array_layers: layer_count,
+                };
+                let (image, future) = ImmutableImage::from_iter(
+                    image_array,
+                    dimensions,
+                    vulkano::image::MipmapsCount::Log2,
+                    Format::R8G8B8A8_SRGB,
+                    $queue,
+                )
+                .unwrap();
+                (ImageView::new_default(image).unwrap(), future)
+
+            }
+        }
+}
 
 mod tile_vertex_shader {
     vulkano_shaders::shader! {
         ty: "vertex",
         path: "shaders/tile_vertex_shader.vert"
+    }
+}
+
+mod tile_fragment_shader {
+    vulkano_shaders::shader! {
+        ty: "fragment",
+        path: "shaders/tile_fragment_shader.frag"
     }
 }

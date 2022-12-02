@@ -509,6 +509,7 @@ name = "last-prove"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "png",
  "rand",
  "vulkano",
  "vulkano-shaders",

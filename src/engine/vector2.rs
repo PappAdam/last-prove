@@ -3,6 +3,8 @@ use std::{
     ops::{Add, AddAssign, Mul, Sub, SubAssign},
 };
 
+use winit::dpi::PhysicalPosition;
+
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Vector2 {
     pub x: f32,
@@ -46,6 +48,23 @@ impl Mul<f32> for Vector2 {
     }
 }
 
+impl Into<[f32; 2]> for Vector2 {
+    fn into(self) -> [f32; 2] {
+        [self.x as f32, self.y as f32]
+    }
+}
+impl Into<[u16; 2]> for Vector2 {
+    fn into(self) -> [u16; 2] {
+        [self.x as u16, self.y as u16]
+    }
+}
+impl From<PhysicalPosition<f64>> for Vector2 
+{
+    fn from(position: PhysicalPosition<f64>) -> Self {
+        Vector2 { x: position.x as f32, y: position.y as f32 }
+    }
+}
+
 impl Display for Vector2 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let res = write!(f, "x: {}, y: {}", self.x, self.y);
@@ -56,10 +75,28 @@ impl Display for Vector2 {
 #[allow(dead_code)]
 impl Vector2 {
     pub fn new<T: Into<f32>>(x: T, y: T) -> Self {
-        Self { x: x.into(), y: y.into()}
+        Self {
+            x: x.into(),
+            y: y.into(),
+        }
     }
     pub fn new_usize(x: usize, y: usize) -> Self {
-        Self { x: x as f32, y: y as f32 }
+        Self {
+            x: x as f32,
+            y: y as f32,
+        }
+    }
+    pub fn from<T: Into<f32> + Copy>(coordinates: [T; 2]) -> Self {
+        Self {
+            x: coordinates[0].into(),
+            y: coordinates[1].into(),
+        }
+    }
+    pub fn from_usize(coordinates: [usize; 2]) -> Self {
+        Self {
+            x: coordinates[0] as f32,
+            y: coordinates[1] as f32,
+        }
     }
 
     pub fn distance(a: Self, b: Self) -> f32 {
@@ -78,9 +115,4 @@ impl Vector2 {
     pub fn abs(&self) -> Self {
         Vector2::new(self.x.abs(), self.y.abs())
     }
-    
-    pub fn to_debug_info(&self) -> String {
-        format!("Vec2: x: {}f32, y: {}f32", self.x, self.y)
-    }
-    
 }

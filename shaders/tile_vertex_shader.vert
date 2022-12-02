@@ -5,19 +5,17 @@ layout(push_constant) uniform PushConstant {
     vec2 camera_position;
 } pconsts;
 
-layout(location = 0) in uint instance_x;
-layout(location = 1) in uint instance_y;
-layout(location = 2) in uint sampler_index;
-layout(location = 3) in uint texture_layer;
+layout(location = 0) in uint coordinates; // First 16 representing x last 16 representing y.
+layout(location = 1) in uint sampler_and_layer;
 
-layout(location = 0) out uint out_sampler_index;
-layout(location = 1) out uint out_texture_layer;
-layout(location = 2) out vec2 uv_coordinates;
+layout(location = 0) out uint out_sampler_and_layer;
+layout(location = 1) out vec2 uv_coordinates;
 
 void main() {
     gl_Position = vec4(
-        (instance_x - instance_y) * pconsts.tile_size,
-        (instance_x + instance_y) * pconsts.tile_size,
+        //(coordinates.x - coordinates.y) * pconsts.tile_size,
+        //(coordinates.x + coordinates.y) * pconsts.tile_size,
+        0, 0,
         0.0, 1.0
     );
 
@@ -27,7 +25,6 @@ void main() {
         vertex_type % 2
     );
 
-    out_sampler_index = sampler_index;
-    out_texture_layer = texture_layer;
+    out_sampler_and_layer = sampler_and_layer;
     uv_coordinates = uv_offsets;
 }
