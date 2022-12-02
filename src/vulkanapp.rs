@@ -9,13 +9,15 @@ use vulkano::{
     instance::{Instance, InstanceCreateInfo},
     shader::ShaderModule,
     swapchain::{Surface, Swapchain, SwapchainCreateInfo},
-    Version, VulkanLibrary, render_pass::{RenderPass, Subpass}, pipeline::{GraphicsPipeline, graphics::{vertex_input::BuffersDefinition, input_assembly::{InputAssemblyState, PrimitiveTopology}}},
+    Version, VulkanLibrary, render_pass::{RenderPass, Subpass}, pipeline::{GraphicsPipeline, graphics::input_assembly::{InputAssemblyState, PrimitiveTopology}},
 };
 use vulkano_win::VkSurfaceBuild;
 use winit::{
     event_loop::EventLoop,
     window::{Window, WindowBuilder},
 };
+
+use crate::map::Map;
 
 pub struct VulkanApp {
     physical: Arc<PhysicalDevice>,
@@ -26,7 +28,8 @@ pub struct VulkanApp {
     swapchain: Arc<Swapchain<Window>>,
     swapchain_images: Vec<Arc<SwapchainImage<Window>>>,
     tile_vertex_shader: Arc<ShaderModule>,
-    render_pass: Arc<RenderPass>
+    render_pass: Arc<RenderPass>,
+    map: Map,
 }
 
 impl VulkanApp {
@@ -70,6 +73,8 @@ impl VulkanApp {
 
         let render_pass = Self::create_render_pass(device.clone(), swapchain.clone());
 
+        let pipeline = Self::create_pipeline(device.clone(), render_pass.clone());
+
         Self {
             device,
             physical,
@@ -80,6 +85,7 @@ impl VulkanApp {
             swapchain_images,
             tile_vertex_shader,
             render_pass,
+            map: Map::new(200, 10, Some(10)).generate(),
         }
     }
 
@@ -199,6 +205,7 @@ impl VulkanApp {
             .unwrap()
     }
 }
+
 
 mod tile_vertex_shader {
     vulkano_shaders::shader! {
