@@ -1,13 +1,16 @@
-use std::fs;
-use super::{perlin, automata};
 use super::tile::NeighborLocation;
+use super::{automata, perlin};
 use super::{tile::Tile, Map};
 use crate::engine::vector2::Vector2;
+use std::fs;
 
 impl Map {
     #[allow(unused)]
-    pub fn generate(mut self) -> Self {
-        let perlin_noise = perlin::Perlin2D::new(self.seed as i32);
+    pub fn generate(mut self, seed: Option<i32>) -> Self {
+        let perlin_noise = perlin::Perlin2D::new(match seed {
+            None => rand::Rng::gen::<i32>(&mut rand::thread_rng()),
+            Some(i) => i,
+        });
 
         let center_on_row = (self.size / 2) as f32;
         let map_center = Vector2::new(center_on_row, center_on_row);
@@ -33,6 +36,7 @@ impl Map {
                     ));
 
                     self.matr[y][x] = tile;
+                    self.num_of_vulkan_instances += 1;
                 }
             }
         }
@@ -41,17 +45,18 @@ impl Map {
         self.calculate_min_z()
     }
 
-    pub fn generate_automata(mut self, density: f32) -> Self{
+    pub fn generate_automata(mut self, density: f32) -> Self {
         let automata_matr = automata::generate(self.size, density);
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
                 if automata_matr[y][x] == 0 {
                     self.matr[y][x] = None;
+                } else {
+                    self.matr[y][x] = Some(Tile::new([x as u16, y as u16], 0));
+                    self.num_of_vulkan_instances += 1;
                 }
-                else {
-                    self.matr[y][x] = Some(Tile::new([x as u16, y as u16], 0))
-                }
-            }} 
+            }
+        }
         self
     }
 
@@ -112,16 +117,24 @@ impl Map {
                     //Calculate min_z for tiles that are blocked by neighbors
                     let left_neighbor: Option<u8> = match self.matr[y + 1][x] {
                         Some(other_tile) => {
-                            let z = if other_tile.max_z + 1 > other_tile.min_z { other_tile.max_z } else { other_tile.min_z };
+                            let z = if other_tile.max_z + 1 > other_tile.min_z {
+                                other_tile.max_z
+                            } else {
+                                other_tile.min_z
+                            };
                             Some(z)
-                        },
+                        }
                         None => None,
                     };
                     let right_neighbor: Option<u8> = match self.matr[y][x + 1] {
                         Some(other_tile) => {
-                            let z = if other_tile.max_z + 1 > other_tile.min_z { other_tile.max_z } else { other_tile.min_z };
+                            let z = if other_tile.max_z + 1 > other_tile.min_z {
+                                other_tile.max_z
+                            } else {
+                                other_tile.min_z
+                            };
                             Some(z)
-                        },
+                        }
                         None => None,
                     };
 
@@ -193,51 +206,51 @@ impl Map {
                             }
                         }
 
-                    //     match neighbors {
-                    //         0b0000 => (*current_tile_reference).tile_type = Some(&textures.t0),
+                        //     match neighbors {
+                        //         0b0000 => (*current_tile_reference).tile_type = Some(&textures.t0),
 
-                    //         0b1000 => (*current_tile_reference).tile_type = Some(&textures.t1_tr),
-                    //         0b0100 => (*current_tile_reference).tile_type = Some(&textures.t1_tl),
-                    //         0b0010 => (*current_tile_reference).tile_type = Some(&textures.t1_bl),
-                    //         0b0001 => (*current_tile_reference).tile_type = Some(&textures.t1_br),
+                        //         0b1000 => (*current_tile_reference).tile_type = Some(&textures.t1_tr),
+                        //         0b0100 => (*current_tile_reference).tile_type = Some(&textures.t1_tl),
+                        //         0b0010 => (*current_tile_reference).tile_type = Some(&textures.t1_bl),
+                        //         0b0001 => (*current_tile_reference).tile_type = Some(&textures.t1_br),
 
-                    //         0b1100 => {
-                    //             (*current_tile_reference).tile_type = Some(&textures.t2_tl_tr)
-                    //         }
-                    //         0b1010 => {
-                    //             (*current_tile_reference).tile_type = Some(&textures.t2_bl_tr)
-                    //         }
-                    //         0b1001 => {
-                    //             (*current_tile_reference).tile_type = Some(&textures.t2_br_tr)
-                    //         }
+                        //         0b1100 => {
+                        //             (*current_tile_reference).tile_type = Some(&textures.t2_tl_tr)
+                        //         }
+                        //         0b1010 => {
+                        //             (*current_tile_reference).tile_type = Some(&textures.t2_bl_tr)
+                        //         }
+                        //         0b1001 => {
+                        //             (*current_tile_reference).tile_type = Some(&textures.t2_br_tr)
+                        //         }
 
-                    //         0b0110 => {
-                    //             (*current_tile_reference).tile_type = Some(&textures.t2_tl_bl)
-                    //         }
-                    //         0b0101 => {
-                    //             (*current_tile_reference).tile_type = Some(&textures.t2_tl_br)
-                    //         }
+                        //         0b0110 => {
+                        //             (*current_tile_reference).tile_type = Some(&textures.t2_tl_bl)
+                        //         }
+                        //         0b0101 => {
+                        //             (*current_tile_reference).tile_type = Some(&textures.t2_tl_br)
+                        //         }
 
-                    //         0b0011 => {
-                    //             (*current_tile_reference).tile_type = Some(&textures.t2_bl_br)
-                    //         }
+                        //         0b0011 => {
+                        //             (*current_tile_reference).tile_type = Some(&textures.t2_bl_br)
+                        //         }
 
-                    //         0b1110 => {
-                    //             (*current_tile_reference).tile_type = Some(&textures.t3_tl_bl_tr)
-                    //         }
-                    //         0b1101 => {
-                    //             (*current_tile_reference).tile_type = Some(&textures.t3_tl_br_tr)
-                    //         }
-                    //         0b1011 => {
-                    //             (*current_tile_reference).tile_type = Some(&textures.t3_bl_br_tr)
-                    //         }
-                    //         0b0111 => {
-                    //             (*current_tile_reference).tile_type = Some(&textures.t3_tl_bl_br)
-                    //         }
+                        //         0b1110 => {
+                        //             (*current_tile_reference).tile_type = Some(&textures.t3_tl_bl_tr)
+                        //         }
+                        //         0b1101 => {
+                        //             (*current_tile_reference).tile_type = Some(&textures.t3_tl_br_tr)
+                        //         }
+                        //         0b1011 => {
+                        //             (*current_tile_reference).tile_type = Some(&textures.t3_bl_br_tr)
+                        //         }
+                        //         0b0111 => {
+                        //             (*current_tile_reference).tile_type = Some(&textures.t3_tl_bl_br)
+                        //         }
 
-                    //         0b1111 => (*current_tile_reference).tile_type = Some(&textures.t4),
-                    //         _ => (),
-                    //     }
+                        //         0b1111 => (*current_tile_reference).tile_type = Some(&textures.t4),
+                        //         _ => (),
+                        //     }
                     }
                 }
             }

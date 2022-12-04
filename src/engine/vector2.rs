@@ -1,11 +1,12 @@
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Mul, Sub, SubAssign},
+    ops::{Add, AddAssign, Mul, Sub, SubAssign, Div},
 };
 
-use winit::dpi::PhysicalPosition;
+use bytemuck::{Pod, Zeroable};
+use winit::dpi::{PhysicalPosition, PhysicalSize};
 
-#[derive(Clone, Copy, Default, Debug)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, PartialOrd)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
@@ -48,6 +49,20 @@ impl Mul<f32> for Vector2 {
     }
 }
 
+impl Div<Vector2> for Vector2{
+    type Output = Self;
+
+    fn div(self, rhs: Vector2) -> Self::Output {
+        Vector2::new(self.x / rhs.x, self.y / rhs.y)
+    }
+}
+
+impl Eq for Vector2 {
+    fn assert_receiver_is_total_eq(&self) {
+
+    }
+}
+
 impl Into<[f32; 2]> for Vector2 {
     fn into(self) -> [f32; 2] {
         [self.x as f32, self.y as f32]
@@ -62,6 +77,12 @@ impl From<PhysicalPosition<f64>> for Vector2
 {
     fn from(position: PhysicalPosition<f64>) -> Self {
         Vector2 { x: position.x as f32, y: position.y as f32 }
+    }
+}
+impl From<PhysicalSize<u32>> for Vector2 
+{
+    fn from(position: PhysicalSize<u32>) -> Self {
+        Vector2 { x: position.width as f32, y: position.height as f32 }
     }
 }
 
@@ -97,6 +118,10 @@ impl Vector2 {
             x: coordinates[0] as f32,
             y: coordinates[1] as f32,
         }
+    }
+    
+    pub fn zero() -> Self {
+        Self { x: 0.0, y: 0.0 }
     }
 
     pub fn distance(a: Self, b: Self) -> f32 {

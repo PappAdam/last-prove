@@ -21,7 +21,13 @@ pub struct Tile {
     filler: u16,
     //status: TileStatus for clicked events and stuff like that maybe
 }
-impl_vertex!(Tile, coordinates, sampler_and_layer);
+
+#[repr(C)]
+#[derive(Default, Clone, Copy, Pod, Zeroable)]
+pub struct GpuStoredTile {
+    pub coordinates: [f32; 2],
+}
+impl_vertex!(GpuStoredTile, coordinates);
 
 impl Tile {
     pub fn new(coordinates: [u16; 2], max_z: u8) -> Self {

@@ -16,6 +16,7 @@ pub struct Input {
     mouse_movement: Vector2, //Mouse movement means the position between last and current frame.
     mousebuttons: HashMap<MouseButton, Keystate>,
     buttons: HashMap<VirtualKeyCode, Keystate>,
+    
 }
 #[allow(dead_code)]
 impl Input {
@@ -57,9 +58,9 @@ impl Input {
             MouseScrollDelta::PixelDelta(_) => {  },
         }
     }
-    pub fn on_mouse_moved(&mut self, mouse_position: Vector2) {
-        self.mouse_movement = mouse_position - self.mouse_position;
-        self.mouse_position = mouse_position;
+    pub fn on_mouse_moved(&mut self, new_mouse_position: Vector2) {
+        self.mouse_movement += new_mouse_position - self.mouse_position;
+        self.mouse_position = new_mouse_position;
     }
 
     pub fn refresh_input(&mut self) {

@@ -1,15 +1,30 @@
 use std::io::Cursor;
+use std::string::FromUtf8Error;
 use std::{ops::Deref, sync::Arc};
 
+use crate::camera::Camera;
 use crate::create_texture;
-use crate::map::tile::Tile;
+use crate::input::Input;
+use crate::map::tile::{GpuStoredTile, Tile};
+use crate::map::Map;
+use bytemuck::Pod;
+use vulkano::buffer::{BufferContents, BufferUsage, CpuAccessibleBuffer, DeviceLocalBuffer};
+use vulkano::command_buffer::pool::standard::StandardCommandPoolAlloc;
+use vulkano::command_buffer::{
+    AutoCommandBufferBuilder, CommandBufferExecFuture, CopyBufferInfo, PrimaryAutoCommandBuffer,
+    RenderPassBeginInfo,
+};
+use vulkano::descriptor_set::pool::standard::StandardDescriptorPoolAlloc;
 use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
+use vulkano::format::ClearValue;
 use vulkano::image::ImageAccess;
-use vulkano::pipeline::Pipeline;
+use vulkano::pipeline::graphics::color_blend::ColorBlendState;
 use vulkano::pipeline::graphics::viewport::Viewport;
+use vulkano::pipeline::Pipeline;
 use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo};
 use vulkano::sampler::{Sampler, SamplerCreateInfo};
-use vulkano::sync::GpuFuture;
+use vulkano::swapchain::{PresentInfo, SwapchainAcquireFuture, SwapchainCreationError};
+use vulkano::sync::{self, FenceSignalFuture, FlushError, GpuFuture, NowFuture};
 use vulkano::{
     device::{
         physical::{PhysicalDevice, PhysicalDeviceType},
@@ -20,7 +35,6 @@ use vulkano::{
     instance::{Instance, InstanceCreateInfo},
     pipeline::{
         graphics::{
-            color_blend::ColorBlendState,
             input_assembly::{InputAssemblyState, PrimitiveTopology},
             vertex_input::BuffersDefinition,
             viewport::ViewportState,
@@ -39,21 +53,30 @@ use winit::{
 };
 
 pub struct VulkanApp {
-    pub event_loop: EventLoop<()>,
-    #[allow(dead_code)]
     surface: Arc<Surface<Window>>,
-    //physical: Arc<PhysicalDevice>,
-    //device: Arc<Device>,
-    //graphics_queue: Arc<Queue>,
-    //swapchain: Arc<Swapchain<Window>>,
-    //swapchain_images: Vec<Arc<SwapchainImage<Window>>>,
-    //render_pass: Arc<RenderPass>,
-    //map: Map,
-    //NOTHING HAS TO BE STORED YET
+    device: Arc<Device>,
+    graphics_queue: Arc<Queue>,
+    swapchain: Arc<Swapchain<Window>>,
+    swapchain_images: Vec<Arc<SwapchainImage<Window>>>,
+    framebuffers: Vec<Arc<Framebuffer>>,
+    draw_image_index: usize, //The index of the image the GPU is drawing on.
+    viewport: Viewport,
+    render_pass: Arc<RenderPass>,
+    clear_values: [f32; 4],
+    graphics_pipeline: Arc<GraphicsPipeline>,
+    graphics_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
+    pub recreate_swapchain: bool,
+    previous_frame_end: Option<Box<dyn GpuFuture>>,
+    device_local_tile_instance_buffer: Arc<DeviceLocalBuffer<[[f32; 2]]>>,
+    //END OF VULKAN VARIABLES
+    //END OF VULKAN VARIABLES
+    pub input: Input,
+    map: Map,
+    pub camera: Camera,
 }
 
 impl VulkanApp {
-    pub fn init() -> Self {
+    pub fn init() -> (Self, EventLoop<()>) {
         let vulkan_library = VulkanLibrary::new().unwrap();
         let vulkano_win_extensions = vulkano_win::required_extensions(&vulkan_library);
         let instance = Instance::new(
@@ -94,7 +117,7 @@ impl VulkanApp {
 
         let render_pass = Self::create_render_pass(device.clone(), swapchain.clone());
 
-        let pipeline = Self::create_pipeline(
+        let graphics_pipeline = Self::create_pipeline(
             device.clone(),
             render_pass.clone(),
             tile_vertex_shader,
@@ -110,8 +133,8 @@ impl VulkanApp {
         let sampler =
             Sampler::new(device.clone(), SamplerCreateInfo::simple_repeat_linear()).unwrap();
 
-        let layout = pipeline.layout().set_layouts().get(0).unwrap();
-        let graphics_set = PersistentDescriptorSet::new(
+        let layout = graphics_pipeline.layout().set_layouts().get(0).unwrap();
+        let graphics_descriptor_set = PersistentDescriptorSet::new(
             layout.clone(),
             [WriteDescriptorSet::image_view_sampler(
                 0,
@@ -127,14 +150,131 @@ impl VulkanApp {
             depth_range: 0.0..1.0,
         };
 
-        let mut framebuffers = Self::window_size_dependent_setup(&swapchain_images, &mut viewport, render_pass.clone());
-        let mut recreate_swapchain = false;
-        let mut previous_frame_end = Some(texture_future.boxed());
+        let framebuffers = Self::window_size_dependent_setup(
+            &swapchain_images,
+            &mut viewport,
+            render_pass.clone(),
+        );
+        let recreate_swapchain = false;
 
-        Self {
+        let map = Map::new(2000, 10).generate_automata(1.0);
+        let instances = map.get_tile_coordinates();
+
+        let camera = Camera::new(surface.window().inner_size().into());
+
+        let (device_local_tile_instance_buffer, copy_future) =
+            Self::create_device_local_buffer(device.clone(), graphics_queue.clone(), instances);
+
+        let previous_frame_end = Some(texture_future.join(copy_future).boxed());
+
+        (
+            Self {
+                surface,
+                device,
+                graphics_queue,
+                render_pass,
+                clear_values: [0.0, 0.68, 1.0, 1.0],
+                swapchain,
+                swapchain_images,
+                recreate_swapchain,
+                framebuffers,
+                draw_image_index: 0,
+                graphics_pipeline,
+                graphics_descriptor_set,
+                viewport,
+                previous_frame_end,
+                device_local_tile_instance_buffer,
+                input: Input::init((800, 600)),
+                map,
+                camera,
+            },
             event_loop,
-            surface, //map: Map::new(200, 10, Some(10)).generate(),
+        )
+    }
+
+    pub fn render(&mut self) {
+        self.previous_frame_end.as_mut().unwrap().cleanup_finished();
+
+        if self.recreate_swapchain {
+            self.recreate_swapchain();
         }
+
+        let draw_image_future = match self.acquire_swapchain_image() {
+            Some(future) => future,
+            None => return,
+        };
+
+        let push_constants = tile_vertex_shader::ty::Camera {
+            _dummy0: [0, 0, 0, 0],
+            coordinates: self.camera.coordinates.into(),
+            tile_size: self.camera.tile_size as u32,
+            size: self.camera.camera_size.into(),
+        };
+
+        let mut cmd_buffer_builder = self.create_cmd_buffer_builder();
+
+        cmd_buffer_builder
+            .begin_render_pass(
+                RenderPassBeginInfo {
+                    clear_values: vec![Some(self.clear_values.into())],
+                    ..RenderPassBeginInfo::framebuffer(
+                        self.framebuffers[self.draw_image_index].clone(),
+                    )
+                },
+                vulkano::command_buffer::SubpassContents::Inline,
+            )
+            .unwrap()
+            .set_viewport(0, [self.viewport.clone()])
+            .bind_pipeline_graphics(self.graphics_pipeline.clone())
+            .bind_descriptor_sets(
+                vulkano::pipeline::PipelineBindPoint::Graphics,
+                self.graphics_pipeline.layout().clone(),
+                0,
+                self.graphics_descriptor_set.clone(),
+            )
+            .bind_vertex_buffers(0, self.device_local_tile_instance_buffer.clone())
+            .push_constants(self.graphics_pipeline.layout().clone(), 0, push_constants)
+            .draw(4, self.map.num_of_vulkan_instances, 0, 0)
+            .unwrap()
+            .end_render_pass()
+            .unwrap();
+
+        let cmd_buffer = cmd_buffer_builder.build().unwrap();
+
+        let render_future = self
+            .previous_frame_end
+            .take()
+            .unwrap()
+            .join(draw_image_future)
+            .then_execute(self.graphics_queue.clone(), cmd_buffer)
+            .unwrap()
+            .then_swapchain_present(
+                self.graphics_queue.clone(),
+                PresentInfo {
+                    index: self.draw_image_index,
+                    ..PresentInfo::swapchain(self.swapchain.clone())
+                },
+            )
+            .then_signal_fence_and_flush();
+
+        match render_future {
+            Ok(future) => {
+                self.previous_frame_end = Some(future.boxed());
+            }
+            Err(FlushError::OutOfDate) => {
+                self.recreate_swapchain = true;
+                self.previous_frame_end = Some(sync::now(self.device.clone()).boxed());
+            }
+            Err(e) => {
+                println!("Failed to flush future: {:?}", e);
+                self.previous_frame_end = Some(sync::now(self.device.clone()).boxed());
+            }
+        }
+    }
+
+    pub fn refresh_game(&mut self) {
+        self.camera.refresh_camera(&self.input);
+        self.input.refresh_input();
     }
 
     fn query_physical_device(
@@ -220,6 +360,7 @@ impl VulkanApp {
                     .iter()
                     .next()
                     .unwrap(),
+                present_mode: vulkano::swapchain::PresentMode::Mailbox,
                 ..Default::default()
             },
         )
@@ -254,17 +395,91 @@ impl VulkanApp {
         vertex_shader: Arc<ShaderModule>,
         fragment_shader: Arc<ShaderModule>,
     ) -> Arc<GraphicsPipeline> {
+        let subpass = Subpass::from(render_pass, 0).unwrap();
         GraphicsPipeline::start()
-            .vertex_input_state(BuffersDefinition::new().instance::<Tile>())
+            .vertex_input_state(BuffersDefinition::new().instance::<GpuStoredTile>())
             .vertex_shader(vertex_shader.entry_point("main").unwrap(), ())
             .input_assembly_state(
                 InputAssemblyState::new().topology(PrimitiveTopology::TriangleStrip),
             )
             .viewport_state(ViewportState::viewport_dynamic_scissor_irrelevant())
             .fragment_shader(fragment_shader.entry_point("main").unwrap(), ())
-            .render_pass(Subpass::from(render_pass, 0).unwrap())
+            .color_blend_state(ColorBlendState::new(subpass.num_color_attachments()).blend_alpha())
+            .render_pass(subpass)
             .build(device.clone())
             .unwrap()
+    }
+
+    fn create_cmd_buffer_builder(&self) -> AutoCommandBufferBuilder<PrimaryAutoCommandBuffer> {
+        AutoCommandBufferBuilder::primary(
+            self.device.clone(),
+            self.graphics_queue.queue_family_index(),
+            vulkano::command_buffer::CommandBufferUsage::OneTimeSubmit,
+        )
+        .unwrap()
+    }
+
+    fn create_device_local_buffer<T>(
+        device: Arc<Device>,
+        queue: Arc<Queue>,
+        data: Vec<T>,
+    ) -> (
+        Arc<DeviceLocalBuffer<[T]>>,
+        FenceSignalFuture<
+            CommandBufferExecFuture<NowFuture, PrimaryAutoCommandBuffer<StandardCommandPoolAlloc>>,
+        >,
+    )
+    where
+        T: Pod + BufferContents,
+    {
+        let data_len = data.len() as u64;
+        let cpu_accessible_buffer = CpuAccessibleBuffer::from_iter(
+            device.clone(),
+            BufferUsage {
+                vertex_buffer: true,
+                transfer_src: true,
+                ..Default::default()
+            },
+            false,
+            data,
+        )
+        .unwrap();
+
+        let device_local_buffer = DeviceLocalBuffer::array(
+            device.clone(),
+            data_len,
+            BufferUsage {
+                vertex_buffer: true,
+                transfer_dst: true,
+                ..Default::default()
+            },
+            [queue.queue_family_index()],
+        )
+        .unwrap();
+
+        let mut cmd_buffer_builder = AutoCommandBufferBuilder::primary(
+            device.clone(),
+            queue.queue_family_index(),
+            vulkano::command_buffer::CommandBufferUsage::OneTimeSubmit,
+        )
+        .unwrap();
+
+        cmd_buffer_builder
+            .copy_buffer(CopyBufferInfo::buffers(
+                cpu_accessible_buffer,
+                device_local_buffer.clone(),
+            ))
+            .unwrap();
+
+        let cmd_buffer = cmd_buffer_builder.build().unwrap();
+
+        let copy_future = sync::now(device)
+            .then_execute(queue.clone(), cmd_buffer)
+            .unwrap()
+            .then_signal_fence_and_flush()
+            .unwrap();
+
+        (device_local_buffer, copy_future)
     }
 
     fn window_size_dependent_setup(
@@ -274,7 +489,7 @@ impl VulkanApp {
     ) -> Vec<Arc<Framebuffer>> {
         let dimensions = images[0].dimensions().width_height();
         viewport.dimensions = [dimensions[0] as f32, dimensions[1] as f32];
-    
+
         images
             .iter()
             .map(|image| {
@@ -290,6 +505,41 @@ impl VulkanApp {
             })
             .collect::<Vec<_>>()
     }
+
+    fn recreate_swapchain(&mut self) {
+        let (new_swapchain, new_images) = match self.swapchain.recreate(SwapchainCreateInfo {
+            image_extent: self.surface.window().inner_size().into(),
+            ..self.swapchain.create_info()
+        }) {
+            Ok(r) => r,
+            Err(SwapchainCreationError::ImageExtentNotSupported { .. }) => return,
+            Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
+        };
+        self.swapchain = new_swapchain;
+        self.framebuffers = Self::window_size_dependent_setup(
+            &new_images,
+            &mut self.viewport,
+            self.render_pass.clone(),
+        );
+        self.recreate_swapchain = false;
+    }
+
+    fn acquire_swapchain_image(&mut self) -> Option<SwapchainAcquireFuture<Window>> {
+        let (image_num, suboptimal, acquire_future) =
+            match vulkano::swapchain::acquire_next_image(self.swapchain.clone(), None) {
+                Ok(r) => r,
+                Err(vulkano::swapchain::AcquireError::OutOfDate) => {
+                    self.recreate_swapchain = true;
+                    return None;
+                }
+                Err(e) => panic!("Failed to acquire next image: {:?}", e),
+            };
+        if suboptimal {
+            self.recreate_swapchain = true;
+        }
+        self.draw_image_index = image_num;
+        Some(acquire_future)
+    }
 }
 
 #[macro_export]
@@ -300,7 +550,7 @@ macro_rules! create_texture {
                 $(
                    $texture;
                     layer_count += 1;
-                )* 
+                )*
                 let image_array: Vec<_> = vec![
                     $(include_bytes!($texture).to_vec()),*
                 ]
@@ -338,7 +588,12 @@ macro_rules! create_texture {
 mod tile_vertex_shader {
     vulkano_shaders::shader! {
         ty: "vertex",
-        path: "shaders/tile_vertex_shader.vert"
+        path: "shaders/tile_vertex_shader.vert",
+        types_meta: {
+            use bytemuck::{Pod, Zeroable};
+
+            #[derive(Clone, Copy, Zeroable, Pod)]
+        }
     }
 }
 
