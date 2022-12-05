@@ -6,9 +6,9 @@ use std::fs;
 
 impl Map {
     #[allow(unused)]
-    pub fn generate(mut self, seed: Option<i32>) -> Self {
+    pub fn generate(mut self, seed: Option<u16>) -> Self {
         let perlin_noise = perlin::Perlin2D::new(match seed {
-            None => rand::Rng::gen::<i32>(&mut rand::thread_rng()),
+            None => rand::Rng::gen::<u16>(&mut rand::thread_rng()),
             Some(i) => i,
         });
 
@@ -34,15 +34,16 @@ impl Map {
                         tile_position.into(),
                         ((perlin_value - treshold) / z_difference_for_height) as u8,
                     ));
-
+                    
+                    self.num_of_vulkan_instances += tile.unwrap().max_z as u32;
                     self.matr[y][x] = tile;
-                    self.num_of_vulkan_instances += 1;
                 }
             }
         }
+        self
         //Calculating minimum Z values for optimized render, than returning the result.
-        self.set_tile_types();
-        self.calculate_min_z()
+        //self.set_tile_types();
+        //self.calculate_min_z()
     }
 
     pub fn generate_automata(mut self, density: f32) -> Self {

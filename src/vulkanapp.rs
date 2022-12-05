@@ -159,7 +159,7 @@ impl VulkanApp {
         let recreate_swapchain = false;
 
         let mapsize = 100;
-        let map = Map::new(mapsize, 10).generate_automata(1.0);
+        let map = Map::new(mapsize, 200).generate(None);
         let instances = map.get_tile_coordinates();
 
         let mut camera = Camera::new(surface.window().inner_size().into());

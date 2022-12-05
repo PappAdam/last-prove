@@ -28,8 +28,10 @@ impl Map {
         for y in &self.matr {
             for x in y {
                 if let Some(tile) = x {
-                    coordinate_vec[vector_index] = [tile.coordinates[0] as f32, tile.coordinates[1] as f32];
-                    vector_index += 1;
+                    for z in tile.min_z..tile.max_z {
+                        coordinate_vec[vector_index] = [tile.coordinates[0] as f32 - z as f32, tile.coordinates[1] as f32 - z as f32];
+                        vector_index += 1;
+                    }
                 }
             }
         }
