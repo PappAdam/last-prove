@@ -4,6 +4,7 @@ use std::{ops::Deref, sync::Arc};
 
 use crate::camera::Camera;
 use crate::create_texture;
+use crate::engine::vector2::Vector2;
 use crate::input::Input;
 use crate::map::tile::{GpuStoredTile, Tile};
 use crate::map::Map;
@@ -157,10 +158,12 @@ impl VulkanApp {
         );
         let recreate_swapchain = false;
 
-        let map = Map::new(2000, 10).generate_automata(1.0);
+        let mapsize = 100;
+        let map = Map::new(mapsize, 10).generate_automata(1.0);
         let instances = map.get_tile_coordinates();
 
-        let camera = Camera::new(surface.window().inner_size().into());
+        let mut camera = Camera::new(surface.window().inner_size().into());
+        camera.look_at_tile(Vector2::new(mapsize / 2, mapsize / 2));
 
         let (device_local_tile_instance_buffer, copy_future) =
             Self::create_device_local_buffer(device.clone(), graphics_queue.clone(), instances);
@@ -184,8 +187,8 @@ impl VulkanApp {
                 viewport,
                 previous_frame_end,
                 device_local_tile_instance_buffer,
-                input: Input::init((800, 600)),
                 map,
+                input: Input::init(),
                 camera,
             },
             event_loop,
@@ -205,9 +208,8 @@ impl VulkanApp {
         };
 
         let push_constants = tile_vertex_shader::ty::Camera {
-            _dummy0: [0, 0, 0, 0],
             coordinates: self.camera.coordinates.into(),
-            tile_size: self.camera.tile_size as u32,
+            tile_size: self.camera.tile_size.into(),
             size: self.camera.camera_size.into(),
         };
 
@@ -272,8 +274,8 @@ impl VulkanApp {
         }
     }
 
-    pub fn refresh_game(&mut self) {
-        self.camera.refresh_camera(&self.input);
+    pub fn refresh_game(&mut self, delta_time: f32) {
+        self.camera.refresh_camera(&self.input, delta_time);
         self.input.refresh_input();
     }
 
@@ -360,7 +362,7 @@ impl VulkanApp {
                     .iter()
                     .next()
                     .unwrap(),
-                present_mode: vulkano::swapchain::PresentMode::Mailbox,
+                present_mode: vulkano::swapchain::PresentMode::Immediate,
                 ..Default::default()
             },
         )

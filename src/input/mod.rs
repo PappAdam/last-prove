@@ -1,6 +1,6 @@
-use crate::engine::vector2::Vector2;
+use crate::{camera::Camera, engine::vector2::Vector2};
 use std::collections::HashMap;
-use winit::event::{MouseButton, VirtualKeyCode, KeyboardInput, ElementState, MouseScrollDelta};
+use winit::event::{ElementState, KeyboardInput, MouseButton, MouseScrollDelta, VirtualKeyCode};
 
 #[derive(Debug)]
 pub enum Keystate {
@@ -16,13 +16,12 @@ pub struct Input {
     mouse_movement: Vector2, //Mouse movement means the position between last and current frame.
     mousebuttons: HashMap<MouseButton, Keystate>,
     buttons: HashMap<VirtualKeyCode, Keystate>,
-    
 }
 #[allow(dead_code)]
 impl Input {
-    pub fn init(window_size: (u16, u16)) -> Self {
+    pub fn init() -> Self {
         let mouse_wheel = 0;
-        let mouse_position = Vector2::new((window_size.0 / 2) as f32, (window_size.0 / 2) as f32);
+        let mouse_position = Vector2::zero();
         let mouse_movement = Vector2::default();
         let mousebuttons = HashMap::new();
         let buttons = HashMap::new();
@@ -36,13 +35,18 @@ impl Input {
     }
 
     pub fn on_key_input(&mut self, input: KeyboardInput) {
-        match input.state {
-            ElementState::Pressed => {
-                self.buttons.insert(input.virtual_keycode.unwrap(), Keystate::Pressed);
-            }
-            ElementState::Released => {
-                self.buttons.insert(input.virtual_keycode.unwrap(), Keystate::Released);
-            }
+        match input.virtual_keycode {
+            Some(_) => match input.state {
+                ElementState::Pressed => {
+                    self.buttons
+                        .insert(input.virtual_keycode.unwrap(), Keystate::Pressed);
+                }
+                ElementState::Released => {
+                    self.buttons
+                        .insert(input.virtual_keycode.unwrap(), Keystate::Released);
+                }
+            },
+            None => {  }
         }
     }
     pub fn on_mousebutton_input(&mut self, mouse_btn: MouseButton, state: ElementState) {
@@ -55,12 +59,14 @@ impl Input {
     pub fn on_mousewheel_scrolled(&mut self, delta: MouseScrollDelta) {
         match delta {
             MouseScrollDelta::LineDelta(_, y) => self.mouse_wheel = y as i8,
-            MouseScrollDelta::PixelDelta(_) => {  },
+            MouseScrollDelta::PixelDelta(_) => {}
         }
     }
-    pub fn on_mouse_moved(&mut self, new_mouse_position: Vector2) {
-        self.mouse_movement += new_mouse_position - self.mouse_position;
-        self.mouse_position = new_mouse_position;
+    pub fn on_mouse_moved(&mut self, new_mouse_position: Vector2, camera_size: Vector2) {
+        let relative_new_mouse_position =
+            new_mouse_position / (camera_size / 2.0) - Vector2::new(1u8, 1);
+        self.mouse_movement += relative_new_mouse_position - self.mouse_position;
+        self.mouse_position = relative_new_mouse_position;
     }
 
     pub fn refresh_input(&mut self) {

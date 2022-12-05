@@ -1,7 +1,7 @@
 #version 450
 
 layout(push_constant) uniform Camera {
-    uint tile_size;
+    vec2 tile_size;
     vec2 coordinates;
     vec2 size;
 } camera;
@@ -18,10 +18,6 @@ void main() {
        vertex_type / 2,
        vertex_type % 2
     );
-    vec2 relative_tile_size = vec2(
-       camera.tile_size / camera.size.x,
-       camera.tile_size / camera.size.y
-    );
 
     vec2 instance_coordinates = vec2(
        coordinates.x - camera.coordinates.x - 1,
@@ -29,8 +25,8 @@ void main() {
     );
 
     vec2 vertex_position = vec2(
-       (instance_coordinates.x - instance_coordinates.y) * relative_tile_size.x / 2 + offsets.x * relative_tile_size.x,
-       (instance_coordinates.x + instance_coordinates.y) * relative_tile_size.y / 4 + offsets.y * relative_tile_size.y
+       (instance_coordinates.x - instance_coordinates.y) * camera.tile_size.x / 2 + offsets.x * camera.tile_size.x,
+       (instance_coordinates.x + instance_coordinates.y) * camera.tile_size.y / 4 + offsets.y * camera.tile_size.y
        );
 
     gl_Position = vec4(vertex_position, 0.0, 1.0);

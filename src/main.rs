@@ -32,9 +32,9 @@ fn main() {
             WindowEvent::MouseInput { button, state, .. } => {
                 vulkan_app.input.on_mousebutton_input(button, state)
             }
-            WindowEvent::CursorMoved { position, .. } => {
-                vulkan_app.input.on_mouse_moved(position.into())
-            }
+            WindowEvent::CursorMoved { position, .. } => vulkan_app
+                .input
+                .on_mouse_moved(position.into(), vulkan_app.camera.camera_size),
             WindowEvent::MouseWheel { delta, .. } => vulkan_app.input.on_mousewheel_scrolled(delta),
             _ => {}
         },
@@ -42,10 +42,11 @@ fn main() {
             frame_count += 1;
             let elapsed = last_frame.elapsed().as_micros();
             avg_elapsed = ((frame_count - 1) * avg_elapsed + elapsed) / frame_count;
-            last_frame = std::time::Instant::now();
-            
-            vulkan_app.refresh_game();
+
+            vulkan_app.refresh_game(elapsed as f32 / 1000000.0);
             vulkan_app.render();
+            
+            last_frame = std::time::Instant::now();
         }
         _ => {}
     });

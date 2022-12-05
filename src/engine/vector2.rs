@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Mul, Sub, SubAssign, Div},
+    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign, MulAssign, DivAssign},
 };
 
 use bytemuck::{Pod, Zeroable};
@@ -41,15 +41,30 @@ impl SubAssign for Vector2 {
     }
 }
 
-impl Mul<f32> for Vector2 {
+impl Mul<Vector2> for Vector2 {
     type Output = Self;
 
-    fn mul(self, rhs: f32) -> Self::Output {
-        Vector2::new(self.x * rhs, self.y * rhs)
+    fn mul(self, rhs: Vector2) -> Self::Output {
+        Vector2::new(self.x * rhs.x, self.y * rhs.y)
     }
 }
 
-impl Div<Vector2> for Vector2{
+impl<T: Into<f32> + Copy> Mul<T> for Vector2 {
+    type Output = Self;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        Vector2::new(self.x * rhs.into(), self.y * rhs.into())
+    }
+}
+
+impl<T: Into<f32> + Copy> MulAssign<T> for Vector2{
+    fn mul_assign(&mut self, rhs: T) {
+        self.x *= rhs.into();
+        self.y *= rhs.into();
+    }
+}
+
+impl Div<Vector2> for Vector2 {
     type Output = Self;
 
     fn div(self, rhs: Vector2) -> Self::Output {
@@ -57,10 +72,23 @@ impl Div<Vector2> for Vector2{
     }
 }
 
-impl Eq for Vector2 {
-    fn assert_receiver_is_total_eq(&self) {
+impl<T: Into<f32> + Copy> Div<T> for Vector2 {
+    type Output = Self;
 
+    fn div(self, rhs: T) -> Self::Output {
+        Vector2::new(self.x / rhs.into(), self.y / rhs.into())
     }
+}
+
+impl<T: Into<f32> + Copy> DivAssign<T> for Vector2 {
+    fn div_assign(&mut self, rhs: T) {
+        self.x /= rhs.into();
+        self.y /= rhs.into();
+    }
+}
+
+impl Eq for Vector2 {
+    fn assert_receiver_is_total_eq(&self) {}
 }
 
 impl Into<[f32; 2]> for Vector2 {
@@ -73,16 +101,20 @@ impl Into<[u16; 2]> for Vector2 {
         [self.x as u16, self.y as u16]
     }
 }
-impl From<PhysicalPosition<f64>> for Vector2 
-{
+impl From<PhysicalPosition<f64>> for Vector2 {
     fn from(position: PhysicalPosition<f64>) -> Self {
-        Vector2 { x: position.x as f32, y: position.y as f32 }
+        Vector2 {
+            x: position.x as f32,
+            y: position.y as f32,
+        }
     }
 }
-impl From<PhysicalSize<u32>> for Vector2 
-{
+impl From<PhysicalSize<u32>> for Vector2 {
     fn from(position: PhysicalSize<u32>) -> Self {
-        Vector2 { x: position.width as f32, y: position.height as f32 }
+        Vector2 {
+            x: position.width as f32,
+            y: position.height as f32,
+        }
     }
 }
 
@@ -119,7 +151,10 @@ impl Vector2 {
             y: coordinates[1] as f32,
         }
     }
-    
+    pub fn uniform<T: Into<f32> + Copy>(x: T) -> Self {
+        Vector2 { x: x.into(), y: x.into() }
+    }
+
     pub fn zero() -> Self {
         Self { x: 0.0, y: 0.0 }
     }
