@@ -39,6 +39,7 @@ impl Camera {
 
     pub fn window_resized(&mut self, new_screen_size: Vector2) {
         self.target_tile_size = self.target_tile_size * (self.camera_size / new_screen_size);
+        self.tile_size = self.target_tile_size;
         self.camera_size = new_screen_size;
     }
 
