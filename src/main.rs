@@ -42,11 +42,11 @@ fn main() {
             frame_count += 1;
             let elapsed = last_frame.elapsed().as_micros();
             avg_elapsed = ((frame_count - 1) * avg_elapsed + elapsed) / frame_count;
+            last_frame = std::time::Instant::now();
 
             vulkan_app.refresh_game(elapsed as f32 / 1000000.0);
             vulkan_app.render();
             
-            last_frame = std::time::Instant::now();
         }
         _ => {}
     });

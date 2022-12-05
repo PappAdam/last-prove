@@ -11,6 +11,7 @@ pub struct Map {
     pub height: u8,
     pub matr: Vec<Vec<Option<tile::Tile>>>,
     pub num_of_vulkan_instances: u32,
+    pub num_of_tile_columns: u32,
 }
 impl Map {
     pub fn new(size: u16, height:u8) -> Self {
@@ -18,7 +19,8 @@ impl Map {
             size,
             height,
             matr: vec::from_elem(vec::from_elem(None, size as usize), size as usize),
-            num_of_vulkan_instances: 0
+            num_of_vulkan_instances: 0,
+            num_of_tile_columns: 0
         }
     }
 
@@ -28,13 +30,14 @@ impl Map {
         for y in &self.matr {
             for x in y {
                 if let Some(tile) = x {
-                    for z in tile.min_z..tile.max_z {
+                    for z in tile.min_z..tile.max_z + 1 {
                         coordinate_vec[vector_index] = [tile.coordinates[0] as f32 - z as f32, tile.coordinates[1] as f32 - z as f32];
                         vector_index += 1;
                     }
                 }
             }
         }
+        assert_eq!(coordinate_vec.len(), vector_index);
         coordinate_vec
     }
 }

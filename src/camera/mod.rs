@@ -29,7 +29,7 @@ impl Camera {
             self.target_tile_size /= 1.1;
         }
 
-        self.tile_size = Vector2::lerp(self.tile_size, self.target_tile_size, 0.1);
+        self.tile_size = Vector2::lerp(self.tile_size, self.target_tile_size, 60.0 * delta_time);
 
         if input.get_mousebutton_down(winit::event::MouseButton::Middle) {
             self.coordinates -=

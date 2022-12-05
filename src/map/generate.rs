@@ -1,4 +1,4 @@
-use super::tile::NeighborLocation;
+use super::tile::{self, NeighborLocation};
 use super::{automata, perlin};
 use super::{tile::Tile, Map};
 use crate::engine::vector2::Vector2;
@@ -6,7 +6,7 @@ use std::fs;
 
 impl Map {
     #[allow(unused)]
-    pub fn generate(mut self, seed: Option<u16>) -> Self {
+    pub fn generate(&mut self, seed: Option<u16>) {
         let perlin_noise = perlin::Perlin2D::new(match seed {
             None => rand::Rng::gen::<u16>(&mut rand::thread_rng()),
             Some(i) => i,
@@ -30,20 +30,18 @@ impl Map {
                 let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.1, 2);
 
                 if perlin_value > treshold {
-                    let tile = Some(Tile::new(
+                    let tile = Tile::new(
                         tile_position.into(),
                         ((perlin_value - treshold) / z_difference_for_height) as u8,
-                    ));
-                    
-                    self.num_of_vulkan_instances += tile.unwrap().max_z as u32;
-                    self.matr[y][x] = tile;
+                    );
+                    self.matr[y][x] = Some(tile);
                 }
             }
         }
-        self
         //Calculating minimum Z values for optimized render, than returning the result.
         //self.set_tile_types();
-        //self.calculate_min_z()
+        self.calculate_min_z();
+        self.calculate_vulkan_instances();
     }
 
     pub fn generate_automata(mut self, density: f32) -> Self {
@@ -83,7 +81,7 @@ impl Map {
         self
     }
 
-    pub fn calculate_min_z(mut self) -> Self {
+    fn calculate_min_z(&mut self) {
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
                 if let Some(mut tile) = self.matr[y][x] {
@@ -171,7 +169,21 @@ impl Map {
                 }
             }
         }
-        self
+    }
+
+    fn calculate_vulkan_instances(&mut self) {
+        self.num_of_vulkan_instances = 0;
+        for y in &self.matr {
+            for x in y {
+                if let Some(tile) = x {
+                    self.num_of_vulkan_instances += if tile.max_z + 1 > tile.min_z {
+                        (tile.max_z - tile.min_z) as u32 + 1
+                    } else {
+                        0u32
+                    };
+                }
+            }
+        }
     }
 
     pub fn set_tile_types(&mut self) {
