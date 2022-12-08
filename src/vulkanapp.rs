@@ -160,7 +160,7 @@ impl VulkanApp {
 
         let mapsize = 300;
         let mut map = Map::new(mapsize, 10);
-        map.generate(None);
+        map.generate_automata(1.0);
         let instances = map.get_tile_coordinates();
 
         let mut camera = Camera::new(surface.window().inner_size().into());

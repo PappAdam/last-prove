@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign, MulAssign, DivAssign},
+    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign, MulAssign, DivAssign, Neg},
 };
 
 use bytemuck::{Pod, Zeroable};
@@ -11,7 +11,13 @@ pub struct Vector2 {
     pub x: f32,
     pub y: f32,
 }
+impl Neg for Vector2 {
+    type Output = Self;
 
+    fn neg(self) -> Self::Output {
+        Vector2::new(-self.x, -self.y)
+    }
+}
 impl Add<Vector2> for Vector2 {
     type Output = Self;
 
@@ -168,6 +174,10 @@ impl Vector2 {
         a_to_b.x * a_to_b.x + a_to_b.y * a_to_b.y
     }
     pub fn lerp(a: Self, b: Self, t: f32) -> Self {
+        if Vector2::distance_squared(a, b) < 0.0000001 {
+            return b;
+        }
+
         let x = a.x + (b.x - a.x) * t;
         let y = a.y + (b.y - a.y) * t;
         Self::new(x, y)

@@ -44,7 +44,7 @@ impl Map {
         self.calculate_vulkan_instances();
     }
 
-    pub fn generate_automata(mut self, density: f32) -> Self {
+    pub fn generate_automata(&mut self, density: f32) {
         let automata_matr = automata::generate(self.size, density);
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
@@ -56,7 +56,6 @@ impl Map {
                 }
             }
         }
-        self
     }
 
     #[allow(unused)]
