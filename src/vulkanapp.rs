@@ -158,13 +158,13 @@ impl VulkanApp {
         );
         let recreate_swapchain = false;
 
-        let mapsize = 300;
+        let mapsize = 100;
         let mut map = Map::new(mapsize, 10);
         map.generate_automata(1.0);
         let instances = map.get_tile_coordinates();
 
         let mut camera = Camera::new(surface.window().inner_size().into());
-        camera.look_at_tile(Vector2::new(mapsize / 2, mapsize / 2));
+        camera.snap_to_tile(Vector2::new(mapsize / 2, mapsize / 2));
 
         let (device_local_tile_instance_buffer, copy_future) =
             Self::create_device_local_buffer(device.clone(), graphics_queue.clone(), instances);
@@ -210,7 +210,7 @@ impl VulkanApp {
 
         let push_constants = tile_vertex_shader::ty::Camera {
             coordinates: self.camera.coordinates.into(),
-            tile_size: self.camera.tile_size.into(),
+            tile_size: (2.0 / self.camera.tiles_fit).into(),
             size: self.camera.camera_size.into(),
         };
 

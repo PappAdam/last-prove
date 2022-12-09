@@ -186,3 +186,12 @@ impl Vector2 {
         Vector2::new(self.x.abs(), self.y.abs())
     }
 }
+
+//float implementations
+impl Div<Vector2> for f32 {
+    type Output = Vector2;
+
+    fn div(self, rhs: Vector2) -> Self::Output {
+        Vector2::new(self / rhs.x, self / rhs.y)
+    }
+}

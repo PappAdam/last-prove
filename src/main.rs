@@ -8,7 +8,7 @@ use core::time;
 use engine::vector2::Vector2;
 use std::time::Instant;
 use vulkanapp::VulkanApp;
-use winit::event::{Event, WindowEvent};
+use winit::event::{Event, WindowEvent, VirtualKeyCode};
 
 fn main() {
     let (mut vulkan_app, event_loop) = VulkanApp::init();
@@ -46,7 +46,6 @@ fn main() {
 
             vulkan_app.refresh_game(elapsed as f32 / 1000000.0);
             vulkan_app.render();
-            
         }
         _ => {}
     });
