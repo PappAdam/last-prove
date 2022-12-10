@@ -68,11 +68,11 @@ pub struct VulkanApp {
     graphics_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
     pub recreate_swapchain: bool,
     previous_frame_end: Option<Box<dyn GpuFuture>>,
-    device_local_tile_instance_buffer: Arc<DeviceLocalBuffer<[[f32; 2]]>>,
+    device_local_tile_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredTile]>>,
     //END OF VULKAN VARIABLES
     //END OF VULKAN VARIABLES
     pub input: Input,
-    map: Map,
+    pub map: Map,
     pub camera: Camera,
 }
 
@@ -127,12 +127,31 @@ impl VulkanApp {
 
         let (textures, texture_future) = create_texture!(
             graphics_queue.clone(),
-            "../Assets/debug_tiles/0.png",
-            "../Assets/debug_tiles/4.png"
+            "../Assets/debug_tiles/0.png",          //0
+            "../Assets/debug_tiles/1_br.png",       //1
+            "../Assets/debug_tiles/1_bl.png",       //2
+            "../Assets/debug_tiles/2_bl_br.png",    //3
+            "../Assets/debug_tiles/1_tl.png",       //4
+            "../Assets/debug_tiles/2_tl_br.png",    //5
+            "../Assets/debug_tiles/2_tl_bl.png",    //6
+            "../Assets/debug_tiles/3_tl_bl_br.png", //7
+            "../Assets/debug_tiles/1_tr.png",       //8
+            "../Assets/debug_tiles/2_br_tr.png",    //9
+            "../Assets/debug_tiles/2_bl_tr.png",    //10
+            "../Assets/debug_tiles/3_bl_br_tr.png", //11
+            "../Assets/debug_tiles/2_tl_tr.png",    //12
+            "../Assets/debug_tiles/3_tl_br_tr.png", //13
+            "../Assets/debug_tiles/3_tl_bl_tr.png", //14
+            "../Assets/debug_tiles/4.png"           //15
         );
 
         let sampler =
-            Sampler::new(device.clone(), SamplerCreateInfo::simple_repeat_linear()).unwrap();
+            Sampler::new(device.clone(), SamplerCreateInfo{
+                mag_filter: vulkano::sampler::Filter::Nearest,
+                min_filter: vulkano::sampler::Filter::Nearest,
+                mipmap_mode: vulkano::sampler::SamplerMipmapMode::Nearest,
+                ..SamplerCreateInfo::simple_repeat_linear()
+            }).unwrap();
 
         let layout = graphics_pipeline.layout().set_layouts().get(0).unwrap();
         let graphics_descriptor_set = PersistentDescriptorSet::new(
@@ -158,13 +177,13 @@ impl VulkanApp {
         );
         let recreate_swapchain = false;
 
-        let mapsize = 100;
+        let mapsize = 500;
         let mut map = Map::new(mapsize, 10);
-        map.generate_automata(1.0);
-        let instances = map.get_tile_coordinates();
+        map.generate(None);
+        let instances = map.get_tile_instance_coordinates();
 
         let mut camera = Camera::new(surface.window().inner_size().into());
-        camera.snap_to_tile(Vector2::new(mapsize / 2, mapsize / 2));
+        camera.snap_to_tile(Vector2::new_usize(mapsize / 2, mapsize / 2));
 
         let (device_local_tile_instance_buffer, copy_future) =
             Self::create_device_local_buffer(device.clone(), graphics_queue.clone(), instances);
@@ -577,7 +596,7 @@ macro_rules! create_texture {
                 let (image, future) = ImmutableImage::from_iter(
                     image_array,
                     dimensions,
-                    vulkano::image::MipmapsCount::Log2,
+                    vulkano::image::MipmapsCount::One,
                     Format::R8G8B8A8_SRGB,
                     $queue,
                 )

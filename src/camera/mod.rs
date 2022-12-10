@@ -26,7 +26,7 @@ impl Camera {
             Vector2::lerp(self.coordinates, self.target_coordinates, 60.0 * delta_time);
 
         let mouse_wheel = input.get_mouse_wheel();
-        if mouse_wheel > 0 && self.target_tiles_fit.x > 4.0 && self.target_tiles_fit.x > 4.0 {
+        if mouse_wheel > 0 && self.target_tiles_fit.x > 2.0 && self.target_tiles_fit.x > 2.0 {
             self.target_tiles_fit /= 1.2;
             self.target_coordinates = Vector2::lerp(
                 self.target_coordinates,
