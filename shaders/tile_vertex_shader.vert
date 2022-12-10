@@ -6,10 +6,10 @@ layout(push_constant) uniform Camera {
     vec2 size;
 } camera;
 
-layout(location = 0) in vec2 coordinates; // First 16 representing x last 16 representing y.
-//layout(location = 1) in uint sampler_and_layer;
+layout(location = 0) in vec2 coordinates;
+layout(location = 1) in uint sampler_and_layer;
 
-//layout(location = 0) out uint out_sampler_and_layer;
+layout(location = 0) out uint out_sampler_and_layer;
 layout(location = 1) out vec2 uv_coordinates;
 
 void main() {
@@ -32,6 +32,6 @@ void main() {
     gl_Position = vec4(vertex_position, 0.0, 1.0);
 
 
-    //out_sampler_and_layer = sampler_and_layer;
+    out_sampler_and_layer = sampler_and_layer;
     uv_coordinates = offsets;
 }

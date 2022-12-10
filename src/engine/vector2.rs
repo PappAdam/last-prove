@@ -107,6 +107,11 @@ impl Into<[u16; 2]> for Vector2 {
         [self.x as u16, self.y as u16]
     }
 }
+impl Into<[usize; 2]> for Vector2 {
+    fn into(self) -> [usize; 2] {
+        [self.x as usize, self.y as usize]
+    }
+}
 impl From<PhysicalPosition<f64>> for Vector2 {
     fn from(position: PhysicalPosition<f64>) -> Self {
         Vector2 {
@@ -184,6 +189,9 @@ impl Vector2 {
     }
     pub fn abs(&self) -> Self {
         Vector2::new(self.x.abs(), self.y.abs())
+    }
+    pub fn round(&self) -> Self {
+        Vector2::new(self.x.round(), self.y.round())
     }
 }
 

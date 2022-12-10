@@ -12,7 +12,6 @@ use winit::event::{Event, WindowEvent, VirtualKeyCode};
 
 fn main() {
     let (mut vulkan_app, event_loop) = VulkanApp::init();
-    let mut frame_number: u64 = 0;
 
     let mut last_frame = std::time::Instant::now();
     let mut frame_count: u128 = 0;
@@ -44,8 +43,13 @@ fn main() {
             avg_elapsed = ((frame_count - 1) * avg_elapsed + elapsed) / frame_count;
             last_frame = std::time::Instant::now();
 
+            if vulkan_app.input.get_mousebutton_pressed(winit::event::MouseButton::Left) {
+                println!("Clicked tile: {:?}", vulkan_app.map.get_tile_from_matr(vulkan_app.camera.relative_screen_position_to_tile_coordinates(vulkan_app.input.get_mouse_position()).round().into()))
+            }
+
             vulkan_app.refresh_game(elapsed as f32 / 1000000.0);
             vulkan_app.render();
+
         }
         _ => {}
     });
