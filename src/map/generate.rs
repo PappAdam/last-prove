@@ -1,3 +1,4 @@
+use super::building::Building;
 use super::tile::NeighborLocation;
 use super::{automata, perlin};
 use super::{tile::Tile, Map};
@@ -34,7 +35,8 @@ impl Map {
                         tile_position.into(),
                         ((perlin_value - treshold) / z_difference_for_height) as u8,
                     );
-                    self.matr[y][x] = Some(tile);
+                    self.tile_matr[y][x] = Some(tile);
+                    self.building_vector.push(Building { coordinates: tile_position.into(), texture_layer: 0 })
                 }
             }
         }
@@ -42,6 +44,7 @@ impl Map {
         self.set_tile_types();
         self.calculate_min_z();
         self.calculate_vulkan_instances();
+        self.building_vector.push(Building { coordinates: [self.size as u16 / 2, self.size as u16 / 2], texture_layer: 0 })
     }
 
     pub fn generate_automata(&mut self, density: f32) {
@@ -49,9 +52,9 @@ impl Map {
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
                 if automata_matr[y][x] == 0 {
-                    self.matr[y][x] = None;
+                    self.tile_matr[y][x] = None;
                 } else {
-                    self.matr[y][x] = Some(Tile::new([x as u16, y as u16], 0));
+                    self.tile_matr[y][x] = Some(Tile::new([x as u16, y as u16], 0));
                 }
             }
         }
@@ -67,14 +70,14 @@ impl Map {
         for (rowindex, row) in rows.iter().enumerate() {
             for (columnindex, column_value) in row.chars().enumerate() {
                 match column_value {
-                    '_' => self.matr[rowindex][columnindex] = None,
+                    '_' => self.tile_matr[rowindex][columnindex] = None,
                     _ => {
                         println!("{}", column_value);
                         let tile = Some(Tile::new(
                             [columnindex as u16, rowindex as u16],
                             column_value.to_digit(10).unwrap() as u8,
                         ));
-                        self.matr[rowindex][columnindex] = tile;
+                        self.tile_matr[rowindex][columnindex] = tile;
                     }
                 }
             }
@@ -156,7 +159,7 @@ impl Map {
                     //If only neighbors are blocking vision to a tile, and the tile is not directly behind to neighbors
                     //then the tile is still rendered. Very rare case but can happen
                     //(so yes, they are not neighbors but whatever)
-                    self.matr[y][x] = Some(tile);
+                    self.tile_matr[y][x] = Some(tile);
                 }
             }
         }
@@ -164,7 +167,7 @@ impl Map {
 
     fn calculate_vulkan_instances(&mut self) {
         self.num_of_vulkan_instances = 0;
-        for y in &self.matr {
+        for y in &self.tile_matr {
             for x in y {
                 if let Some(tile) = x {
                     self.num_of_vulkan_instances += if tile.max_z + 1 > tile.min_z {
@@ -212,7 +215,7 @@ impl Map {
                         }
                     }
                     //println!("{:?}", tile);
-                    self.matr[y][x] = Some(tile);
+                    self.tile_matr[y][x] = Some(tile);
                 }
             }
         }

@@ -6,6 +6,7 @@ use crate::camera::Camera;
 use crate::create_texture;
 use crate::engine::vector2::Vector2;
 use crate::input::Input;
+use crate::map::building::GpuStoredBuilding;
 use crate::map::tile::{GpuStoredTile, Tile};
 use crate::map::Map;
 use bytemuck::Pod;
@@ -18,8 +19,9 @@ use vulkano::command_buffer::{
 use vulkano::descriptor_set::pool::standard::StandardDescriptorPoolAlloc;
 use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
 use vulkano::format::ClearValue;
-use vulkano::image::ImageAccess;
+use vulkano::image::{AttachmentImage, ImageAccess};
 use vulkano::pipeline::graphics::color_blend::ColorBlendState;
+use vulkano::pipeline::graphics::depth_stencil::DepthStencilState;
 use vulkano::pipeline::graphics::viewport::Viewport;
 use vulkano::pipeline::Pipeline;
 use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo};
@@ -63,12 +65,14 @@ pub struct VulkanApp {
     draw_image_index: usize, //The index of the image the GPU is drawing on.
     viewport: Viewport,
     render_pass: Arc<RenderPass>,
-    clear_values: [f32; 4],
+    clear_values: Vec<Option<ClearValue>>,
     graphics_pipeline: Arc<GraphicsPipeline>,
-    graphics_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
+    tile_texture_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
+    building_texture_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
     pub recreate_swapchain: bool,
     previous_frame_end: Option<Box<dyn GpuFuture>>,
     device_local_tile_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredTile]>>,
+    device_local_building_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredBuilding]>>,
     //END OF VULKAN VARIABLES
     //END OF VULKAN VARIABLES
     pub input: Input,
@@ -104,7 +108,6 @@ impl VulkanApp {
             khr_swapchain: true,
             ..Default::default()
         };
-
         let (physical, queue_family_index) =
             Self::query_physical_device(instance, &device_extensions, &surface);
 
@@ -125,7 +128,7 @@ impl VulkanApp {
             tile_fragment_shader,
         );
 
-        let (textures, texture_future) = create_texture!(
+        let (tile_textures, tile_texture_future) = create_texture!(
             graphics_queue.clone(),
             "../Assets/debug_tiles/0.png",          //0
             "../Assets/debug_tiles/1_br.png",       //1
@@ -144,21 +147,40 @@ impl VulkanApp {
             "../Assets/debug_tiles/3_tl_bl_tr.png", //14
             "../Assets/debug_tiles/4.png"           //15
         );
+        let (building_textures, building_texture_future) = create_texture!(
+            graphics_queue.clone(),
+            "../Assets/debug_buildings/basic.png",
+            "../Assets/debug_buildings/basic.png",
+            "../Assets/debug_buildings/basic.png",
+            "../Assets/debug_buildings/basic.png"
+        );
 
-        let sampler =
-            Sampler::new(device.clone(), SamplerCreateInfo{
+        let sampler = Sampler::new(
+            device.clone(),
+            SamplerCreateInfo {
                 mag_filter: vulkano::sampler::Filter::Nearest,
                 min_filter: vulkano::sampler::Filter::Nearest,
                 mipmap_mode: vulkano::sampler::SamplerMipmapMode::Nearest,
                 ..SamplerCreateInfo::simple_repeat_linear()
-            }).unwrap();
+            },
+        )
+        .unwrap();
 
         let layout = graphics_pipeline.layout().set_layouts().get(0).unwrap();
-        let graphics_descriptor_set = PersistentDescriptorSet::new(
+        let tile_texture_descriptor_set = PersistentDescriptorSet::new(
             layout.clone(),
             [WriteDescriptorSet::image_view_sampler(
                 0,
-                textures.clone(),
+                tile_textures,
+                sampler.clone(),
+            )],
+        )
+        .unwrap();
+        let building_texture_descriptor_set = PersistentDescriptorSet::new(
+            layout.clone(),
+            [WriteDescriptorSet::image_view_sampler(
+                0,
+                building_textures,
                 sampler.clone(),
             )],
         )
@@ -171,6 +193,7 @@ impl VulkanApp {
         };
 
         let framebuffers = Self::window_size_dependent_setup(
+            device.clone(),
             &swapchain_images,
             &mut viewport,
             render_pass.clone(),
@@ -185,28 +208,35 @@ impl VulkanApp {
         let mut camera = Camera::new(surface.window().inner_size().into());
         camera.snap_to_tile(Vector2::new_usize(mapsize / 2, mapsize / 2));
 
-        let (device_local_tile_instance_buffer, copy_future) =
+        let (device_local_tile_instance_buffer, tile_copy_future) =
             Self::create_device_local_buffer(device.clone(), graphics_queue.clone(), instances);
+        let (device_local_building_instance_buffer, building_copy_future) =
+            Self::create_device_local_buffer(
+                device.clone(),
+                graphics_queue.clone(),
+                map.get_building_instance_coordinates(),
+            );
 
-        let previous_frame_end = Some(texture_future.join(copy_future).boxed());
-
+        let previous_frame_end = Some(tile_texture_future.join(building_texture_future).join(tile_copy_future).join(building_copy_future).boxed());
         (
             Self {
                 surface,
                 device,
                 graphics_queue,
                 render_pass,
-                clear_values: [0.0, 0.68, 1.0, 1.0],
+                clear_values: vec![Some([0.0, 0.68, 1.0, 1.0].into()), Some(1f32.into())],
                 swapchain,
                 swapchain_images,
                 recreate_swapchain,
                 framebuffers,
                 draw_image_index: 0,
                 graphics_pipeline,
-                graphics_descriptor_set,
+                tile_texture_descriptor_set,
+                building_texture_descriptor_set,
                 viewport,
                 previous_frame_end,
                 device_local_tile_instance_buffer,
+                device_local_building_instance_buffer,
                 map,
                 input: Input::init(),
                 camera,
@@ -216,8 +246,6 @@ impl VulkanApp {
     }
 
     pub fn render(&mut self) {
-        self.previous_frame_end.as_mut().unwrap().cleanup_finished();
-
         if self.recreate_swapchain {
             self.recreate_swapchain();
         }
@@ -234,11 +262,10 @@ impl VulkanApp {
         };
 
         let mut cmd_buffer_builder = self.create_cmd_buffer_builder();
-
         cmd_buffer_builder
             .begin_render_pass(
                 RenderPassBeginInfo {
-                    clear_values: vec![Some(self.clear_values.into())],
+                    clear_values: self.clear_values.clone(),
                     ..RenderPassBeginInfo::framebuffer(
                         self.framebuffers[self.draw_image_index].clone(),
                     )
@@ -252,16 +279,33 @@ impl VulkanApp {
                 vulkano::pipeline::PipelineBindPoint::Graphics,
                 self.graphics_pipeline.layout().clone(),
                 0,
-                self.graphics_descriptor_set.clone(),
+                self.tile_texture_descriptor_set.clone(),
             )
             .bind_vertex_buffers(0, self.device_local_tile_instance_buffer.clone())
             .push_constants(self.graphics_pipeline.layout().clone(), 0, push_constants)
             .draw(4, self.map.num_of_vulkan_instances, 0, 0)
-            .unwrap()
-            .end_render_pass()
+            .unwrap();
+
+        let num_of_vulkan_building_instances = self.map.building_vector.len();
+        if num_of_vulkan_building_instances > 0 {
+            cmd_buffer_builder
+                .bind_vertex_buffers(0, self.device_local_building_instance_buffer.clone())
+                .bind_descriptor_sets(
+                    vulkano::pipeline::PipelineBindPoint::Graphics,
+                    self.graphics_pipeline.layout().clone(),
+                    0,
+                    self.building_texture_descriptor_set.clone(),
+                )
+                .draw(4, self.map.building_vector.len() as u32, 0, 0)
+                .unwrap();
+        }
+        cmd_buffer_builder
+        .end_render_pass()
             .unwrap();
 
         let cmd_buffer = cmd_buffer_builder.build().unwrap();
+
+        self.previous_frame_end.as_mut().unwrap().cleanup_finished();
 
         let render_future = self
             .previous_frame_end
@@ -401,11 +445,17 @@ impl VulkanApp {
                     store: Store,
                     format: swapchain.image_format(),
                     samples: 1,
+                },
+                depth: {
+                    load: Clear,
+                    store: DontCare,
+                    format: Format::D16_UNORM,
+                    samples: 1,
                 }
             },
             pass: {
                 color: [color],
-                depth_stencil: {}
+                depth_stencil: {depth}
             }
         )
         .unwrap()
@@ -426,6 +476,7 @@ impl VulkanApp {
             )
             .viewport_state(ViewportState::viewport_dynamic_scissor_irrelevant())
             .fragment_shader(fragment_shader.entry_point("main").unwrap(), ())
+            .depth_stencil_state(DepthStencilState::simple_depth_test())
             .color_blend_state(ColorBlendState::new(subpass.num_color_attachments()).blend_alpha())
             .render_pass(subpass)
             .build(device.clone())
@@ -505,12 +556,18 @@ impl VulkanApp {
     }
 
     fn window_size_dependent_setup(
+        device: Arc<Device>,
         images: &[Arc<SwapchainImage<Window>>],
         viewport: &mut Viewport,
         render_pass: Arc<RenderPass>,
     ) -> Vec<Arc<Framebuffer>> {
         let dimensions = images[0].dimensions().width_height();
         viewport.dimensions = [dimensions[0] as f32, dimensions[1] as f32];
+
+        let depth_buffer = ImageView::new_default(
+            AttachmentImage::transient(device.clone(), dimensions, Format::D16_UNORM).unwrap(),
+        )
+        .unwrap();
 
         images
             .iter()
@@ -519,7 +576,7 @@ impl VulkanApp {
                 Framebuffer::new(
                     render_pass.clone(),
                     FramebufferCreateInfo {
-                        attachments: vec![view],
+                        attachments: vec![view, depth_buffer.clone()],
                         ..Default::default()
                     },
                 )
@@ -539,6 +596,7 @@ impl VulkanApp {
         };
         self.swapchain = new_swapchain;
         self.framebuffers = Self::window_size_dependent_setup(
+            self.device.clone(),
             &new_images,
             &mut self.viewport,
             self.render_pass.clone(),
