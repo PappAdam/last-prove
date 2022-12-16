@@ -1,4 +1,5 @@
 use std::io::Cursor;
+use std::ops::RangeInclusive;
 use std::string::FromUtf8Error;
 use std::{ops::Deref, sync::Arc};
 
@@ -21,9 +22,9 @@ use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
 use vulkano::format::ClearValue;
 use vulkano::image::{AttachmentImage, ImageAccess};
 use vulkano::pipeline::graphics::color_blend::ColorBlendState;
-use vulkano::pipeline::graphics::depth_stencil::DepthStencilState;
+use vulkano::pipeline::graphics::depth_stencil::{CompareOp, DepthStencilState};
 use vulkano::pipeline::graphics::viewport::Viewport;
-use vulkano::pipeline::Pipeline;
+use vulkano::pipeline::{Pipeline, StateMode};
 use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo};
 use vulkano::sampler::{Sampler, SamplerCreateInfo};
 use vulkano::swapchain::{PresentInfo, SwapchainAcquireFuture, SwapchainCreationError};
@@ -73,6 +74,7 @@ pub struct VulkanApp {
     previous_frame_end: Option<Box<dyn GpuFuture>>,
     device_local_tile_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredTile]>>,
     device_local_building_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredBuilding]>>,
+    building_instance_count: u16,
     //END OF VULKAN VARIABLES
     //END OF VULKAN VARIABLES
     pub input: Input,
@@ -198,11 +200,12 @@ impl VulkanApp {
             &mut viewport,
             render_pass.clone(),
         );
+
         let recreate_swapchain = false;
 
-        let mapsize = 500;
+        let mapsize = 10;
         let mut map = Map::new(mapsize, 10);
-        map.generate(None);
+        map.generate_automata(1.0);
         let instances = map.get_tile_instance_coordinates();
 
         let mut camera = Camera::new(surface.window().inner_size().into());
@@ -217,7 +220,13 @@ impl VulkanApp {
                 map.get_building_instance_coordinates(),
             );
 
-        let previous_frame_end = Some(tile_texture_future.join(building_texture_future).join(tile_copy_future).join(building_copy_future).boxed());
+        let previous_frame_end = Some(
+            tile_texture_future
+                .join(building_texture_future)
+                .join(tile_copy_future)
+                .join(building_copy_future)
+                .boxed(),
+        );
         (
             Self {
                 surface,
@@ -237,6 +246,7 @@ impl VulkanApp {
                 previous_frame_end,
                 device_local_tile_instance_buffer,
                 device_local_building_instance_buffer,
+                building_instance_count: 0,
                 map,
                 input: Input::init(),
                 camera,
@@ -286,8 +296,17 @@ impl VulkanApp {
             .draw(4, self.map.num_of_vulkan_instances, 0, 0)
             .unwrap();
 
-        let num_of_vulkan_building_instances = self.map.building_vector.len();
-        if num_of_vulkan_building_instances > 0 {
+        let current_building_instance_count = self.map.building_vector.len() as u16;
+        if current_building_instance_count != self.building_instance_count {
+            let gpu_stored_building_vector = self.map.get_building_instance_coordinates();
+            self.building_instance_count = current_building_instance_count;
+            (self.device_local_building_instance_buffer, _) = Self::create_device_local_buffer(
+                self.device.clone(),
+                self.graphics_queue.clone(),
+                gpu_stored_building_vector,
+            )
+        }
+        if self.building_instance_count > 0 {
             cmd_buffer_builder
                 .bind_vertex_buffers(0, self.device_local_building_instance_buffer.clone())
                 .bind_descriptor_sets(
@@ -296,12 +315,10 @@ impl VulkanApp {
                     0,
                     self.building_texture_descriptor_set.clone(),
                 )
-                .draw(4, self.map.building_vector.len() as u32, 0, 0)
+                .draw(4, self.building_instance_count as u32, 0, 0)
                 .unwrap();
         }
-        cmd_buffer_builder
-        .end_render_pass()
-            .unwrap();
+        cmd_buffer_builder.end_render_pass().unwrap();
 
         let cmd_buffer = cmd_buffer_builder.build().unwrap();
 
@@ -468,6 +485,10 @@ impl VulkanApp {
         fragment_shader: Arc<ShaderModule>,
     ) -> Arc<GraphicsPipeline> {
         let subpass = Subpass::from(render_pass, 0).unwrap();
+
+        let mut depth_stencil_state = DepthStencilState::simple_depth_test();
+        depth_stencil_state.depth.unwrap().compare_op = StateMode::Fixed(CompareOp::Never);
+
         GraphicsPipeline::start()
             .vertex_input_state(BuffersDefinition::new().instance::<GpuStoredTile>())
             .vertex_shader(vertex_shader.entry_point("main").unwrap(), ())
@@ -476,7 +497,7 @@ impl VulkanApp {
             )
             .viewport_state(ViewportState::viewport_dynamic_scissor_irrelevant())
             .fragment_shader(fragment_shader.entry_point("main").unwrap(), ())
-            .depth_stencil_state(DepthStencilState::simple_depth_test())
+            //.depth_stencil_state(depth_stencil_state)
             .color_blend_state(ColorBlendState::new(subpass.num_color_attachments()).blend_alpha())
             .render_pass(subpass)
             .build(device.clone())

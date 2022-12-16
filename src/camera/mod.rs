@@ -67,6 +67,10 @@ impl Camera {
         self.coordinates = coordinates;
     }
 
+    pub fn relative_screen_position_to_rounded_tile_coordinates(&self, mouse_screen_position: Vector2) -> Vector2 {
+        let mouse_coordinates = self.relative_screen_position_to_tile_coordinates(mouse_screen_position);
+        mouse_coordinates.round()
+    }
     //pub fn absolute_screen_position_to_tile_coordinates(
     //    &self,
     //    screen_position: Vector2,

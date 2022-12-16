@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign, MulAssign, DivAssign, Neg},
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
 use bytemuck::{Pod, Zeroable};
@@ -63,7 +63,7 @@ impl<T: Into<f32> + Copy> Mul<T> for Vector2 {
     }
 }
 
-impl<T: Into<f32> + Copy> MulAssign<T> for Vector2{
+impl<T: Into<f32> + Copy> MulAssign<T> for Vector2 {
     fn mul_assign(&mut self, rhs: T) {
         self.x *= rhs.into();
         self.y *= rhs.into();
@@ -114,7 +114,7 @@ impl Into<[usize; 2]> for Vector2 {
 }
 impl From<PhysicalPosition<f64>> for Vector2 {
     fn from(position: PhysicalPosition<f64>) -> Self {
-        Vector2 {
+        Self {
             x: position.x as f32,
             y: position.y as f32,
         }
@@ -122,9 +122,20 @@ impl From<PhysicalPosition<f64>> for Vector2 {
 }
 impl From<PhysicalSize<u32>> for Vector2 {
     fn from(position: PhysicalSize<u32>) -> Self {
-        Vector2 {
+        Self {
             x: position.width as f32,
             y: position.height as f32,
+        }
+    }
+}
+impl<T> From<[T; 2]> for Vector2
+where
+    T: Into<f32> + Copy,
+{
+    fn from(coordinates: [T; 2]) -> Self {
+        Self {
+            x: coordinates[0].into(),
+            y: coordinates[1].into(),
         }
     }
 }
@@ -150,12 +161,6 @@ impl Vector2 {
             y: y as f32,
         }
     }
-    pub fn from<T: Into<f32> + Copy>(coordinates: [T; 2]) -> Self {
-        Self {
-            x: coordinates[0].into(),
-            y: coordinates[1].into(),
-        }
-    }
     pub fn from_usize(coordinates: [usize; 2]) -> Self {
         Self {
             x: coordinates[0] as f32,
@@ -163,7 +168,10 @@ impl Vector2 {
         }
     }
     pub fn uniform<T: Into<f32> + Copy>(x: T) -> Self {
-        Vector2 { x: x.into(), y: x.into() }
+        Vector2 {
+            x: x.into(),
+            y: x.into(),
+        }
     }
 
     pub fn zero() -> Self {

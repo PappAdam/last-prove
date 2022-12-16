@@ -47,9 +47,8 @@ impl Map {
                             coordinates: [
                                 tile.coordinates[0] as f32 - z as f32,
                                 tile.coordinates[1] as f32 - z as f32,
-                                1f32 - ((tile.coordinates[0] + tile.coordinates[1] + z as u16)
-                                    as f32
-                                    / (self.size as f32 * 2f32 + self.height as f32)),
+                                (tile.coordinates[0] + tile.coordinates[1] + z as u16 + 1) as f32
+                                    / (self.size * 2 + self.height as usize) as f32,
                             ],
                             texture_layer: tile.neighbors as u32,
                         };
@@ -59,29 +58,9 @@ impl Map {
             }
         }
         assert_eq!(coordinate_vec.len(), vector_index);
+        dbg!(coordinate_vec.clone());
         coordinate_vec
     }
-
-    pub fn get_building_instance_coordinates(&self) -> Vec<GpuStoredBuilding> {
-        let mut gpu_stored_building_vector =
-            vec::from_elem(GpuStoredBuilding::zero(), self.building_vector.len());
-        let mut vector_index = 0;
-        for building in &self.building_vector {
-            let z = self.get_tile_from_matr(Vector2::new(building.coordinates[0], building.coordinates[1])).unwrap().max_z + 1;
-            gpu_stored_building_vector[vector_index] = GpuStoredBuilding {
-                coordinates: [
-                    building.coordinates[0] as f32 - z as f32,
-                    building.coordinates[1] as f32 - z as f32,
-                    1f32 - ((building.coordinates[0] + building.coordinates[1] + z as u16) as f32
-                        / (self.size as f32 * 2f32 + self.height as f32)),
-                ],
-                texture_layer: 0
-            };
-            vector_index += 1;
-        }
-        gpu_stored_building_vector
-    }
-
 
     pub fn get_mut_tile_from_matr(&mut self, coordinates: Vector2) -> Option<&mut Tile> {
         if coordinates.x >= 0f32
@@ -112,6 +91,19 @@ impl Map {
             return self.tile_matr[coordinates.y as usize][coordinates.x as usize].clone();
         }
         None
+    }
+    pub fn is_tile_at(&self, coordinates: Vector2) -> bool {
+        if coordinates.x >= 0f32
+            && coordinates.x < self.size as f32
+            && coordinates.y >= 0f32
+            && coordinates.y < self.size as f32
+        {
+            if let Some(_) = self.tile_matr[coordinates.y as usize][coordinates.x as usize].clone()
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

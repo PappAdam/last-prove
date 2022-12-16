@@ -36,7 +36,7 @@ impl Map {
                         ((perlin_value - treshold) / z_difference_for_height) as u8,
                     );
                     self.tile_matr[y][x] = Some(tile);
-                    self.building_vector.push(Building { coordinates: tile_position.into(), texture_layer: 0 })
+                    //self.building_vector.push(Building { coordinates: tile_position.into(), texture_layer: 0 })
                 }
             }
         }
@@ -61,6 +61,7 @@ impl Map {
         self.set_tile_types();
         self.calculate_min_z();
         self.calculate_vulkan_instances();
+        self.building_vector.push(Building { coordinates: [4, 4], texture_layer: 0 });
     }
 
     #[allow(unused)]

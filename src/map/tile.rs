@@ -23,7 +23,7 @@ pub struct Tile {
     pub max_z: u8, //Max Z also means height.
     pub min_z: u8, //Not range, because range is not copiable
     pub neighbors: u8,
-    flags: u8,
+    pub flags: u8,
     //0 BUILDING ON TOP
     //1 NOT USED
     //2 NOT USED
@@ -32,7 +32,7 @@ pub struct Tile {
     //5 NOT USED
     //6 NOT USED
     //7 NOT USED
-    building_on_top_index_in_vector: u16,
+    pub building_on_top_index_in_vector: u16,
     //status: TileStatus for clicked events and stuff like that maybe
 }
 

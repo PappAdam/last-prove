@@ -28,7 +28,6 @@ void main() {
       (instance_coordinates.x - instance_coordinates.y) * camera.tile_size.x / 2 + offsets.x * camera.tile_size.x,
       (instance_coordinates.x + instance_coordinates.y) * camera.tile_size.y / 4 + offsets.y * camera.tile_size.y
       );
-
    gl_Position = vec4(vertex_position, coordinates.z, 1.0);
    out_texture_layer = texture_layer;
    uv_coordinates = offsets;

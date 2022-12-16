@@ -6,6 +6,7 @@ mod vulkanapp;
 
 use core::time;
 use engine::vector2::Vector2;
+use map::building::Building;
 use std::time::Instant;
 use vulkanapp::VulkanApp;
 use winit::event::{Event, WindowEvent, VirtualKeyCode};
@@ -44,7 +45,10 @@ fn main() {
             last_frame = std::time::Instant::now();
 
             if vulkan_app.input.get_mousebutton_pressed(winit::event::MouseButton::Left) {
-                println!("Clicked tile: {:?}", vulkan_app.map.get_tile_from_matr(vulkan_app.camera.relative_screen_position_to_tile_coordinates(vulkan_app.input.get_mouse_position()).round().into()))
+                let clicked_tile_coordinates = vulkan_app.camera.relative_screen_position_to_rounded_tile_coordinates(vulkan_app.input.get_mouse_position());
+                if vulkan_app.map.is_tile_at(clicked_tile_coordinates) {
+                    vulkan_app.map.build_building(clicked_tile_coordinates, 0);
+                }
             }
 
             vulkan_app.refresh_game(elapsed as f32 / 1000000.0);
