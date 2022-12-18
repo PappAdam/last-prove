@@ -8,7 +8,7 @@ use crate::create_texture;
 use crate::engine::vector2::Vector2;
 use crate::input::Input;
 use crate::map::building::GpuStoredBuilding;
-use crate::map::tile::{GpuStoredTile, Tile};
+use crate::map::tile::{GpuStoredTile, Tile, TileFlag};
 use crate::map::Map;
 use bytemuck::Pod;
 use vulkano::buffer::{BufferContents, BufferUsage, CpuAccessibleBuffer, DeviceLocalBuffer};
@@ -307,18 +307,17 @@ impl VulkanApp {
                 gpu_stored_building_vector,
             )
         }
-        if self.building_instance_count > 0 {
-            cmd_buffer_builder
-                .bind_vertex_buffers(0, self.device_local_building_instance_buffer.clone())
-                .bind_descriptor_sets(
-                    vulkano::pipeline::PipelineBindPoint::Graphics,
-                    self.graphics_pipeline.layout().clone(),
-                    0,
-                    self.building_texture_descriptor_set.clone(),
-                )
-                .draw(4, self.building_instance_count as u32, 0, 0)
-                .unwrap();
-        }
+        cmd_buffer_builder
+            .bind_vertex_buffers(0, self.device_local_building_instance_buffer.clone())
+            .bind_descriptor_sets(
+                vulkano::pipeline::PipelineBindPoint::Graphics,
+                self.graphics_pipeline.layout().clone(),
+                0,
+                self.building_texture_descriptor_set.clone(),
+            )
+            .draw(4, self.building_instance_count as u32, 0, 0)
+            .unwrap();
+
         cmd_buffer_builder.end_render_pass().unwrap();
 
         let cmd_buffer = cmd_buffer_builder.build().unwrap();
@@ -357,8 +356,34 @@ impl VulkanApp {
     }
 
     pub fn refresh_game(&mut self, delta_time: f32) {
+        self.process_input_commands();
+
         self.camera.refresh_camera(&self.input, delta_time);
         self.input.refresh_input();
+    }
+
+    fn process_input_commands(&mut self) {
+        if self
+            .input
+            .get_mousebutton_pressed(winit::event::MouseButton::Left)
+        {
+            let mouse_coordinates = self
+                .camera
+                .relative_screen_position_to_tile_coordinates(self.input.get_mouse_position());
+            if let Some(clicked_tile) = self.map.get_clicked_tile(mouse_coordinates) {
+                //No building on top
+                if clicked_tile.flags & TileFlag::BuildingOnTop as u8
+                    != TileFlag::BuildingOnTop as u8
+                {
+                    self.map.build_building(clicked_tile.coordinates.into(), 0);
+                }
+                //Has building on top
+                else {
+                    self.map.destroy_building(clicked_tile.coordinates.into());
+                }
+            } else {
+            }
+        }
     }
 
     fn query_physical_device(

@@ -7,6 +7,7 @@ pub mod tile;
 use std::fmt::{self, Display};
 use std::vec;
 
+use crate::engine::object_vector::ObjVec;
 use crate::engine::vector2::Vector2;
 use crate::map::tile::GpuStoredTile;
 
@@ -17,7 +18,7 @@ pub struct Map {
     pub size: usize,
     pub height: u8,
     pub tile_matr: Vec<Vec<Option<tile::Tile>>>,
-    pub building_vector: Vec<Building>,
+    pub building_vector: ObjVec<Building>,
     pub num_of_vulkan_instances: u32,
     pub num_of_tile_columns: u32,
 }
@@ -29,7 +30,7 @@ impl Map {
             size,
             height,
             tile_matr: vec::from_elem(vec::from_elem(None, size as usize), size as usize),
-            building_vector: vec![],
+            building_vector: ObjVec::with_capacity(10),
             num_of_vulkan_instances: 0,
             num_of_tile_columns: 0,
         }

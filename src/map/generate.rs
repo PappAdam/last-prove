@@ -44,7 +44,7 @@ impl Map {
         self.set_tile_types();
         self.calculate_min_z();
         self.calculate_vulkan_instances();
-        self.building_vector.push(Building { coordinates: [self.size as u16 / 2, self.size as u16 / 2], texture_layer: 0 })
+        self.build_building(Vector2::uniform_usize(self.size / 2), 0);
     }
 
     pub fn generate_automata(&mut self, density: f32) {
@@ -61,7 +61,6 @@ impl Map {
         self.set_tile_types();
         self.calculate_min_z();
         self.calculate_vulkan_instances();
-        self.building_vector.push(Building { coordinates: [4, 4], texture_layer: 0 });
     }
 
     #[allow(unused)]

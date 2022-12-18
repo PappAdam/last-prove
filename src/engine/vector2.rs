@@ -161,18 +161,19 @@ impl Vector2 {
             y: y as f32,
         }
     }
-    pub fn from_usize(coordinates: [usize; 2]) -> Self {
-        Self {
-            x: coordinates[0] as f32,
-            y: coordinates[1] as f32,
-        }
-    }
     pub fn uniform<T: Into<f32> + Copy>(x: T) -> Self {
         Vector2 {
             x: x.into(),
             y: x.into(),
         }
     }
+    pub fn uniform_usize(x: usize) -> Self {
+        Vector2 {
+            x: x as f32,
+            y: x as f32,
+        }
+    }
+
 
     pub fn zero() -> Self {
         Self { x: 0.0, y: 0.0 }

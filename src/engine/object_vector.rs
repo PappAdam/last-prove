@@ -1,4 +1,4 @@
-use std::ops::{Index, IndexMut};
+use std::{ops::{Index, IndexMut}, vec::IntoIter, fmt::Debug};
 
 pub trait GameObject {
     fn is_none(&self) -> bool;
@@ -11,7 +11,7 @@ pub struct ObjVec<T: GameObject> {
     content: Vec<T>,
 }
 
-impl<T: GameObject> ObjVec<T> {
+impl<T: GameObject + Debug> ObjVec<T> {
     pub fn new() -> Self {
         Self {
             first_empty_index: usize::MAX,
@@ -26,13 +26,17 @@ impl<T: GameObject> ObjVec<T> {
         }
     }
 
-    pub fn push(&mut self, value: T) {
+    pub fn push(&mut self, value: T) -> u16 {
+        let index_pushed;
         if self.first_empty_index != usize::MAX {
             self.content[self.first_empty_index] = value;
+            index_pushed = self.first_empty_index as u16;
             self.seek_for_empty();
         } else {
+            index_pushed = self.len() as u16;
             self.content.push(value);
         }
+        index_pushed
     }
 
     pub fn remove(&mut self, index: usize) {
@@ -53,6 +57,16 @@ impl<T: GameObject> ObjVec<T> {
 
         self.first_empty_index = index;
     }
+
+    pub fn len(&self) -> usize{
+        let mut len = 0;
+        for element in &self.content {
+            if !element.is_none() {
+                len += 1
+            }
+        }
+        len
+    }
 }
 
 impl<T: GameObject> Index<usize> for ObjVec<T> {
@@ -68,5 +82,34 @@ impl<T: GameObject> IndexMut<usize> for ObjVec<T> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.content[index]
+    }
+}
+
+impl<'a, T: GameObject> IntoIterator for &'a ObjVec<T> 
+{
+    type Item = &'a T;
+
+    type IntoIter = ObjVecIterator<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        ObjVecIterator{ vector: &self.content, index: 0 }
+    }
+}
+
+pub struct ObjVecIterator<'a, T: GameObject> {
+    vector: &'a Vec<T>,
+    index: usize
+}
+
+impl<'a, T: GameObject> Iterator for ObjVecIterator<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut next = None;
+        if self.vector.len() > self.index {
+            next = Some(&self.vector[self.index]);
+            self.index += 1;
+        }
+        next
     }
 }

@@ -12,7 +12,8 @@ pub enum NeighborLocation {
     Right = 0b0001,  //1
 }
 pub enum TileFlag {
-    BuildingOnTop = 0b10000000,
+    NotNone = 0b10000000,
+    BuildingOnTop = 0b01000000,
 }
 
 #[repr(C)]
@@ -24,8 +25,8 @@ pub struct Tile {
     pub min_z: u8, //Not range, because range is not copiable
     pub neighbors: u8,
     pub flags: u8,
-    //0 BUILDING ON TOP
-    //1 NOT USED
+    //0 NOT NONE (0 If None.)
+    //1 BUILDING ON TOP
     //2 NOT USED
     //3 NOT USED
     //4 NOT USED
