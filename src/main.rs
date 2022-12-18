@@ -44,16 +44,18 @@ fn main() {
             avg_elapsed = ((frame_count - 1) * avg_elapsed + elapsed) / frame_count;
             last_frame = std::time::Instant::now();
 
-            if vulkan_app.input.get_mousebutton_pressed(winit::event::MouseButton::Left) {
-                let clicked_tile_coordinates = vulkan_app.camera.relative_screen_position_to_rounded_tile_coordinates(vulkan_app.input.get_mouse_position());
-                if vulkan_app.map.is_tile_at(clicked_tile_coordinates) {
-                    vulkan_app.map.build_building(clicked_tile_coordinates, 0);
+            if vulkan_app
+                .input
+                .get_mousebutton_pressed(winit::event::MouseButton::Left)
+            {
+                let mouse_coordinates = vulkan_app.camera.relative_screen_position_to_tile_coordinates(vulkan_app.input.get_mouse_position());
+                if let Some(clicked_tile) = vulkan_app.map.get_clicked_tile(mouse_coordinates) {
+                    vulkan_app.map.build_building(clicked_tile.coordinates.into(), 0);
                 }
             }
 
             vulkan_app.refresh_game(elapsed as f32 / 1000000.0);
             vulkan_app.render();
-
         }
         _ => {}
     });

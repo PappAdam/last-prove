@@ -58,8 +58,63 @@ impl Map {
             }
         }
         assert_eq!(coordinate_vec.len(), vector_index);
-        dbg!(coordinate_vec.clone());
         coordinate_vec
+    }
+
+    pub fn get_clicked_tile(&self, mouse_tile_coordinates: Vector2) -> Option<&Tile> {
+        let rounded_mouse_coordinates = mouse_tile_coordinates.round();
+
+        //Checking tiles in front of the click position
+        let (mut final_clicked_tile, mut height_of_click) = self.get_shown_tile_at_coordinates(rounded_mouse_coordinates);
+        let side = (mouse_tile_coordinates.x - mouse_tile_coordinates.x.round())
+        //Side is < 0 if on the left, > 0 if on the right.
+            - (mouse_tile_coordinates.y - mouse_tile_coordinates.y.round());
+
+        //Checking tiles to the sides from the click position
+        let side_offset = {
+            if side < 0.0 {
+                Vector2::new(-1.0, 0.0)
+            } else {
+                Vector2::new(0.0, -1.0)
+            }
+        };
+        let (clicked_tile_on_side, height_of_side_of_click) =
+            self.get_shown_tile_at_coordinates(rounded_mouse_coordinates + side_offset);
+
+        if let Some(mut clicked_tile) = final_clicked_tile {
+            if let Some(clicked_tile_on_side) = clicked_tile_on_side {
+                height_of_click += 1;
+                if height_of_side_of_click >= height_of_click {
+                    clicked_tile = clicked_tile_on_side;
+                }
+            }
+            final_clicked_tile = Some(clicked_tile)
+        } else {
+            final_clicked_tile = self.get_tile_from_matr(rounded_mouse_coordinates + side_offset);
+            if let None = final_clicked_tile {
+                final_clicked_tile = self.get_tile_from_matr(rounded_mouse_coordinates + Vector2::uniform(-1.0))
+            }
+        }
+
+        final_clicked_tile
+    }
+
+    fn get_shown_tile_at_coordinates(&self, rounded_coordinates: Vector2) -> (Option<&Tile>, u8) {
+        //Returns the tile that is drawn on top of the original. (The tile that is shown on the screen)
+        let mut clicked_tile = self.get_tile_from_matr(rounded_coordinates);
+        let mut clicked_tile_z = 0;
+        for z_up in 1..self.height + 1 {
+            if let Some(other_tile) =
+                self.get_tile_from_matr(Vector2::uniform(z_up) + rounded_coordinates)
+            {
+                if other_tile.max_z >= z_up {
+                    clicked_tile = Some(other_tile);
+                    clicked_tile_z = z_up;
+                }
+            }
+        }
+
+        (clicked_tile, clicked_tile_z)
     }
 
     pub fn get_mut_tile_from_matr(&mut self, coordinates: Vector2) -> Option<&mut Tile> {

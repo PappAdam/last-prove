@@ -203,9 +203,10 @@ impl VulkanApp {
 
         let recreate_swapchain = false;
 
-        let mapsize = 10;
+        let mapsize = 100;
         let mut map = Map::new(mapsize, 10);
-        map.generate_automata(1.0);
+        //map.generate_automata(1.0);
+        map.generate(Some(1));
         let instances = map.get_tile_instance_coordinates();
 
         let mut camera = Camera::new(surface.window().inner_size().into());
