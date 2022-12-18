@@ -1,8 +1,6 @@
+use crate::{camera::Camera, engine::vector2::Vector2};
 use std::collections::HashMap;
-use sdl2::keyboard::Keycode;
-use sdl2::mouse::MouseButton;
-use crate::engine::vector2::Vector2;
-
+use winit::event::{ElementState, KeyboardInput, MouseButton, MouseScrollDelta, VirtualKeyCode};
 
 #[derive(Debug)]
 pub enum Keystate {
@@ -17,13 +15,13 @@ pub struct Input {
     mouse_position: Vector2,
     mouse_movement: Vector2, //Mouse movement means the position between last and current frame.
     mousebuttons: HashMap<MouseButton, Keystate>,
-    buttons: HashMap<Keycode, Keystate>,
+    buttons: HashMap<VirtualKeyCode, Keystate>,
 }
 #[allow(dead_code)]
 impl Input {
-    pub fn init(window_size: (u16, u16)) -> Self {
+    pub fn init() -> Self {
         let mouse_wheel = 0;
-        let mouse_position = Vector2::new((window_size.0 / 2) as f32, (window_size.0 / 2) as f32);
+        let mouse_position = Vector2::zero();
         let mouse_movement = Vector2::default();
         let mousebuttons = HashMap::new();
         let buttons = HashMap::new();
@@ -36,52 +34,40 @@ impl Input {
         }
     }
 
-
-
-    pub fn on_key_pressed(&mut self, keycode: Option<Keycode>) {
-        match keycode {
-            None => {}
-            Some(keycode) => {
-                self.buttons.insert(keycode, Keystate::Pressed);
-            }
+    pub fn on_key_input(&mut self, input: KeyboardInput) {
+        match input.virtual_keycode {
+            Some(_) => match input.state {
+                ElementState::Pressed => {
+                    self.buttons
+                        .insert(input.virtual_keycode.unwrap(), Keystate::Pressed);
+                }
+                ElementState::Released => {
+                    self.buttons
+                        .insert(input.virtual_keycode.unwrap(), Keystate::Released);
+                }
+            },
+            None => {  }
         }
     }
-    pub fn on_key_released(&mut self, keycode: Option<Keycode>) {
-        match keycode {
-            None => {}
-            Some(keycode) => {
-                self.buttons.insert(keycode, Keystate::Released);
-            }
-        }
-    }
-    pub fn on_mousebutton_pressed(&mut self, mouse_btn: MouseButton) {
-        match mouse_btn {
-            MouseButton::Unknown => {}
-            _ => {
-                self.mousebuttons.insert(mouse_btn, Keystate::Pressed);
-            }
-        }
-    }
-    pub fn on_mousebutton_released(&mut self, mouse_btn: MouseButton) {
-        match mouse_btn {
-            MouseButton::Unknown => {}
-            _ => {
-                self.mousebuttons.insert(mouse_btn, Keystate::Released);
-            }
-        }
+    pub fn on_mousebutton_input(&mut self, mouse_btn: MouseButton, state: ElementState) {
+        match state {
+            ElementState::Pressed => self.mousebuttons.insert(mouse_btn, Keystate::Pressed),
+            ElementState::Released => self.mousebuttons.insert(mouse_btn, Keystate::Released),
+        };
     }
 
-
-    pub fn on_mousewheel_scrolled(&mut self, y: i8) {
-        self.mouse_wheel = y;
+    pub fn on_mousewheel_scrolled(&mut self, delta: MouseScrollDelta) {
+        match delta {
+            MouseScrollDelta::LineDelta(_, y) => self.mouse_wheel = y as i8,
+            MouseScrollDelta::PixelDelta(_) => {}
+        }
     }
-    pub fn on_mouse_moved(&mut self, mouse_position: (f32, f32), mouse_movement: (f32, f32)) {
-        self.mouse_position.x = mouse_position.0;
-        self.mouse_position.y = mouse_position.1;
-        self.mouse_movement.x = mouse_movement.0;
-        self.mouse_movement.y = mouse_movement.1;
+    pub fn on_mouse_moved(&mut self, new_mouse_position: Vector2, camera_size: Vector2) {
+        let relative_new_mouse_position =
+            new_mouse_position / (camera_size / 2.0) - Vector2::new(1u8, 1);
+        self.mouse_movement += relative_new_mouse_position - self.mouse_position;
+        self.mouse_position = relative_new_mouse_position;
     }
-
 
     pub fn refresh_input(&mut self) {
         for key in self.buttons.iter_mut() {
@@ -103,30 +89,27 @@ impl Input {
         self.mouse_movement.y = 0.0;
     }
 
-
-
-
     //Just functions to get input values.
-    fn get_key_state(&self, keycode: Keycode) -> &Keystate {
+    fn get_key_state(&self, keycode: VirtualKeyCode) -> &Keystate {
         match self.buttons.get(&keycode) {
             Some(keycode) => keycode,
             None => &Keystate::Up,
         }
     }
     //3 functions for getting specific key states, use !get_key_down for key up.
-    pub fn get_key_down(&self, keycode: Keycode) -> bool {
+    pub fn get_key_down(&self, keycode: VirtualKeyCode) -> bool {
         match self.get_key_state(keycode) {
             Keystate::Down | Keystate::Pressed => true,
             _ => false,
         }
     }
-    pub fn get_key_pressed(&self, keycode: Keycode) -> bool {
+    pub fn get_key_pressed(&self, keycode: VirtualKeyCode) -> bool {
         match self.get_key_state(keycode) {
             Keystate::Pressed => true,
             _ => false,
         }
     }
-    pub fn get_key_released(&self, keycode: Keycode) -> bool {
+    pub fn get_key_released(&self, keycode: VirtualKeyCode) -> bool {
         match self.get_key_state(keycode) {
             Keystate::Released => true,
             _ => false,
@@ -164,7 +147,10 @@ impl Input {
     }
     pub fn get_rel_mouse_position(&self, window_size: (u16, u16)) -> (f32, f32) {
         let mouse_position = self.get_mouse_position();
-        ((mouse_position.x as f32) / (window_size.0 as f32 - 1.0), (mouse_position.y as f32) / (window_size.1 as f32 - 1.0))
+        (
+            (mouse_position.x as f32) / (window_size.0 as f32 - 1.0),
+            (mouse_position.y as f32) / (window_size.1 as f32 - 1.0),
+        )
     }
     pub fn get_mouse_movement(&self) -> Vector2 {
         self.mouse_movement
@@ -177,16 +163,16 @@ impl Input {
         for key in &self.buttons {
             match key.1 {
                 Keystate::Down => {
-                    println!("{} DOWN", key.0)
+                    println!("{:?} DOWN", key.0)
                 }
                 Keystate::Up => {
-                    println!("{} UP", key.0)
+                    println!("{:?} UP", key.0)
                 }
                 Keystate::Pressed => {
-                    println!("{} PRESSED", key.0)
+                    println!("{:?} PRESSED", key.0)
                 }
                 Keystate::Released => {
-                    println!("{} RELEASED", key.0)
+                    println!("{:?} RELEASED", key.0)
                 }
             }
         }

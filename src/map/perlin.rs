@@ -19,8 +19,8 @@ pub struct Perlin2D {
 }
 
 impl Perlin2D {
-    pub fn new(seed: i32) -> Self {
-        Self { seed }
+    pub fn new(seed: u16) -> Self {
+        Self { seed: seed as i32 }
     }
 
     pub fn perlin2d(&self, x: f32, y: f32, freq: f32, depth: u8) -> f32 {
