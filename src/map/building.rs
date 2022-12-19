@@ -97,7 +97,6 @@ impl Map {
             if tile_under_building.flags & TileFlag::BuildingOnTop as u8 == 0 {
                 //No building on top of tile
                 tile_under_building.flags |= TileFlag::BuildingOnTop as u8;
-                println!("{}", tile_under_building.flags);
                 tile_under_building.building_on_top_index_in_vector = building_index;
             } else {
                 panic!(
