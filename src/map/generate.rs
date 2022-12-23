@@ -1,5 +1,4 @@
-use super::building::Building;
-use super::tile::NeighborLocation;
+use super::tile::TileFlag;
 use super::{automata, perlin};
 use super::{tile::Tile, Map};
 use crate::engine::vector2::Vector2;
@@ -47,20 +46,21 @@ impl Map {
         self.build_building(Vector2::uniform_usize(self.size / 2), 0);
     }
 
-    pub fn generate_automata(&mut self, density: f32) {
-        let automata_matr = automata::generate(self.size, density);
+    pub fn generate_automata(&mut self, density: f32, iterations: u8) {
+        let automata_matr = automata::generate(self.size, density, iterations);
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
                 if automata_matr[y][x] == 0 {
                     self.tile_matr[y][x] = None;
                 } else {
-                    self.tile_matr[y][x] = Some(Tile::new([x as u16, y as u16], 0));
+                    self.tile_matr[y][x] = Some(Tile::new([x as u16, y as u16], automata_matr[y][x] - 1));
                 }
             }
         }
         self.set_tile_types();
-        self.calculate_min_z();
+        //self.calculate_min_z();
         self.calculate_vulkan_instances();
+        self.build_building(Vector2::uniform_usize(self.size / 2), 0);
     }
 
     #[allow(unused)]
@@ -189,13 +189,13 @@ impl Map {
                     //Using floats to prevent subtracing with overflow
                     {
                         if other_tile.max_z == tile.max_z {
-                            tile.neighbors |= NeighborLocation::Top as u8;
+                            tile.flags |= TileFlag::NeighborOnTop as u8;
                         }
                     }
                     if let Some(other_tile) = self.get_tile_from_matr(Vector2::new_usize(x, y + 1))
                     {
                         if other_tile.max_z == tile.max_z {
-                            tile.neighbors |= NeighborLocation::Bottom as u8;
+                            tile.flags |= TileFlag::NeighborOnBottom as u8;
                         }
                     }
 
@@ -204,14 +204,14 @@ impl Map {
                     //Using floats to prevent subtracing with overflow
                     {
                         if other_tile.max_z == tile.max_z {
-                            tile.neighbors |= NeighborLocation::Left as u8;
+                            tile.flags |= TileFlag::NeighborOnLeft as u8;
                         }
                     }
 
                     if let Some(other_tile) = self.get_tile_from_matr(Vector2::new_usize(x + 1, y))
                     {
                         if other_tile.max_z == tile.max_z {
-                            tile.neighbors |= NeighborLocation::Right as u8;
+                            tile.flags |= TileFlag::NeighborOnRight as u8;
                         }
                     }
                     //println!("{:?}", tile);

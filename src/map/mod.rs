@@ -51,7 +51,7 @@ impl Map {
                                 (tile.coordinates[0] + tile.coordinates[1] + z as u16 + 1) as f32
                                     / (self.size * 2 + self.height as usize) as f32,
                             ],
-                            texture_layer: tile.neighbors as u32,
+                            texture_layer: (tile.flags >> 4) as u32,
                         };
                         vector_index += 1;
                     }

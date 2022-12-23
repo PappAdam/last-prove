@@ -2,34 +2,28 @@ use bytemuck::{Pod, Zeroable};
 use std::fmt::{Display, Result};
 use vulkano::impl_vertex;
 
-use crate::engine::vector2::Vector2;
 
-pub enum NeighborLocation {
-    // Dir from Top -> counter clockwise
-    Top = 0b1000,    //8
-    Left = 0b0100,   //4
-    Bottom = 0b0010, //2
-    Right = 0b0001,  //1
-}
 pub enum TileFlag {
-    NotNone = 0b10000000,
-    BuildingOnTop = 0b01000000,
+    NeighborOnTop = 0b10000000,
+    NeighborOnLeft = 0b01000000,
+    NeighborOnBottom = 0b00100000,
+    NeighborOnRight = 0b00010000,
+    BuildingOnTop = 0b00001000,
 }
 
 #[repr(C)]
 #[derive(Default, Debug, Clone, Copy, Pod, Zeroable)]
 pub struct Tile {
     pub coordinates: [u16; 2],
-    texture_layer: u16,
+    texture_layer: u8,
     pub max_z: u8, //Max Z also means height.
     pub min_z: u8, //Not range, because range is not copiable
-    pub neighbors: u8,
     pub flags: u8,
-    //0 NOT NONE (0 If None.)
-    //1 BUILDING ON TOP
-    //2 NOT USED
-    //3 NOT USED
-    //4 NOT USED
+    //0 NEIGHBOR ON TOP
+    //1 NEIGHBOR ON LEFT
+    //2 NEIGHBOR ON BOTTOM
+    //3 NEIGHBOR ON RIGHT
+    //4 BUILDING ON TOP
     //5 NOT USED
     //6 NOT USED
     //7 NOT USED
@@ -44,6 +38,7 @@ pub struct GpuStoredTile {
     pub texture_layer: u32,
 }
 impl_vertex!(GpuStoredTile, coordinates, texture_layer);
+
 
 impl GpuStoredTile {
     pub fn zero() -> Self {
@@ -62,7 +57,6 @@ impl Tile {
             min_z: 0,
             texture_layer: 0,
             flags: 0b00000000,
-            neighbors: 0b0000,
             building_on_top_index_in_vector: 0,
         }
     }
