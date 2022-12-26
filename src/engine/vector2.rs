@@ -3,7 +3,6 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-use bytemuck::{Pod, Zeroable};
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 
 #[derive(Clone, Copy, Default, Debug, PartialEq, PartialOrd)]

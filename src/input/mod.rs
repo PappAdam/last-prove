@@ -1,4 +1,4 @@
-use crate::{camera::Camera, engine::vector2::Vector2};
+use crate::{engine::vector2::Vector2};
 use std::collections::HashMap;
 use winit::event::{ElementState, KeyboardInput, MouseButton, MouseScrollDelta, VirtualKeyCode};
 

@@ -30,7 +30,7 @@ impl Camera {
             self.target_tiles_fit /= 1.2;
             self.target_coordinates = Vector2::lerp(
                 self.target_coordinates,
-                self.relative_screen_position_to_tile_coordinates(input.get_mouse_position()),
+                self.screen_position_to_tile_coordinates(input.get_mouse_position()),
                 1.0 - (1.0 / 1.2),
             );
         } else if mouse_wheel < 0
@@ -40,14 +40,14 @@ impl Camera {
             self.target_tiles_fit *= 1.2;
             self.target_coordinates = Vector2::lerp(
                 self.target_coordinates,
-                self.relative_screen_position_to_tile_coordinates(-input.get_mouse_position()),
+                self.screen_position_to_tile_coordinates(-input.get_mouse_position()),
                 0.2,
             );
         }
 
         if input.get_mousebutton_down(winit::event::MouseButton::Middle) {
             self.target_coordinates =
-                self.relative_screen_position_to_tile_coordinates(-input.get_mouse_movement());
+                self.screen_position_to_tile_coordinates(-input.get_mouse_movement());
             self.coordinates = self.target_coordinates
         }
     }
@@ -67,24 +67,7 @@ impl Camera {
         self.coordinates = coordinates;
     }
 
-    pub fn relative_screen_position_to_rounded_tile_coordinates(&self, mouse_screen_position: Vector2) -> Vector2 {
-        let mouse_coordinates = self.relative_screen_position_to_tile_coordinates(mouse_screen_position);
-        mouse_coordinates.round()
-    }
-    //pub fn absolute_screen_position_to_tile_coordinates(
-    //    &self,
-    //    screen_position: Vector2,
-    //) -> Vector2 {
-    //    let x =
-    //        screen_position.x / self.tile_size.x * 2.0 + screen_position.y / self.tile_size.y * 4.0;
-    //    let y = -screen_position.x / self.tile_size.x * 2.0
-    //        + screen_position.y / self.tile_size.y * 4.0;
-    //    Vector2::new(x, y)
-    //}
-    pub fn relative_screen_position_to_tile_coordinates(
-        &self,
-        screen_position: Vector2,
-    ) -> Vector2 {
+    pub fn screen_position_to_tile_coordinates(&self, screen_position: Vector2) -> Vector2 {
         let x = screen_position.x / (2.0 / self.tiles_fit.x)
             + screen_position.y * 2.0 / (2.0 / self.tiles_fit.y);
         let y = -screen_position.x / (2.0 / self.tiles_fit.x)
@@ -98,11 +81,4 @@ impl Camera {
     //    let y = (relative_coordinates.x + relative_coordinates.y) * self.tile_size.y / 4.0;
     //    self.coordinates - Vector2::new(x, y) / self.camera_size
     //}
-
-    pub fn absolute_screen_position_to_relative_screen_position(
-        &self,
-        screen_position: Vector2,
-    ) -> Vector2 {
-        screen_position / self.camera_size
-    }
 }

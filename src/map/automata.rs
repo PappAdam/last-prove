@@ -4,7 +4,7 @@ use std::vec;
 pub fn generate(size: usize, density: f32, iterations: u8) -> Vec<Vec<u8>> {
     let mut matr = initialize_matrix(size, density);
 
-    for i in 0..iterations {
+    for _ in 0..iterations {
         matr = automata_iteration(matr);
     }
 

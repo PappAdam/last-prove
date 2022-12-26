@@ -1,6 +1,4 @@
 use std::io::Cursor;
-use std::ops::RangeInclusive;
-use std::string::FromUtf8Error;
 use std::{ops::Deref, sync::Arc};
 
 use crate::camera::Camera;
@@ -8,7 +6,7 @@ use crate::create_texture;
 use crate::engine::vector2::Vector2;
 use crate::input::Input;
 use crate::map::building::GpuStoredBuilding;
-use crate::map::tile::{GpuStoredTile, Tile, TileFlag};
+use crate::map::tile::{GpuStoredTile, TileFlag};
 use crate::map::Map;
 use bytemuck::Pod;
 use vulkano::buffer::{BufferContents, BufferUsage, CpuAccessibleBuffer, DeviceLocalBuffer};
@@ -22,9 +20,8 @@ use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
 use vulkano::format::ClearValue;
 use vulkano::image::{AttachmentImage, ImageAccess};
 use vulkano::pipeline::graphics::color_blend::ColorBlendState;
-use vulkano::pipeline::graphics::depth_stencil::{CompareOp, DepthStencilState};
 use vulkano::pipeline::graphics::viewport::Viewport;
-use vulkano::pipeline::{Pipeline, StateMode};
+use vulkano::pipeline::Pipeline;
 use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo};
 use vulkano::sampler::{Sampler, SamplerCreateInfo};
 use vulkano::swapchain::{PresentInfo, SwapchainAcquireFuture, SwapchainCreationError};
@@ -61,7 +58,6 @@ pub struct VulkanApp {
     device: Arc<Device>,
     graphics_queue: Arc<Queue>,
     swapchain: Arc<Swapchain<Window>>,
-    swapchain_images: Vec<Arc<SwapchainImage<Window>>>,
     framebuffers: Vec<Arc<Framebuffer>>,
     draw_image_index: usize, //The index of the image the GPU is drawing on.
     viewport: Viewport,
@@ -205,8 +201,8 @@ impl VulkanApp {
 
         let mapsize = 80;
         let mut map = Map::new(mapsize, 8);
-        //map.generate(None);
-        map.generate_automata(0.7, 17);
+        map.generate(None);
+        //map.generate_automata(0.7, 17);
         let instances = map.get_tile_instance_coordinates();
         //println!("{}", map);
 
@@ -237,7 +233,6 @@ impl VulkanApp {
                 render_pass,
                 clear_values: vec![Some([0.0, 0.68, 1.0, 1.0].into()), Some(1f32.into())],
                 swapchain,
-                swapchain_images,
                 recreate_swapchain,
                 framebuffers,
                 draw_image_index: 0,
@@ -370,7 +365,7 @@ impl VulkanApp {
         {
             let mouse_coordinates = self
                 .camera
-                .relative_screen_position_to_tile_coordinates(self.input.get_mouse_position());
+                .screen_position_to_tile_coordinates(self.input.get_mouse_position());
             if let Some(clicked_tile) = self.map.get_clicked_tile(mouse_coordinates) {
                 //No building on top
                 if clicked_tile.flags & TileFlag::BuildingOnTop as u8
@@ -513,8 +508,8 @@ impl VulkanApp {
     ) -> Arc<GraphicsPipeline> {
         let subpass = Subpass::from(render_pass, 0).unwrap();
 
-        let mut depth_stencil_state = DepthStencilState::simple_depth_test();
-        depth_stencil_state.depth.unwrap().compare_op = StateMode::Fixed(CompareOp::Never);
+        //let mut depth_stencil_state = DepthStencilState::simple_depth_test();
+        //depth_stencil_state.depth.unwrap().compare_op = StateMode::Fixed(CompareOp::Never);
 
         GraphicsPipeline::start()
             .vertex_input_state(BuffersDefinition::new().instance::<GpuStoredTile>())

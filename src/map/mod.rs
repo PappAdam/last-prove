@@ -11,7 +11,7 @@ use crate::engine::object_vector::ObjVec;
 use crate::engine::vector2::Vector2;
 use crate::map::tile::GpuStoredTile;
 
-use self::building::{Building, GpuStoredBuilding};
+use self::building::Building;
 use self::tile::Tile;
 
 pub struct Map {
@@ -147,19 +147,6 @@ impl Map {
             return self.tile_matr[coordinates.y as usize][coordinates.x as usize].clone();
         }
         None
-    }
-    pub fn is_tile_at(&self, coordinates: Vector2) -> bool {
-        if coordinates.x >= 0f32
-            && coordinates.x < self.size as f32
-            && coordinates.y >= 0f32
-            && coordinates.y < self.size as f32
-        {
-            if let Some(_) = self.tile_matr[coordinates.y as usize][coordinates.x as usize].clone()
-            {
-                return true;
-            }
-        }
-        return false;
     }
 }
 

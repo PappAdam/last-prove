@@ -5,7 +5,6 @@ use crate::engine::vector2::Vector2;
 use std::fs;
 
 impl Map {
-    #[allow(unused)]
     pub fn generate(&mut self, seed: Option<u16>) {
         let perlin_noise = perlin::Perlin2D::new(match seed {
             None => rand::Rng::gen::<u16>(&mut rand::thread_rng()),
@@ -46,6 +45,7 @@ impl Map {
         self.build_building(Vector2::uniform_usize(self.size / 2), 0);
     }
 
+    #[allow(unused)]
     pub fn generate_automata(&mut self, density: f32, iterations: u8) {
         let automata_matr = automata::generate(self.size, density, iterations);
         for y in 0..self.size as usize {

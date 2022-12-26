@@ -1,4 +1,4 @@
-use std::{ops::{Index, IndexMut}, vec::IntoIter, fmt::Debug};
+use std::{ops::{Index, IndexMut}, fmt::Debug};
 
 pub trait GameObject {
     fn is_none(&self) -> bool;

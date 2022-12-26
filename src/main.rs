@@ -4,12 +4,8 @@ mod input;
 mod map;
 mod vulkanapp;
 
-use core::time;
-use engine::vector2::Vector2;
-use map::building::Building;
-use std::time::Instant;
 use vulkanapp::VulkanApp;
-use winit::event::{Event, WindowEvent, VirtualKeyCode};
+use winit::event::{Event, WindowEvent};
 
 fn main() {
     let (mut vulkan_app, event_loop) = VulkanApp::init();

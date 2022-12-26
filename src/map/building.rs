@@ -6,7 +6,7 @@ use vulkano::impl_vertex;
 use crate::engine::{object_vector::GameObject, vector2::Vector2};
 
 use super::{
-    tile::{Tile, TileFlag},
+    tile::TileFlag,
     Map,
 };
 
