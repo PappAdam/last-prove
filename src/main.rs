@@ -3,6 +3,7 @@ mod engine;
 mod input;
 mod map;
 mod vulkanapp;
+mod gpustoredinstances;
 
 use vulkanapp::VulkanApp;
 use winit::event::{Event, WindowEvent};
@@ -42,6 +43,7 @@ fn main() {
 
             vulkan_app.refresh_game(elapsed as f32 / 1000000.0);
             vulkan_app.render();
+
         }
         _ => {}
     });

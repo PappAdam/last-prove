@@ -1,4 +1,12 @@
-use crate::{engine::vector2::Vector2, input::Input};
+use std::vec;
+mod hud;
+
+use crate::{
+    engine::vector2::Vector2,
+    gpustoredinstances::GpuStoredHUDObject,
+    input::Input,
+};
+use hud::HudObject;
 
 pub struct Camera {
     pub coordinates: Vector2, //The cameras coordinates are the coordinates of the tile in the center
@@ -6,17 +14,21 @@ pub struct Camera {
     pub tiles_fit: Vector2,
     pub target_tiles_fit: Vector2,
     pub camera_size: Vector2,
+    hud_objects: Vec<HudObject>,
 }
 
 impl Camera {
     pub fn new(camera_size: Vector2) -> Self {
         let tiles_fit = camera_size / Vector2::new(64u8, 64);
+        let hud_objects = hud::create_hud_elements();
+
         Self {
             coordinates: Vector2::zero(),
             target_coordinates: Vector2::zero(),
             tiles_fit,
             target_tiles_fit: tiles_fit,
             camera_size,
+            hud_objects,
         }
     }
 
@@ -73,6 +85,37 @@ impl Camera {
         let y = -screen_position.x / (2.0 / self.tiles_fit.x)
             + screen_position.y * 2.0 / (2.0 / self.tiles_fit.y);
         Vector2::new(x, y) + self.coordinates
+    }
+
+    pub fn get_hud_object_at_screen_position(
+        &self,
+        screen_position: Vector2,
+    ) -> Option<&HudObject> {
+        for hud_object in &self.hud_objects {
+            if hud_object.screen_position_inside_hud(screen_position) {
+                return Some(hud_object);
+            }
+        }
+        None
+    }
+
+    pub fn get_hud_instance_coordinates(&self) -> Vec<GpuStoredHUDObject> {
+        let mut gpu_stored_hud_objects =
+            vec::from_elem(GpuStoredHUDObject::zero(), self.hud_objects.len());
+        for (vector_index, hud_object) in self.hud_objects.iter().enumerate() {
+            if hud_object.is_shown() {
+                gpu_stored_hud_objects[vector_index] = GpuStoredHUDObject {
+                    screen_position: [
+                        hud_object.top_left.x,
+                        hud_object.top_left.y,
+                        hud_object.z_layer as f32,
+                    ],
+                    object_size: (hud_object.bottom_right - hud_object.top_left).into(),
+                    texture_layer: 0,
+                }
+            }
+        }
+        gpu_stored_hud_objects
     }
 
     //pub fn tile_coordinates_to_screen_position(&self, coordinates: Vector2) -> Vector2 {
