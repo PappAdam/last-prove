@@ -450,6 +450,9 @@ impl VulkanApp {
     fn copy_into_building_buffer(&mut self) {
         let gpu_stored_building_vector = self.map.get_building_instance_coordinates();
         self.building_instance_count = self.map.building_vector.len() as u16;
+        if self.building_instance_count == 0 {
+            return;
+        }
         (self.device_local_building_instance_buffer, _) = Self::create_device_local_buffer(
             self.device.clone(),
             self.graphics_queue.clone(),
