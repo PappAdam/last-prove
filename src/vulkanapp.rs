@@ -161,14 +161,10 @@ impl VulkanApp {
         let (building_textures, building_texture_future) = create_texture!(
             graphics_queue.clone(),
             "../Assets/debug_buildings/basic.png",
-            "../Assets/debug_buildings/basic.png",
-            "../Assets/debug_buildings/basic.png",
             "../Assets/debug_buildings/basic.png"
         );
         let (hud_textures, hud_texture_future) = create_texture!(
             graphics_queue.clone(),
-            "../Assets/hud/Debug.png",
-            "../Assets/hud/Debug.png",
             "../Assets/hud/Debug.png",
             "../Assets/hud/Debug.png"
 
@@ -231,7 +227,7 @@ impl VulkanApp {
 
         let recreate_swapchain = false;
 
-        let mapsize = 80;
+        let mapsize = 800;
         let mut map = Map::new(mapsize, 8);
         map.generate(None);
         //map.generate_automata(0.7, 17);
@@ -313,31 +309,7 @@ impl VulkanApp {
             size: self.camera.camera_size.into(),
         };
 
-        let mut cmd_buffer_builder = self.create_cmd_buffer_builder();
-        cmd_buffer_builder
-            .begin_render_pass(
-                RenderPassBeginInfo {
-                    clear_values: self.clear_values.clone(),
-                    ..RenderPassBeginInfo::framebuffer(
-                        self.framebuffers[self.draw_image_index].clone(),
-                    )
-                },
-                vulkano::command_buffer::SubpassContents::Inline,
-            )
-            .unwrap()
-            .set_viewport(0, [self.viewport.clone()])
-            .bind_pipeline_graphics(self.gameobject_pipeline.clone())
-            .bind_descriptor_sets(
-               vulkano::pipeline::PipelineBindPoint::Graphics,
-               self.gameobject_pipeline.layout().clone(),
-               0,
-               self.tile_texture_descriptor_set.clone(),
-            )
-            .bind_vertex_buffers(0, self.device_local_tile_instance_buffer.clone())
-            .push_constants(self.gameobject_pipeline.layout().clone(), 0, push_constants)
-            .draw(4, self.map.num_of_vulkan_instances, 0, 0)
-            .unwrap();
-
+        //Copy to local buffer if building count doesn't match (Builded or destroyes)
         let current_building_instance_count = self.map.building_vector.len() as u16;
         if current_building_instance_count != self.building_instance_count {
             let gpu_stored_building_vector = self.map.get_building_instance_coordinates();
@@ -349,16 +321,43 @@ impl VulkanApp {
             )
         }
 
+        let mut cmd_buffer_builder = self.create_cmd_buffer_builder();
         cmd_buffer_builder
+            //General setup
+            .begin_render_pass(
+                RenderPassBeginInfo {
+                    clear_values: self.clear_values.clone(),
+                    ..RenderPassBeginInfo::framebuffer(
+                        self.framebuffers[self.draw_image_index].clone(),
+                    )
+                },
+                vulkano::command_buffer::SubpassContents::Inline,
+            )
+            .unwrap()
+            .set_viewport(0, [self.viewport.clone()])
+            .push_constants(self.gameobject_pipeline.layout().clone(), 0, push_constants)
+            //Tile rendering
+            .bind_pipeline_graphics(self.gameobject_pipeline.clone())
+            .bind_descriptor_sets(
+              vulkano::pipeline::PipelineBindPoint::Graphics,
+              self.gameobject_pipeline.layout().clone(),
+              0,
+              self.tile_texture_descriptor_set.clone(),
+            )
+            .bind_vertex_buffers(0, self.device_local_tile_instance_buffer.clone())
+            .draw(4, self.map.num_of_vulkan_instances, 0, 0)
+            .unwrap()
+            //Building rendering, pipeline is the same.
             .bind_vertex_buffers(0, self.device_local_building_instance_buffer.clone())
             .bind_descriptor_sets(
-                vulkano::pipeline::PipelineBindPoint::Graphics,
-                self.gameobject_pipeline.layout().clone(),
-                0,
-                self.building_texture_descriptor_set.clone(),
+               vulkano::pipeline::PipelineBindPoint::Graphics,
+               self.gameobject_pipeline.layout().clone(),
+               0,
+               self.building_texture_descriptor_set.clone(),
             )
             .draw(4, self.building_instance_count as u32, 0, 0)
             .unwrap()
+            //HUD rendering
             .bind_pipeline_graphics(self.hud_pipeline.clone())
             .bind_descriptor_sets(
                 vulkano::pipeline::PipelineBindPoint::Graphics,
@@ -369,6 +368,7 @@ impl VulkanApp {
             .bind_vertex_buffers(0, self.device_local_hud_instance_buffer.clone())
             .draw(4, 2, 0, 0)
             .unwrap();
+            
 
         cmd_buffer_builder.end_render_pass().unwrap();
 
