@@ -8,6 +8,8 @@ use crate::{
 };
 use hud::HudObject;
 
+use self::hud::HudFlag;
+
 pub struct Camera {
     pub coordinates: Vector2, //The cameras coordinates are the coordinates of the tile in the center
     pub target_coordinates: Vector2,
@@ -116,6 +118,17 @@ impl Camera {
             }
         }
         gpu_stored_hud_objects
+    }
+
+    pub fn toggle_hud_visibility(&mut self, index_of_hud_object: usize) {
+        let mut hud_object = &mut self.hud_objects[index_of_hud_object];
+        println!("{}", hud_object.flags);
+        if hud_object.is_shown() {
+            hud_object.flags &= !(HudFlag::Shown as u8)
+        }
+        else {
+            hud_object.flags |= HudFlag::Shown as u8
+        }
     }
 
     //pub fn tile_coordinates_to_screen_position(&self, coordinates: Vector2) -> Vector2 {

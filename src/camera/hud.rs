@@ -3,11 +3,10 @@ use crate::engine::vector2::Vector2;
 pub fn create_hud_elements() -> Vec<HudObject> {
     vec![
         HudObject::new(Vector2::new(0.7, -0.9), Vector2::uniform(0.9)),
-        HudObject::new(Vector2::uniform(-0.9), Vector2::uniform(-0.85)),
     ]
 }
 
-enum HudFlag {
+pub enum HudFlag {
     Shown = 0b10000000,
 }
 

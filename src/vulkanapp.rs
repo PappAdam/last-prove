@@ -2,7 +2,7 @@ use std::io::Cursor;
 use std::{ops::Deref, sync::Arc};
 
 use crate::camera::Camera;
-use crate::{create_texture};
+use crate::create_texture;
 use crate::engine::vector2::Vector2;
 use crate::gpustoredinstances::{GpuStoredGameObject, GpuStoredHUDObject};
 use crate::input::Input;
@@ -167,7 +167,6 @@ impl VulkanApp {
             graphics_queue.clone(),
             "../Assets/hud/Debug.png",
             "../Assets/hud/Debug.png"
-
         );
 
         let sampler = Sampler::new(
@@ -181,7 +180,8 @@ impl VulkanApp {
         )
         .unwrap();
 
-        let gameobject_pipeline_descriptor_layout = gameobject_pipeline.layout().set_layouts().get(0).unwrap();
+        let gameobject_pipeline_descriptor_layout =
+            gameobject_pipeline.layout().set_layouts().get(0).unwrap();
         let tile_texture_descriptor_set = PersistentDescriptorSet::new(
             gameobject_pipeline_descriptor_layout.clone(),
             [WriteDescriptorSet::image_view_sampler(
@@ -242,12 +242,17 @@ impl VulkanApp {
                 graphics_queue.clone(),
                 map.get_tile_instance_coordinates(),
             );
-        let (device_local_building_instance_buffer, building_copy_future) =
-            Self::create_device_local_buffer(
+        let device_local_building_instance_buffer =
+            DeviceLocalBuffer::<[GpuStoredGameObject]>::array(
                 device.clone(),
-                graphics_queue.clone(),
-                map.get_building_instance_coordinates(),
-            );
+                1,
+                BufferUsage {
+                    vertex_buffer: true,
+                    transfer_src: true,
+                    ..Default::default()
+                },
+                [graphics_queue.queue_family_index()],
+            ).unwrap();
         let (device_local_hud_instance_buffer, hud_copy_future) = Self::create_device_local_buffer(
             device.clone(),
             graphics_queue.clone(),
@@ -258,39 +263,36 @@ impl VulkanApp {
             tile_texture_future
                 .join(building_texture_future)
                 .join(tile_copy_future)
-                .join(building_copy_future)
                 .join(hud_copy_future)
                 .join(hud_texture_future)
                 .boxed(),
         );
-        (
-            Self {
-                surface,
-                device,
-                graphics_queue,
-                render_pass,
-                clear_values: vec![Some([0.0, 0.68, 1.0, 1.0].into()), Some(1f32.into())],
-                swapchain,
-                recreate_swapchain,
-                framebuffers,
-                draw_image_index: 0,
-                gameobject_pipeline,
-                hud_pipeline,
-                tile_texture_descriptor_set,
-                building_texture_descriptor_set,
-                hud_texture_descriptor_set,
-                viewport,
-                previous_frame_end,
-                device_local_tile_instance_buffer,
-                device_local_building_instance_buffer,
-                device_local_hud_instance_buffer,
-                building_instance_count: 0,
-                map,
-                input: Input::init(),
-                camera,
-            },
-            event_loop,
-        )
+        let vulkan_app = Self {
+            surface,
+            device,
+            graphics_queue,
+            render_pass,
+            clear_values: vec![Some([0.0, 0.68, 1.0, 1.0].into()), Some(1f32.into())],
+            swapchain,
+            recreate_swapchain,
+            framebuffers,
+            draw_image_index: 0,
+            gameobject_pipeline,
+            hud_pipeline,
+            tile_texture_descriptor_set,
+            building_texture_descriptor_set,
+            hud_texture_descriptor_set,
+            viewport,
+            previous_frame_end,
+            device_local_tile_instance_buffer,
+            device_local_building_instance_buffer,
+            device_local_hud_instance_buffer,
+            building_instance_count: 0,
+            map,
+            input: Input::init(),
+            camera,
+        };
+        (vulkan_app, event_loop)
     }
 
     pub fn render(&mut self) {
@@ -308,18 +310,6 @@ impl VulkanApp {
             tile_size: (2.0 / self.camera.tiles_fit).into(),
             size: self.camera.camera_size.into(),
         };
-
-        //Copy to local buffer if building count doesn't match (Builded or destroyes)
-        let current_building_instance_count = self.map.building_vector.len() as u16;
-        if current_building_instance_count != self.building_instance_count {
-            let gpu_stored_building_vector = self.map.get_building_instance_coordinates();
-            self.building_instance_count = current_building_instance_count;
-            (self.device_local_building_instance_buffer, _) = Self::create_device_local_buffer(
-                self.device.clone(),
-                self.graphics_queue.clone(),
-                gpu_stored_building_vector,
-            )
-        }
 
         let mut cmd_buffer_builder = self.create_cmd_buffer_builder();
         cmd_buffer_builder
@@ -339,25 +329,30 @@ impl VulkanApp {
             //Tile rendering
             .bind_pipeline_graphics(self.gameobject_pipeline.clone())
             .bind_descriptor_sets(
-              vulkano::pipeline::PipelineBindPoint::Graphics,
-              self.gameobject_pipeline.layout().clone(),
-              0,
-              self.tile_texture_descriptor_set.clone(),
+                vulkano::pipeline::PipelineBindPoint::Graphics,
+                self.gameobject_pipeline.layout().clone(),
+                0,
+                self.tile_texture_descriptor_set.clone(),
             )
             .bind_vertex_buffers(0, self.device_local_tile_instance_buffer.clone())
             .draw(4, self.map.num_of_vulkan_instances, 0, 0)
-            .unwrap()
-            //Building rendering, pipeline is the same.
-            .bind_vertex_buffers(0, self.device_local_building_instance_buffer.clone())
-            .bind_descriptor_sets(
-               vulkano::pipeline::PipelineBindPoint::Graphics,
-               self.gameobject_pipeline.layout().clone(),
-               0,
-               self.building_texture_descriptor_set.clone(),
-            )
-            .draw(4, self.building_instance_count as u32, 0, 0)
-            .unwrap()
-            //HUD rendering
+            .unwrap();
+        //Building rendering, pipeline is the same.
+        if self.building_instance_count > 0 {
+            cmd_buffer_builder
+                .bind_vertex_buffers(0, self.device_local_building_instance_buffer.clone())
+                .bind_descriptor_sets(
+                    vulkano::pipeline::PipelineBindPoint::Graphics,
+                    self.gameobject_pipeline.layout().clone(),
+                    0,
+                    self.building_texture_descriptor_set.clone(),
+                )
+                .draw(4, self.building_instance_count as u32, 0, 0)
+                .unwrap();
+        }
+
+        //HUD rendering
+        cmd_buffer_builder
             .bind_pipeline_graphics(self.hud_pipeline.clone())
             .bind_descriptor_sets(
                 vulkano::pipeline::PipelineBindPoint::Graphics,
@@ -366,9 +361,8 @@ impl VulkanApp {
                 self.hud_texture_descriptor_set.clone(),
             )
             .bind_vertex_buffers(0, self.device_local_hud_instance_buffer.clone())
-            .draw(4, 2, 0, 0)
+            .draw(4, 1, 0, 0)
             .unwrap();
-            
 
         cmd_buffer_builder.end_render_pass().unwrap();
 
@@ -427,6 +421,7 @@ impl VulkanApp {
                 .camera
                 .get_hud_object_at_screen_position(mouse_position)
             {
+                //do stuff with hud
             } else {
                 if let Some(clicked_tile) =
                     self.map.get_shown_tile_at_coordinates(mouse_coordinates)
@@ -436,15 +431,30 @@ impl VulkanApp {
                         != TileFlag::BuildingOnTop as u8
                     {
                         self.map.build_building(clicked_tile.coordinates.into(), 0);
+                        self.copy_into_building_buffer();
                     }
                     //Has building on top
                     else {
                         self.map.destroy_building(clicked_tile.coordinates.into());
+                        self.copy_into_building_buffer();
                     }
                 } else {
                 }
             }
         }
+        if self.input.get_key_pressed(winit::event::VirtualKeyCode::E) {
+            self.camera.toggle_hud_visibility(0)
+        }
+    }
+
+    fn copy_into_building_buffer(&mut self) {
+        let gpu_stored_building_vector = self.map.get_building_instance_coordinates();
+        self.building_instance_count = self.map.building_vector.len() as u16;
+        (self.device_local_building_instance_buffer, _) = Self::create_device_local_buffer(
+            self.device.clone(),
+            self.graphics_queue.clone(),
+            gpu_stored_building_vector,
+        );
     }
 
     fn query_physical_device(
