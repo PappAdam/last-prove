@@ -16,6 +16,7 @@ pub struct Input {
     mouse_movement: Vector2, //Mouse movement means the position between last and current frame.
     mousebuttons: HashMap<MouseButton, Keystate>,
     buttons: HashMap<VirtualKeyCode, Keystate>,
+    pub keys_pressed_this_frame: Vec<VirtualKeyCode>,
 }
 #[allow(dead_code)]
 impl Input {
@@ -31,19 +32,21 @@ impl Input {
             mouse_movement,
             mousebuttons,
             buttons,
+            keys_pressed_this_frame: vec![]
         }
     }
 
-    pub fn on_key_input(&mut self, input: KeyboardInput) {
-        match input.virtual_keycode {
-            Some(_) => match input.state {
+    pub fn on_key_input(&mut self, keaboard_input: KeyboardInput) {
+        match keaboard_input.virtual_keycode {
+            Some(key_code) => match keaboard_input.state {
                 ElementState::Pressed => {
                     self.buttons
-                        .insert(input.virtual_keycode.unwrap(), Keystate::Pressed);
+                        .insert(key_code, Keystate::Pressed);
+                    self.keys_pressed_this_frame.push(key_code);
                 }
                 ElementState::Released => {
                     self.buttons
-                        .insert(input.virtual_keycode.unwrap(), Keystate::Released);
+                        .insert(key_code, Keystate::Released);
                 }
             },
             None => {  }
@@ -87,6 +90,7 @@ impl Input {
         self.mouse_wheel = 0;
         self.mouse_movement.x = 0.0;
         self.mouse_movement.y = 0.0;
+        self.keys_pressed_this_frame.clear();
     }
 
     //Just functions to get input values.

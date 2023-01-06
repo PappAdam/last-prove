@@ -120,17 +120,6 @@ impl Camera {
         gpu_stored_hud_objects
     }
 
-    pub fn toggle_hud_visibility(&mut self, index_of_hud_object: usize) {
-        let mut hud_object = &mut self.hud_objects[index_of_hud_object];
-        println!("{}", hud_object.flags);
-        if hud_object.is_shown() {
-            hud_object.flags &= !(HudFlag::Shown as u8)
-        }
-        else {
-            hud_object.flags |= HudFlag::Shown as u8
-        }
-    }
-
     //pub fn tile_coordinates_to_screen_position(&self, coordinates: Vector2) -> Vector2 {
     //    let relative_coordinates = coordinates - self.coordinates; //Vector pointing from camera to tile
     //    let x = (relative_coordinates.x - relative_coordinates.y) * self.tile_size.x / 2.0;

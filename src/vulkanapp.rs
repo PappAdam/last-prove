@@ -75,6 +75,7 @@ pub struct VulkanApp {
     device_local_building_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredGameObject]>>,
     device_local_hud_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredHUDObject]>>,
     building_instance_count: u16,
+    hud_instance_count: u8,
     //END OF VULKAN VARIABLES
     //END OF VULKAN VARIABLES
     pub input: Input,
@@ -252,7 +253,8 @@ impl VulkanApp {
                     ..Default::default()
                 },
                 [graphics_queue.queue_family_index()],
-            ).unwrap();
+            )
+            .unwrap();
         let (device_local_hud_instance_buffer, hud_copy_future) = Self::create_device_local_buffer(
             device.clone(),
             graphics_queue.clone(),
@@ -288,6 +290,7 @@ impl VulkanApp {
             device_local_building_instance_buffer,
             device_local_hud_instance_buffer,
             building_instance_count: 0,
+            hud_instance_count: 2,
             map,
             input: Input::init(),
             camera,
@@ -361,7 +364,7 @@ impl VulkanApp {
                 self.hud_texture_descriptor_set.clone(),
             )
             .bind_vertex_buffers(0, self.device_local_hud_instance_buffer.clone())
-            .draw(4, 1, 0, 0)
+            .draw(4, self.hud_instance_count as u32, 0, 0)
             .unwrap();
 
         cmd_buffer_builder.end_render_pass().unwrap();
@@ -417,39 +420,40 @@ impl VulkanApp {
             let mouse_coordinates = self
                 .camera
                 .screen_position_to_tile_coordinates(mouse_position);
-            if let Some(hud_object) = self
+
+            //Clicked a hud object
+            if let Some(_hud_object) = self
                 .camera
                 .get_hud_object_at_screen_position(mouse_position)
             {
                 //do stuff with hud
-            } else {
-                if let Some(clicked_tile) =
-                    self.map.get_shown_tile_at_coordinates(mouse_coordinates)
+                return;
+            }
+            //Clicked a tile
+            if let Some(clicked_tile) = self.map.get_shown_tile_at_coordinates(mouse_coordinates) {
+                //No building on top
+                if clicked_tile.flags & TileFlag::BuildingOnTop as u8
+                    != TileFlag::BuildingOnTop as u8
                 {
-                    //No building on top
-                    if clicked_tile.flags & TileFlag::BuildingOnTop as u8
-                        != TileFlag::BuildingOnTop as u8
-                    {
-                        self.map.build_building(clicked_tile.coordinates.into(), 0);
-                        self.copy_into_building_buffer();
-                    }
-                    //Has building on top
-                    else {
-                        self.map.destroy_building(clicked_tile.coordinates.into());
-                        self.copy_into_building_buffer();
-                    }
-                } else {
+                    self.map.build_building(clicked_tile.coordinates.into(), 0);
+                    self.copy_into_building_buffer();
+                }
+                //Has building on top
+                else {
+                    self.map.destroy_building(clicked_tile.coordinates.into());
+                    self.copy_into_building_buffer();
                 }
             }
         }
-        if self.input.get_key_pressed(winit::event::VirtualKeyCode::E) {
-            self.camera.toggle_hud_visibility(0)
+        for key_pressed in &self.input.keys_pressed_this_frame {
+            self.camera.refresh_hud_on_key_press(*key_pressed);
         }
+        self.copy_into_hud_buffer();
     }
 
     fn copy_into_building_buffer(&mut self) {
         let gpu_stored_building_vector = self.map.get_building_instance_coordinates();
-        self.building_instance_count = self.map.building_vector.len() as u16;
+        self.building_instance_count = gpu_stored_building_vector.len() as u16;
         if self.building_instance_count == 0 {
             return;
         }
@@ -457,6 +461,18 @@ impl VulkanApp {
             self.device.clone(),
             self.graphics_queue.clone(),
             gpu_stored_building_vector,
+        );
+    }
+    fn copy_into_hud_buffer(&mut self) {
+        let gpu_stored_hud_vector = self.camera.get_hud_instance_coordinates();
+        self.hud_instance_count = gpu_stored_hud_vector.len() as u8;
+        if self.hud_instance_count == 0 {
+            return;
+        }
+        (self.device_local_hud_instance_buffer, _) = Self::create_device_local_buffer(
+            self.device.clone(),
+            self.graphics_queue.clone(),
+            gpu_stored_hud_vector,
         );
     }
 
