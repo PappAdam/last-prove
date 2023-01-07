@@ -1,21 +1,23 @@
+use std::vec;
+
 use winit::event::VirtualKeyCode;
 
-use crate::engine::vector2::Vector2;
+use crate::{engine::vector2::Vector2, gpustoredinstances::GpuStoredHUDObject};
 
 use super::Camera;
 
 pub fn create_hud_elements() -> Vec<HudObject> {
     vec![
         HudObject::new_static(Vector2::new(-0.55, -1.0), Vector2::new(0.55, -0.80)),
+        // HudObject::new_toggleable_by_key(
+        //     Vector2::new(-1.0, -0.7),
+        //     Vector2::new(-0.7, 0.7),
+        //     VirtualKeyCode::A,
+        // ),
         HudObject::new_toggleable_by_key(
             Vector2::new(0.7, -0.7),
             Vector2::new(1.0, 0.7),
             VirtualKeyCode::E,
-        ),
-        HudObject::new_toggleable_by_key(
-            Vector2::new(-1.0, -0.7),
-            Vector2::new(-0.7, 0.7),
-            VirtualKeyCode::A,
         ),
     ]
 }
@@ -38,7 +40,6 @@ pub struct HudObject {
     pub bottom_right: Vector2, //in relative screen position
     pub z_layer: u8,           //Higher is closer to camera.
     hud_type: HudType,
-    //action_on_click:
     pub flags: u8, //0: Shown (0 if not shown)
                    //1: NOT SET
                    //2: NOT SET
@@ -105,6 +106,37 @@ impl HudObject {
 }
 
 impl Camera {
+    pub fn get_hud_object_at_screen_position(
+        &self,
+        screen_position: Vector2,
+    ) -> Option<&HudObject> {
+        for hud_object in &self.hud_objects {
+            if hud_object.screen_position_inside_hud(screen_position) {
+                return Some(hud_object);
+            }
+        }
+        None
+    }
+
+    pub fn get_hud_instance_coordinates(&self) -> Vec<GpuStoredHUDObject> {
+        let mut gpu_stored_hud_objects =
+            vec::from_elem(GpuStoredHUDObject::zero(), self.hud_objects.len());
+        for (vector_index, hud_object) in self.hud_objects.iter().enumerate() {
+            if hud_object.is_shown() {
+                gpu_stored_hud_objects[vector_index] = GpuStoredHUDObject {
+                    screen_position: [
+                        hud_object.top_left.x,
+                        hud_object.top_left.y,
+                        hud_object.z_layer as f32,
+                    ],
+                    object_size: (hud_object.bottom_right - hud_object.top_left).into(),
+                    texture_layer: 0,
+                }
+            }
+        }
+        gpu_stored_hud_objects
+    }
+    
     pub fn refresh_hud_on_key_press(&mut self, key_pressed: VirtualKeyCode) {
         println!("{:?}", key_pressed);
         for hud_object in &mut self.hud_objects {

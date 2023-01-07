@@ -408,7 +408,7 @@ impl VulkanApp {
         self.process_input_commands();
 
         self.camera.refresh_camera(&self.input, delta_time);
-        self.input.refresh_input();
+        self.input.refresh_input(delta_time);
     }
 
     fn process_input_commands(&mut self) {
@@ -440,8 +440,7 @@ impl VulkanApp {
                 }
                 //Has building on top
                 else {
-                    self.map.destroy_building(clicked_tile.coordinates.into());
-                    self.copy_into_building_buffer();
+                    self.camera.hud_objects[1].toggle_visibility()
                 }
             }
         }
