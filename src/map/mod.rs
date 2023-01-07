@@ -9,7 +9,7 @@ use std::vec;
 
 use crate::engine::object_vector::ObjVec;
 use crate::engine::vector2::Vector2;
-use crate::map::tile::GpuStoredTile;
+use crate::gpustoredinstances::GpuStoredGameObject;
 
 use self::building::Building;
 use self::tile::Tile;
@@ -36,15 +36,15 @@ impl Map {
         }
     }
 
-    pub fn get_tile_instance_coordinates(&self) -> Vec<GpuStoredTile> {
+    pub fn get_tile_instance_coordinates(&self) -> Vec<GpuStoredGameObject> {
         let mut coordinate_vec =
-            vec::from_elem(GpuStoredTile::zero(), self.num_of_vulkan_instances as usize);
+            vec::from_elem(GpuStoredGameObject::zero(), self.num_of_vulkan_instances as usize);
         let mut vector_index = 0;
         for y in &self.tile_matr {
             for x in y {
                 if let Some(tile) = x {
                     for z in tile.min_z..tile.max_z + 1 {
-                        coordinate_vec[vector_index] = GpuStoredTile {
+                        coordinate_vec[vector_index] = GpuStoredGameObject {
                             coordinates: [
                                 tile.coordinates[0] as f32 - z as f32,
                                 tile.coordinates[1] as f32 - z as f32,
@@ -62,11 +62,12 @@ impl Map {
         coordinate_vec
     }
 
-    pub fn get_clicked_tile(&self, mouse_tile_coordinates: Vector2) -> Option<&Tile> {
+    pub fn get_shown_tile_at_coordinates(&self, mouse_tile_coordinates: Vector2) -> Option<&Tile> {
         let rounded_mouse_coordinates = mouse_tile_coordinates.round();
 
         //Checking tiles in front of the click position
-        let (mut final_clicked_tile, mut height_of_click) = self.get_shown_tile_at_coordinates(rounded_mouse_coordinates);
+        let (mut final_clicked_tile, mut height_of_click) =
+            self.get_tile_on_top_at_coordinates(rounded_mouse_coordinates);
         let side = (mouse_tile_coordinates.x - mouse_tile_coordinates.x.round())
         //Side is < 0 if on the left, > 0 if on the right.
             - (mouse_tile_coordinates.y - mouse_tile_coordinates.y.round());
@@ -80,7 +81,7 @@ impl Map {
             }
         };
         let (clicked_tile_on_side, height_of_side_of_click) =
-            self.get_shown_tile_at_coordinates(rounded_mouse_coordinates + side_offset);
+            self.get_tile_on_top_at_coordinates(rounded_mouse_coordinates + side_offset);
 
         if let Some(mut clicked_tile) = final_clicked_tile {
             if let Some(clicked_tile_on_side) = clicked_tile_on_side {
@@ -93,29 +94,34 @@ impl Map {
         } else {
             final_clicked_tile = self.get_tile_from_matr(rounded_mouse_coordinates + side_offset);
             if let None = final_clicked_tile {
-                final_clicked_tile = self.get_tile_from_matr(rounded_mouse_coordinates + Vector2::uniform(-1.0))
+                final_clicked_tile =
+                    self.get_tile_from_matr(rounded_mouse_coordinates + Vector2::uniform(-1.0))
             }
         }
 
         final_clicked_tile
     }
 
-    fn get_shown_tile_at_coordinates(&self, rounded_coordinates: Vector2) -> (Option<&Tile>, u8) {
+    fn get_tile_on_top_at_coordinates(&self, rounded_coordinates: Vector2) -> (Option<&Tile>, u8) {
         //Returns the tile that is drawn on top of the original. (The tile that is shown on the screen)
-        let mut clicked_tile = self.get_tile_from_matr(rounded_coordinates);
-        let mut clicked_tile_z = 0;
+        let mut tile_at_coordinate = self.get_tile_from_matr(rounded_coordinates);
+        let mut tile_at_coordinate_z = if let Some(tile_at_coordinate) = tile_at_coordinate {
+            tile_at_coordinate.max_z
+        } else {
+            0
+        };
         for z_up in 1..self.height + 1 {
             if let Some(other_tile) =
                 self.get_tile_from_matr(Vector2::uniform(z_up) + rounded_coordinates)
             {
                 if other_tile.max_z >= z_up {
-                    clicked_tile = Some(other_tile);
-                    clicked_tile_z = z_up;
+                    tile_at_coordinate = Some(other_tile);
+                    tile_at_coordinate_z = z_up;
                 }
             }
         }
 
-        (clicked_tile, clicked_tile_z)
+        (tile_at_coordinate, tile_at_coordinate_z)
     }
 
     pub fn get_mut_tile_from_matr(&mut self, coordinates: Vector2) -> Option<&mut Tile> {

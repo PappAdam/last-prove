@@ -11,11 +11,13 @@ pub enum Keystate {
 }
 
 pub struct Input {
-    mouse_wheel: i8,
-    mouse_position: Vector2,
-    mouse_movement: Vector2, //Mouse movement means the position between last and current frame.
+    mouse_wheel: i8,            //Can be -1, 0, or 1.
+    mouse_position: Vector2,    //Relative screen position range is from -1 to 1
+    mouse_movement: Vector2,    //Mouse movement means the position between last and current frame.
     mousebuttons: HashMap<MouseButton, Keystate>,
     buttons: HashMap<VirtualKeyCode, Keystate>,
+    mouse_stationary: f32, //Amount of time indicating for how long hasn't the mouse been moved in seconds
+    pub keys_pressed_this_frame: Vec<VirtualKeyCode>, //This vector clears itself every frame
 }
 #[allow(dead_code)]
 impl Input {
@@ -31,22 +33,23 @@ impl Input {
             mouse_movement,
             mousebuttons,
             buttons,
+            keys_pressed_this_frame: vec![],
+            mouse_stationary: 0f32,
         }
     }
 
-    pub fn on_key_input(&mut self, input: KeyboardInput) {
-        match input.virtual_keycode {
-            Some(_) => match input.state {
+    pub fn on_key_input(&mut self, keaboard_input: KeyboardInput) {
+        match keaboard_input.virtual_keycode {
+            Some(key_code) => match keaboard_input.state {
                 ElementState::Pressed => {
-                    self.buttons
-                        .insert(input.virtual_keycode.unwrap(), Keystate::Pressed);
+                    self.buttons.insert(key_code, Keystate::Pressed);
+                    self.keys_pressed_this_frame.push(key_code);
                 }
                 ElementState::Released => {
-                    self.buttons
-                        .insert(input.virtual_keycode.unwrap(), Keystate::Released);
+                    self.buttons.insert(key_code, Keystate::Released);
                 }
             },
-            None => {  }
+            None => {}
         }
     }
     pub fn on_mousebutton_input(&mut self, mouse_btn: MouseButton, state: ElementState) {
@@ -69,7 +72,8 @@ impl Input {
         self.mouse_position = relative_new_mouse_position;
     }
 
-    pub fn refresh_input(&mut self) {
+    pub fn refresh_input(&mut self, delta_time: f32) {
+        //Setting every pressed button to down, every released button to up
         for key in self.buttons.iter_mut() {
             match *key.1 {
                 Keystate::Pressed => *key.1 = Keystate::Down,
@@ -84,9 +88,20 @@ impl Input {
                 _ => {}
             }
         }
+
+        //Mouse stationary calculations
+        if self.mouse_movement == Vector2::zero() {
+            self.mouse_stationary += delta_time
+        }
+        else {
+            self.mouse_stationary = 0f32;
+        }
+
+        //Resetting values that are representing single frame actions
         self.mouse_wheel = 0;
         self.mouse_movement.x = 0.0;
         self.mouse_movement.y = 0.0;
+        self.keys_pressed_this_frame.clear();
     }
 
     //Just functions to get input values.

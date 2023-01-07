@@ -4,9 +4,9 @@ use std::{ops::Deref, sync::Arc};
 use crate::camera::Camera;
 use crate::create_texture;
 use crate::engine::vector2::Vector2;
+use crate::gpustoredinstances::{GpuStoredGameObject, GpuStoredHUDObject};
 use crate::input::Input;
-use crate::map::building::GpuStoredBuilding;
-use crate::map::tile::{GpuStoredTile, TileFlag};
+use crate::map::tile::TileFlag;
 use crate::map::Map;
 use bytemuck::Pod;
 use vulkano::buffer::{BufferContents, BufferUsage, CpuAccessibleBuffer, DeviceLocalBuffer};
@@ -20,6 +20,7 @@ use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
 use vulkano::format::ClearValue;
 use vulkano::image::{AttachmentImage, ImageAccess};
 use vulkano::pipeline::graphics::color_blend::ColorBlendState;
+use vulkano::pipeline::graphics::vertex_input::Vertex;
 use vulkano::pipeline::graphics::viewport::Viewport;
 use vulkano::pipeline::Pipeline;
 use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo};
@@ -63,14 +64,18 @@ pub struct VulkanApp {
     viewport: Viewport,
     render_pass: Arc<RenderPass>,
     clear_values: Vec<Option<ClearValue>>,
-    graphics_pipeline: Arc<GraphicsPipeline>,
+    gameobject_pipeline: Arc<GraphicsPipeline>,
+    hud_pipeline: Arc<GraphicsPipeline>,
     tile_texture_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
     building_texture_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
+    hud_texture_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
     pub recreate_swapchain: bool,
     previous_frame_end: Option<Box<dyn GpuFuture>>,
-    device_local_tile_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredTile]>>,
-    device_local_building_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredBuilding]>>,
+    device_local_tile_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredGameObject]>>,
+    device_local_building_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredGameObject]>>,
+    device_local_hud_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredHUDObject]>>,
     building_instance_count: u16,
+    hud_instance_count: u8,
     //END OF VULKAN VARIABLES
     //END OF VULKAN VARIABLES
     pub input: Input,
@@ -115,15 +120,24 @@ impl VulkanApp {
         let (swapchain, swapchain_images) = Self::create_swapchain(device.clone(), surface.clone());
 
         let tile_vertex_shader = tile_vertex_shader::load(device.clone()).unwrap();
-        let tile_fragment_shader = tile_fragment_shader::load(device.clone()).unwrap();
+        let general_fragment_shader = general_fragment_shader::load(device.clone()).unwrap();
 
         let render_pass = Self::create_render_pass(device.clone(), swapchain.clone());
 
-        let graphics_pipeline = Self::create_pipeline(
+        let gameobject_pipeline = Self::create_pipeline::<GpuStoredGameObject>(
             device.clone(),
             render_pass.clone(),
             tile_vertex_shader,
-            tile_fragment_shader,
+            general_fragment_shader.clone(),
+        );
+
+        let hud_vertex_shader = hud_vertex_shader::load(device.clone()).unwrap();
+
+        let hud_pipeline = Self::create_pipeline::<GpuStoredHUDObject>(
+            device.clone(),
+            render_pass.clone(),
+            hud_vertex_shader,
+            general_fragment_shader,
         );
 
         let (tile_textures, tile_texture_future) = create_texture!(
@@ -148,9 +162,12 @@ impl VulkanApp {
         let (building_textures, building_texture_future) = create_texture!(
             graphics_queue.clone(),
             "../Assets/debug_buildings/basic.png",
-            "../Assets/debug_buildings/basic.png",
-            "../Assets/debug_buildings/basic.png",
             "../Assets/debug_buildings/basic.png"
+        );
+        let (hud_textures, hud_texture_future) = create_texture!(
+            graphics_queue.clone(),
+            "../Assets/hud/Debug.png",
+            "../Assets/hud/Debug.png"
         );
 
         let sampler = Sampler::new(
@@ -164,9 +181,10 @@ impl VulkanApp {
         )
         .unwrap();
 
-        let layout = graphics_pipeline.layout().set_layouts().get(0).unwrap();
+        let gameobject_pipeline_descriptor_layout =
+            gameobject_pipeline.layout().set_layouts().get(0).unwrap();
         let tile_texture_descriptor_set = PersistentDescriptorSet::new(
-            layout.clone(),
+            gameobject_pipeline_descriptor_layout.clone(),
             [WriteDescriptorSet::image_view_sampler(
                 0,
                 tile_textures,
@@ -175,10 +193,21 @@ impl VulkanApp {
         )
         .unwrap();
         let building_texture_descriptor_set = PersistentDescriptorSet::new(
-            layout.clone(),
+            gameobject_pipeline_descriptor_layout.clone(),
             [WriteDescriptorSet::image_view_sampler(
                 0,
                 building_textures,
+                sampler.clone(),
+            )],
+        )
+        .unwrap();
+
+        let hud_pipeline_descriptor_layout = hud_pipeline.layout().set_layouts().get(0).unwrap();
+        let hud_texture_descriptor_set = PersistentDescriptorSet::new(
+            hud_pipeline_descriptor_layout.clone(),
+            [WriteDescriptorSet::image_view_sampler(
+                0,
+                hud_textures,
                 sampler.clone(),
             )],
         )
@@ -199,57 +228,74 @@ impl VulkanApp {
 
         let recreate_swapchain = false;
 
-        let mapsize = 80;
+        let mapsize = 800;
         let mut map = Map::new(mapsize, 8);
         map.generate(None);
         //map.generate_automata(0.7, 17);
-        let instances = map.get_tile_instance_coordinates();
         //println!("{}", map);
 
         let mut camera = Camera::new(surface.window().inner_size().into());
         camera.snap_to_tile(Vector2::new_usize(mapsize / 2, mapsize / 2));
 
         let (device_local_tile_instance_buffer, tile_copy_future) =
-            Self::create_device_local_buffer(device.clone(), graphics_queue.clone(), instances);
-        let (device_local_building_instance_buffer, building_copy_future) =
             Self::create_device_local_buffer(
                 device.clone(),
                 graphics_queue.clone(),
-                map.get_building_instance_coordinates(),
+                map.get_tile_instance_coordinates(),
             );
+        let device_local_building_instance_buffer =
+            DeviceLocalBuffer::<[GpuStoredGameObject]>::array(
+                device.clone(),
+                1,
+                BufferUsage {
+                    vertex_buffer: true,
+                    transfer_src: true,
+                    ..Default::default()
+                },
+                [graphics_queue.queue_family_index()],
+            )
+            .unwrap();
+        let (device_local_hud_instance_buffer, hud_copy_future) = Self::create_device_local_buffer(
+            device.clone(),
+            graphics_queue.clone(),
+            camera.get_hud_instance_coordinates(),
+        );
 
         let previous_frame_end = Some(
             tile_texture_future
                 .join(building_texture_future)
                 .join(tile_copy_future)
-                .join(building_copy_future)
+                .join(hud_copy_future)
+                .join(hud_texture_future)
                 .boxed(),
         );
-        (
-            Self {
-                surface,
-                device,
-                graphics_queue,
-                render_pass,
-                clear_values: vec![Some([0.0, 0.68, 1.0, 1.0].into()), Some(1f32.into())],
-                swapchain,
-                recreate_swapchain,
-                framebuffers,
-                draw_image_index: 0,
-                graphics_pipeline,
-                tile_texture_descriptor_set,
-                building_texture_descriptor_set,
-                viewport,
-                previous_frame_end,
-                device_local_tile_instance_buffer,
-                device_local_building_instance_buffer,
-                building_instance_count: 0,
-                map,
-                input: Input::init(),
-                camera,
-            },
-            event_loop,
-        )
+        let vulkan_app = Self {
+            surface,
+            device,
+            graphics_queue,
+            render_pass,
+            clear_values: vec![Some([0.0, 0.68, 1.0, 1.0].into()), Some(1f32.into())],
+            swapchain,
+            recreate_swapchain,
+            framebuffers,
+            draw_image_index: 0,
+            gameobject_pipeline,
+            hud_pipeline,
+            tile_texture_descriptor_set,
+            building_texture_descriptor_set,
+            hud_texture_descriptor_set,
+            viewport,
+            previous_frame_end,
+            device_local_tile_instance_buffer,
+            device_local_building_instance_buffer,
+            device_local_hud_instance_buffer,
+            building_instance_count: 0,
+            hud_instance_count: 2,
+            map,
+            input: Input::init(),
+            camera,
+        };
+        (vulkan_app, event_loop)
     }
 
     pub fn render(&mut self) {
@@ -270,6 +316,7 @@ impl VulkanApp {
 
         let mut cmd_buffer_builder = self.create_cmd_buffer_builder();
         cmd_buffer_builder
+            //General setup
             .begin_render_pass(
                 RenderPassBeginInfo {
                     clear_values: self.clear_values.clone(),
@@ -281,37 +328,43 @@ impl VulkanApp {
             )
             .unwrap()
             .set_viewport(0, [self.viewport.clone()])
-            .bind_pipeline_graphics(self.graphics_pipeline.clone())
+            .push_constants(self.gameobject_pipeline.layout().clone(), 0, push_constants)
+            //Tile rendering
+            .bind_pipeline_graphics(self.gameobject_pipeline.clone())
             .bind_descriptor_sets(
                 vulkano::pipeline::PipelineBindPoint::Graphics,
-                self.graphics_pipeline.layout().clone(),
+                self.gameobject_pipeline.layout().clone(),
                 0,
                 self.tile_texture_descriptor_set.clone(),
             )
             .bind_vertex_buffers(0, self.device_local_tile_instance_buffer.clone())
-            .push_constants(self.graphics_pipeline.layout().clone(), 0, push_constants)
             .draw(4, self.map.num_of_vulkan_instances, 0, 0)
             .unwrap();
-
-        let current_building_instance_count = self.map.building_vector.len() as u16;
-        if current_building_instance_count != self.building_instance_count {
-            let gpu_stored_building_vector = self.map.get_building_instance_coordinates();
-            self.building_instance_count = current_building_instance_count;
-            (self.device_local_building_instance_buffer, _) = Self::create_device_local_buffer(
-                self.device.clone(),
-                self.graphics_queue.clone(),
-                gpu_stored_building_vector,
-            )
+        //Building rendering, pipeline is the same.
+        if self.building_instance_count > 0 {
+            cmd_buffer_builder
+                .bind_vertex_buffers(0, self.device_local_building_instance_buffer.clone())
+                .bind_descriptor_sets(
+                    vulkano::pipeline::PipelineBindPoint::Graphics,
+                    self.gameobject_pipeline.layout().clone(),
+                    0,
+                    self.building_texture_descriptor_set.clone(),
+                )
+                .draw(4, self.building_instance_count as u32, 0, 0)
+                .unwrap();
         }
+
+        //HUD rendering
         cmd_buffer_builder
-            .bind_vertex_buffers(0, self.device_local_building_instance_buffer.clone())
+            .bind_pipeline_graphics(self.hud_pipeline.clone())
             .bind_descriptor_sets(
                 vulkano::pipeline::PipelineBindPoint::Graphics,
-                self.graphics_pipeline.layout().clone(),
+                self.hud_pipeline.layout().clone(),
                 0,
-                self.building_texture_descriptor_set.clone(),
+                self.hud_texture_descriptor_set.clone(),
             )
-            .draw(4, self.building_instance_count as u32, 0, 0)
+            .bind_vertex_buffers(0, self.device_local_hud_instance_buffer.clone())
+            .draw(4, self.hud_instance_count as u32, 0, 0)
             .unwrap();
 
         cmd_buffer_builder.end_render_pass().unwrap();
@@ -355,7 +408,7 @@ impl VulkanApp {
         self.process_input_commands();
 
         self.camera.refresh_camera(&self.input, delta_time);
-        self.input.refresh_input();
+        self.input.refresh_input(delta_time);
     }
 
     fn process_input_commands(&mut self) {
@@ -363,23 +416,63 @@ impl VulkanApp {
             .input
             .get_mousebutton_pressed(winit::event::MouseButton::Left)
         {
+            let mouse_position = self.input.get_mouse_position();
             let mouse_coordinates = self
                 .camera
-                .screen_position_to_tile_coordinates(self.input.get_mouse_position());
-            if let Some(clicked_tile) = self.map.get_clicked_tile(mouse_coordinates) {
+                .screen_position_to_tile_coordinates(mouse_position);
+
+            //Clicked a hud object
+            if let Some(_hud_object) = self
+                .camera
+                .get_hud_object_at_screen_position(mouse_position)
+            {
+                //do stuff with hud
+                return;
+            }
+            //Clicked a tile
+            if let Some(clicked_tile) = self.map.get_shown_tile_at_coordinates(mouse_coordinates) {
                 //No building on top
                 if clicked_tile.flags & TileFlag::BuildingOnTop as u8
                     != TileFlag::BuildingOnTop as u8
                 {
                     self.map.build_building(clicked_tile.coordinates.into(), 0);
+                    self.copy_into_building_buffer();
                 }
                 //Has building on top
                 else {
-                    self.map.destroy_building(clicked_tile.coordinates.into());
+                    self.camera.hud_objects[1].toggle_visibility()
                 }
-            } else {
             }
         }
+        for key_pressed in &self.input.keys_pressed_this_frame {
+            self.camera.refresh_hud_on_key_press(*key_pressed);
+        }
+        self.copy_into_hud_buffer();
+    }
+
+    fn copy_into_building_buffer(&mut self) {
+        let gpu_stored_building_vector = self.map.get_building_instance_coordinates();
+        self.building_instance_count = gpu_stored_building_vector.len() as u16;
+        if self.building_instance_count == 0 {
+            return;
+        }
+        (self.device_local_building_instance_buffer, _) = Self::create_device_local_buffer(
+            self.device.clone(),
+            self.graphics_queue.clone(),
+            gpu_stored_building_vector,
+        );
+    }
+    fn copy_into_hud_buffer(&mut self) {
+        let gpu_stored_hud_vector = self.camera.get_hud_instance_coordinates();
+        self.hud_instance_count = gpu_stored_hud_vector.len() as u8;
+        if self.hud_instance_count == 0 {
+            return;
+        }
+        (self.device_local_hud_instance_buffer, _) = Self::create_device_local_buffer(
+            self.device.clone(),
+            self.graphics_queue.clone(),
+            gpu_stored_hud_vector,
+        );
     }
 
     fn query_physical_device(
@@ -500,7 +593,7 @@ impl VulkanApp {
         .unwrap()
     }
 
-    fn create_pipeline(
+    fn create_pipeline<InstanceType: Vertex>(
         device: Arc<Device>,
         render_pass: Arc<RenderPass>,
         vertex_shader: Arc<ShaderModule>,
@@ -512,7 +605,7 @@ impl VulkanApp {
         //depth_stencil_state.depth.unwrap().compare_op = StateMode::Fixed(CompareOp::Never);
 
         GraphicsPipeline::start()
-            .vertex_input_state(BuffersDefinition::new().instance::<GpuStoredTile>())
+            .vertex_input_state(BuffersDefinition::new().instance::<InstanceType>())
             .vertex_shader(vertex_shader.entry_point("main").unwrap(), ())
             .input_assembly_state(
                 InputAssemblyState::new().topology(PrimitiveTopology::TriangleStrip),
@@ -720,9 +813,16 @@ mod tile_vertex_shader {
     }
 }
 
-mod tile_fragment_shader {
+mod hud_vertex_shader {
+    vulkano_shaders::shader! {
+        ty: "vertex",
+        path: "shaders/hud_vertex_shader.vert"
+    }
+}
+
+mod general_fragment_shader {
     vulkano_shaders::shader! {
         ty: "fragment",
-        path: "shaders/tile_fragment_shader.frag"
+        path: "shaders/general_fragment_shader.frag"
     }
 }

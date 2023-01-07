@@ -1,7 +1,5 @@
 use bytemuck::{Pod, Zeroable};
 use std::fmt::{Display, Result};
-use vulkano::impl_vertex;
-
 
 pub enum TileFlag {
     NeighborOnTop = 0b10000000,
@@ -29,24 +27,6 @@ pub struct Tile {
     //7 NOT USED
     pub building_on_top_index_in_vector: u16,
     //status: TileStatus for clicked events and stuff like that maybe
-}
-
-#[repr(C)]
-#[derive(Default, Clone, Copy, Pod, Zeroable, Debug)]
-pub struct GpuStoredTile {
-    pub coordinates: [f32; 3],
-    pub texture_layer: u32,
-}
-impl_vertex!(GpuStoredTile, coordinates, texture_layer);
-
-
-impl GpuStoredTile {
-    pub fn zero() -> Self {
-        Self {
-            coordinates: [0.0, 0.0, 0.0],
-            texture_layer: 0,
-        }
-    }
 }
 
 impl Tile {

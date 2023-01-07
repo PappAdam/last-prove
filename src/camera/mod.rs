@@ -1,22 +1,33 @@
-use crate::{engine::vector2::Vector2, input::Input};
+pub mod hud;
+
+use crate::{
+    engine::vector2::Vector2,
+    input::Input,
+};
+use hud::HudObject;
 
 pub struct Camera {
     pub coordinates: Vector2, //The cameras coordinates are the coordinates of the tile in the center
     pub target_coordinates: Vector2,
     pub tiles_fit: Vector2,
     pub target_tiles_fit: Vector2,
-    pub camera_size: Vector2,
+    pub camera_size: Vector2,   //Number represents pixels on both axis.
+    pub hud_objects: Vec<HudObject>,
+    //All hud related things are found in hud.rs, not here.
 }
 
 impl Camera {
     pub fn new(camera_size: Vector2) -> Self {
         let tiles_fit = camera_size / Vector2::new(64u8, 64);
+        let hud_objects = hud::create_hud_elements();
+
         Self {
             coordinates: Vector2::zero(),
             target_coordinates: Vector2::zero(),
             tiles_fit,
             target_tiles_fit: tiles_fit,
             camera_size,
+            hud_objects,
         }
     }
 
@@ -55,7 +66,6 @@ impl Camera {
     pub fn window_resized(&mut self, new_screen_size: Vector2) {
         self.target_tiles_fit = self.target_tiles_fit / (self.camera_size / new_screen_size);
         self.tiles_fit = self.target_tiles_fit;
-        self.camera_size = new_screen_size;
     }
 
     pub fn ease_to_tile(&mut self, coordinates: Vector2) {

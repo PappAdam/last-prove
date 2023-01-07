@@ -5,7 +5,7 @@ use std::{
 
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 
-#[derive(Clone, Copy, Default, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
@@ -92,8 +92,10 @@ impl<T: Into<f32> + Copy> DivAssign<T> for Vector2 {
     }
 }
 
-impl Eq for Vector2 {
-    fn assert_receiver_is_total_eq(&self) {}
+impl PartialEq for Vector2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
+    }
 }
 
 impl Into<[f32; 2]> for Vector2 {
@@ -146,7 +148,6 @@ impl Display for Vector2 {
     }
 }
 
-#[allow(dead_code)]
 impl Vector2 {
     pub fn new<T: Into<f32>>(x: T, y: T) -> Self {
         Self {

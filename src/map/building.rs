@@ -1,9 +1,6 @@
 use std::vec;
 
-use bytemuck::{Pod, Zeroable};
-use vulkano::impl_vertex;
-
-use crate::engine::{object_vector::GameObject, vector2::Vector2};
+use crate::{engine::{object_vector::GameObject, vector2::Vector2}, gpustoredinstances::GpuStoredGameObject};
 
 use super::{
     tile::TileFlag,
@@ -39,27 +36,10 @@ impl GameObject for Building {
     }
 }
 
-#[repr(C)]
-#[derive(Default, Clone, Copy, Pod, Zeroable, Debug)]
-pub struct GpuStoredBuilding {
-    pub coordinates: [f32; 3],
-    pub texture_layer: u32,
-}
-impl_vertex!(GpuStoredBuilding, coordinates, texture_layer);
-
-impl GpuStoredBuilding {
-    pub fn zero() -> Self {
-        Self {
-            coordinates: [0.0, 0.0, 0.0],
-            texture_layer: 0,
-        }
-    }
-}
-
 impl Map {
-    pub fn get_building_instance_coordinates(&self) -> Vec<GpuStoredBuilding> {
+    pub fn get_building_instance_coordinates(&self) -> Vec<GpuStoredGameObject> {
         let mut gpu_stored_building_vector =
-            vec::from_elem(GpuStoredBuilding::zero(), self.building_vector.len());
+            vec::from_elem(GpuStoredGameObject::zero(), self.building_vector.len());
         let mut vector_index = 0;
         for building in &self.building_vector {
             if !building.is_none() {
@@ -68,7 +48,7 @@ impl Map {
                 .unwrap()
                 .max_z
                 + 1;
-            gpu_stored_building_vector[vector_index] = GpuStoredBuilding {
+            gpu_stored_building_vector[vector_index] = GpuStoredGameObject {
                 coordinates: [
                     building.coordinates[0] as f32 - z as f32,
                     building.coordinates[1] as f32 - z as f32,

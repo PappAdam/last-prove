@@ -42,7 +42,7 @@ impl Map {
         self.set_tile_types();
         self.calculate_min_z();
         self.calculate_vulkan_instances();
-        self.build_building(Vector2::uniform_usize(self.size / 2), 0);
+        // self.build_building(Vector2::uniform_usize(self.size / 2), 0);
     }
 
     #[allow(unused)]
