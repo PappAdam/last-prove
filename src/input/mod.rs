@@ -19,7 +19,7 @@ pub struct Input {
     mouse_stationary: f32, //Amount of time indicating for how long hasn't the mouse been moved in seconds
     pub keys_pressed_this_frame: Vec<VirtualKeyCode>, //This vector clears itself every frame
 }
-#[allow(dead_code)]
+
 impl Input {
     pub fn init() -> Self {
         let mouse_wheel = 0;
@@ -172,24 +172,5 @@ impl Input {
     }
     pub fn get_mouse_wheel(&self) -> i8 {
         self.mouse_wheel
-    }
-
-    pub fn print_pressed_buttons(&self) {
-        for key in &self.buttons {
-            match key.1 {
-                Keystate::Down => {
-                    println!("{:?} DOWN", key.0)
-                }
-                Keystate::Up => {
-                    println!("{:?} UP", key.0)
-                }
-                Keystate::Pressed => {
-                    println!("{:?} PRESSED", key.0)
-                }
-                Keystate::Released => {
-                    println!("{:?} RELEASED", key.0)
-                }
-            }
-        }
     }
 }
