@@ -66,6 +66,7 @@ impl Camera {
     pub fn window_resized(&mut self, new_screen_size: Vector2) {
         self.target_tiles_fit = self.target_tiles_fit / (self.camera_size / new_screen_size);
         self.tiles_fit = self.target_tiles_fit;
+        self.camera_size = new_screen_size;
     }
 
     pub fn ease_to_tile(&mut self, coordinates: Vector2) {
