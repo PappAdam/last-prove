@@ -3,7 +3,6 @@ mod engine;
 mod input;
 mod map;
 mod vulkanapp;
-mod gpustoredinstances;
 
 use vulkanapp::VulkanApp;
 use winit::event::{Event, WindowEvent};

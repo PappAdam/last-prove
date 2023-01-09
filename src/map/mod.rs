@@ -9,7 +9,7 @@ use std::vec;
 
 use crate::engine::object_vector::ObjVec;
 use crate::engine::vector2::Vector2;
-use crate::gpustoredinstances::GpuStoredGameObject;
+use crate::vulkanapp::gpustoredinstances::GpuStoredGameObject;
 
 use self::building::Building;
 use self::tile::Tile;
@@ -37,8 +37,10 @@ impl Map {
     }
 
     pub fn get_tile_instance_coordinates(&self) -> Vec<GpuStoredGameObject> {
-        let mut coordinate_vec =
-            vec::from_elem(GpuStoredGameObject::zero(), self.num_of_vulkan_instances as usize);
+        let mut coordinate_vec = vec::from_elem(
+            GpuStoredGameObject::zero(),
+            self.num_of_vulkan_instances as usize,
+        );
         let mut vector_index = 0;
         for y in &self.tile_matr {
             for x in y {

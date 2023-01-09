@@ -1,11 +1,11 @@
 use std::vec;
 
-use crate::{engine::{object_vector::GameObject, vector2::Vector2}, gpustoredinstances::GpuStoredGameObject};
-
-use super::{
-    tile::TileFlag,
-    Map,
+use crate::{
+    engine::{object_vector::GameObject, vector2::Vector2},
+    vulkanapp::gpustoredinstances::GpuStoredGameObject,
 };
+
+use super::{tile::TileFlag, Map};
 
 pub enum BuildingFlag {
     NotNone = 0b10000000,
@@ -32,7 +32,7 @@ impl GameObject for Building {
     }
 
     fn set_to_none(&mut self) {
-        self.flags &=  !(BuildingFlag::NotNone as u8);
+        self.flags &= !(BuildingFlag::NotNone as u8);
     }
 }
 
@@ -44,20 +44,20 @@ impl Map {
         for building in &self.building_vector {
             if !building.is_none() {
                 let z = self
-                .get_tile_from_matr(building.coordinates.into())
-                .unwrap()
-                .max_z
-                + 1;
-            gpu_stored_building_vector[vector_index] = GpuStoredGameObject {
-                coordinates: [
-                    building.coordinates[0] as f32 - z as f32,
-                    building.coordinates[1] as f32 - z as f32,
-                    (building.coordinates[0] + building.coordinates[1] + z as u16 + 1) as f32
-                        / (self.size * 2 + self.height as usize) as f32,
-                ],
-                texture_layer: 0,
-            };
-            vector_index += 1;
+                    .get_tile_from_matr(building.coordinates.into())
+                    .unwrap()
+                    .max_z
+                    + 1;
+                gpu_stored_building_vector[vector_index] = GpuStoredGameObject {
+                    coordinates: [
+                        building.coordinates[0] as f32 - z as f32,
+                        building.coordinates[1] as f32 - z as f32,
+                        (building.coordinates[0] + building.coordinates[1] + z as u16 + 1) as f32
+                            / (self.size * 2 + self.height as usize) as f32,
+                    ],
+                    texture_layer: 0,
+                };
+                vector_index += 1;
             }
         }
         gpu_stored_building_vector

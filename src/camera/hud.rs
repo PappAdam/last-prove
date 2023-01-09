@@ -2,7 +2,8 @@ use std::vec;
 
 use winit::event::VirtualKeyCode;
 
-use crate::{engine::vector2::Vector2, gpustoredinstances::GpuStoredHUDObject};
+use crate::{engine::vector2::Vector2};
+use crate::vulkanapp::gpustoredinstances::GpuStoredHUDObject;
 
 use super::Camera;
 
