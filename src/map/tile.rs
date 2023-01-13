@@ -7,6 +7,7 @@ pub enum TileFlag {
     NeighborOnBottom = 0b00100000,
     NeighborOnRight = 0b00010000,
     BuildingOnTop = 0b00001000,
+    TroopOnTop = 0b00000100,
 }
 
 #[repr(C)]
@@ -22,11 +23,10 @@ pub struct Tile {
     //2 NEIGHBOR ON BOTTOM
     //3 NEIGHBOR ON RIGHT
     //4 BUILDING ON TOP
-    //5 NOT USED
+    //5 TROOP ON TOP
     //6 NOT USED
     //7 NOT USED
-    pub building_on_top_index_in_vector: u16,
-    //status: TileStatus for clicked events and stuff like that maybe
+    pub object_on_top_index_in_vector: u16,
 }
 
 impl Tile {
@@ -37,8 +37,18 @@ impl Tile {
             min_z: 0,
             texture_layer: 0,
             flags: 0b00000000,
-            building_on_top_index_in_vector: 0,
+            object_on_top_index_in_vector: 0,
         }
+    }
+
+    pub fn is_building_on_top(&self) -> bool {
+        self.flags & TileFlag::BuildingOnTop as u8 == TileFlag::BuildingOnTop as u8
+    }
+    pub fn is_troop_on_top(&self) -> bool {
+        self.flags & TileFlag::TroopOnTop as u8 == TileFlag::TroopOnTop as u8
+    }
+    pub fn is_occupied(&self) -> bool {
+        self.is_building_on_top() || self.is_troop_on_top()
     }
 }
 

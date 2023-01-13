@@ -1,14 +1,14 @@
-use std::vec;
+use crate::engine::{object_vector::GameObject, vector2::Vector2};
 
-use crate::{
-    engine::{object_vector::GameObject, vector2::Vector2},
-    vulkanapp::gpustoredinstances::GpuStoredGameObject,
+use super::{
+    tile::{Tile, TileFlag},
+    Map,
 };
-
-use super::{tile::TileFlag, Map};
 
 pub enum BuildingFlag {
     NotNone = 0b10000000,
+    FacingTop = 0b01000000,
+    FacingLeft = 0b00100000,
 }
 
 #[derive(Debug)]
@@ -17,13 +17,25 @@ pub struct Building {
     pub texture_layer: u16,
     pub flags: u8,
     //0: NOT  NONE (0 If None.)
-    //1: NOT  SET
-    //2: NOT  SET
+    //1: FACING DIRECTION T-B   (1 if on top, 0 if on bottom)
+    //2: FACING DIRECTION L-R   (1 if on left, 0 if on bottom)
     //3: NOT  SET
     //4: NOT  SET
     //5: NOT  SET
     //6: NOT  SET
     //7: NOT  SET
+}
+
+impl Building {
+    pub fn facing(&self) -> Vector2 {
+        match self.texture_layer % 4 {
+            0 => {Vector2::new(0.0, -1.0)},
+            1 => {Vector2::new(1.0, 0.0)},
+            2 => {Vector2::new(0.0, 1.0)},
+            3 => {Vector2::new(-1.0, 0.0)},
+            _ => panic!("This cannot happen, just need to match because the compiler.")
+        }
+    }
 }
 
 impl GameObject for Building {
@@ -37,56 +49,18 @@ impl GameObject for Building {
 }
 
 impl Map {
-    pub fn get_building_instance_coordinates(&self) -> Vec<GpuStoredGameObject> {
-        let mut gpu_stored_building_vector =
-            vec::from_elem(GpuStoredGameObject::zero(), self.building_vector.len());
-        let mut vector_index = 0;
-        for building in &self.building_vector {
-            if !building.is_none() {
-                let z = self
-                    .get_tile_from_matr(building.coordinates.into())
-                    .unwrap()
-                    .max_z
-                    + 1;
-                gpu_stored_building_vector[vector_index] = GpuStoredGameObject {
-                    coordinates: [
-                        building.coordinates[0] as f32 - z as f32,
-                        building.coordinates[1] as f32 - z as f32,
-                        (building.coordinates[0] + building.coordinates[1] + z as u16 + 1) as f32
-                            / (self.size * 2 + self.height as usize) as f32,
-                    ],
-                    texture_layer: 0,
-                };
-                vector_index += 1;
-            }
-        }
-        gpu_stored_building_vector
-    }
-
     pub fn build_building(&mut self, coordinates: Vector2, building_texture_layer: u16) {
-        let building_coordinates = coordinates;
         let building = Building {
-            coordinates: building_coordinates.into(),
+            coordinates: coordinates.into(),
             texture_layer: building_texture_layer,
             flags: BuildingFlag::NotNone as u8,
         };
 
         let building_index = self.building_vector.push(building);
 
-        if let Some(tile_under_building) = self.get_mut_tile_from_matr(building_coordinates) {
-            if tile_under_building.flags & TileFlag::BuildingOnTop as u8 == 0 {
-                //No building on top of tile
-                tile_under_building.flags |= TileFlag::BuildingOnTop as u8;
-                tile_under_building.building_on_top_index_in_vector = building_index;
-            } else {
-                panic!(
-                    "Building already exists at build position: {}",
-                    building_coordinates
-                );
-            }
-        } else {
-            panic!("No tile found at build position: {}", building_coordinates);
-        }
+        self.get_mut_tile_from_matr(coordinates)
+            .expect("No tile found at build position")
+            .set_building_on_top(building_index);
     }
 
     pub fn destroy_building(&mut self, tile_coordinates_below_building: Vector2) {
@@ -94,7 +68,14 @@ impl Map {
             .get_mut_tile_from_matr(tile_coordinates_below_building)
             .unwrap();
         tile_below_building.flags &= !(TileFlag::BuildingOnTop as u8);
-        let building_index = tile_below_building.building_on_top_index_in_vector as usize;
+        let building_index = tile_below_building.object_on_top_index_in_vector as usize;
         self.building_vector.remove(building_index);
+    }
+}
+
+impl Tile {
+    fn set_building_on_top(&mut self, building_index: u16) {
+        self.flags |= TileFlag::BuildingOnTop as u8;
+        self.object_on_top_index_in_vector = building_index;
     }
 }

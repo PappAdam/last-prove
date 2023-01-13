@@ -1,5 +1,6 @@
 mod automata;
 pub mod building;
+pub mod troop;
 pub mod generate;
 pub mod perlin;
 pub mod tile;
@@ -13,12 +14,14 @@ use crate::vulkanapp::gpustoredinstances::GpuStoredGameObject;
 
 use self::building::Building;
 use self::tile::Tile;
+use self::troop::Troop;
 
 pub struct Map {
     pub size: usize,
     pub height: u8,
     pub tile_matr: Vec<Vec<Option<tile::Tile>>>,
     pub building_vector: ObjVec<Building>,
+    pub troop_vector: ObjVec<Troop>,
     pub num_of_vulkan_instances: u32,
     pub num_of_tile_columns: u32,
 }
@@ -31,37 +34,10 @@ impl Map {
             height,
             tile_matr: vec::from_elem(vec::from_elem(None, size as usize), size as usize),
             building_vector: ObjVec::with_capacity(10),
+            troop_vector: ObjVec::with_capacity(10),
             num_of_vulkan_instances: 0,
             num_of_tile_columns: 0,
         }
-    }
-
-    pub fn get_tile_instance_coordinates(&self) -> Vec<GpuStoredGameObject> {
-        let mut coordinate_vec = vec::from_elem(
-            GpuStoredGameObject::zero(),
-            self.num_of_vulkan_instances as usize,
-        );
-        let mut vector_index = 0;
-        for y in &self.tile_matr {
-            for x in y {
-                if let Some(tile) = x {
-                    for z in tile.min_z..tile.max_z + 1 {
-                        coordinate_vec[vector_index] = GpuStoredGameObject {
-                            coordinates: [
-                                tile.coordinates[0] as f32 - z as f32,
-                                tile.coordinates[1] as f32 - z as f32,
-                                (tile.coordinates[0] + tile.coordinates[1] + z as u16 + 1) as f32
-                                    / (self.size * 2 + self.height as usize) as f32,
-                            ],
-                            texture_layer: (tile.flags >> 4) as u32,
-                        };
-                        vector_index += 1;
-                    }
-                }
-            }
-        }
-        assert_eq!(coordinate_vec.len(), vector_index);
-        coordinate_vec
     }
 
     pub fn get_shown_tile_at_coordinates(&self, mouse_tile_coordinates: Vector2) -> Option<&Tile> {

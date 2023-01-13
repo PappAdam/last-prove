@@ -1,6 +1,5 @@
 use std::io::Cursor;
 use std::{ops::Deref, sync::Arc};
-use vulkano::sync::GpuFuture;
 use vulkano::buffer::{BufferUsage, DeviceLocalBuffer};
 use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
 use vulkano::instance::InstanceCreateInfo;
@@ -8,22 +7,22 @@ use vulkano::pipeline::graphics::color_blend::ColorBlendState;
 use vulkano::pipeline::graphics::vertex_input::Vertex;
 use vulkano::pipeline::graphics::viewport::Viewport;
 use vulkano::sampler::{Sampler, SamplerCreateInfo};
+use vulkano::sync::GpuFuture;
 use vulkano::{
     device::{
         physical::{PhysicalDevice, PhysicalDeviceType},
         Device, DeviceCreateInfo, DeviceExtensions, Queue, QueueCreateInfo,
     },
     format::Format,
-    image::{ImageUsage, SwapchainImage, ImmutableImage, ImageDimensions, view::ImageView},
+    image::{view::ImageView, ImageDimensions, ImageUsage, ImmutableImage, SwapchainImage},
     instance::Instance,
     pipeline::{
-        Pipeline,
         graphics::{
             input_assembly::{InputAssemblyState, PrimitiveTopology},
             vertex_input::BuffersDefinition,
             viewport::ViewportState,
         },
-        GraphicsPipeline,
+        GraphicsPipeline, Pipeline,
     },
     render_pass::{RenderPass, Subpass},
     shader::ShaderModule,
@@ -126,6 +125,11 @@ impl VulkanApp {
             "../../Assets/debug_buildings/basic.png",
             "../../Assets/debug_buildings/basic.png"
         );
+        let (troop_textures, troop_texture_future) = create_texture!(
+            graphics_queue.clone(),
+            "../../Assets/debug_troops/basic.png",
+            "../../Assets/debug_troops/basic.png"
+        );
         let (hud_textures, hud_texture_future) = create_texture!(
             graphics_queue.clone(),
             "../../Assets/hud/Debug.png",
@@ -163,6 +167,15 @@ impl VulkanApp {
             )],
         )
         .unwrap();
+        let troop_texture_descriptor_set = PersistentDescriptorSet::new(
+            gameobject_pipeline_descriptor_layout.clone(),
+            [WriteDescriptorSet::image_view_sampler(
+                0,
+                troop_textures,
+                sampler.clone(),
+            )],
+        )
+        .unwrap();
 
         let hud_pipeline_descriptor_layout = hud_pipeline.layout().set_layouts().get(0).unwrap();
         let hud_texture_descriptor_set = PersistentDescriptorSet::new(
@@ -190,7 +203,7 @@ impl VulkanApp {
 
         let recreate_swapchain = false;
 
-        let mapsize = 800;
+        let mapsize = 2000;
         let mut map = Map::new(mapsize, 8);
         map.generate(None);
         //map.generate_automata(0.7, 17);
@@ -217,6 +230,18 @@ impl VulkanApp {
                 [graphics_queue.queue_family_index()],
             )
             .unwrap();
+        let device_local_troop_instance_buffer =
+            DeviceLocalBuffer::<[GpuStoredGameObject]>::array(
+                device.clone(),
+                1,
+                BufferUsage {
+                    vertex_buffer: true,
+                    transfer_src: true,
+                    ..Default::default()
+                },
+                [graphics_queue.queue_family_index()],
+            )
+            .unwrap();
         let (device_local_hud_instance_buffer, hud_copy_future) = Self::create_device_local_buffer(
             device.clone(),
             graphics_queue.clone(),
@@ -226,9 +251,10 @@ impl VulkanApp {
         let previous_frame_end = Some(
             tile_texture_future
                 .join(building_texture_future)
+                .join(troop_texture_future)
+                .join(hud_texture_future)
                 .join(tile_copy_future)
                 .join(hud_copy_future)
-                .join(hud_texture_future)
                 .boxed(),
         );
         let vulkan_app = Self {
@@ -245,14 +271,17 @@ impl VulkanApp {
             hud_pipeline,
             tile_texture_descriptor_set,
             building_texture_descriptor_set,
+            troop_texture_descriptor_set,
             hud_texture_descriptor_set,
             viewport,
             previous_frame_end,
             device_local_tile_instance_buffer,
             device_local_building_instance_buffer,
+            device_local_troop_instance_buffer,
             device_local_hud_instance_buffer,
             building_instance_count: 0,
-            hud_instance_count: 2,
+            troop_instance_count: 0,
+            hud_instance_count: 1,
             map,
             input: Input::init(),
             camera,

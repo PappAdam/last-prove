@@ -61,6 +61,19 @@ impl VulkanApp {
                 .draw(4, self.building_instance_count as u32, 0, 0)
                 .unwrap();
         }
+        //Troop rendering, pipeline is the same
+        if self.troop_instance_count > 0 {
+            cmd_buffer_builder
+                .bind_vertex_buffers(0, self.device_local_troop_instance_buffer.clone())
+                .bind_descriptor_sets(
+                    vulkano::pipeline::PipelineBindPoint::Graphics,
+                    self.gameobject_pipeline.layout().clone(),
+                    0,
+                    self.troop_texture_descriptor_set.clone(),
+                )
+                .draw(4, self.troop_instance_count as u32, 0, 0)
+                .unwrap();
+        }
     
         //HUD rendering
         cmd_buffer_builder
@@ -110,51 +123,5 @@ impl VulkanApp {
                 self.previous_frame_end = Some(sync::now(self.device.clone()).boxed());
             }
         }
-    }
-    
-    pub fn refresh_game(&mut self, delta_time: f32) {
-        self.process_input_commands();
-    
-        self.camera.refresh_camera(&self.input, delta_time);
-        self.input.refresh_input(delta_time);
-    }
-    
-    fn process_input_commands(&mut self) {
-        if self
-            .input
-            .get_mousebutton_pressed(winit::event::MouseButton::Left)
-        {
-            let mouse_position = self.input.get_mouse_position();
-            let mouse_coordinates = self
-                .camera
-                .screen_position_to_tile_coordinates(mouse_position);
-    
-            //Clicked a hud object
-            if let Some(_hud_object) = self
-                .camera
-                .get_hud_object_at_screen_position(mouse_position)
-            {
-                //do stuff with hud
-                return;
-            }
-            //Clicked a tile
-            if let Some(clicked_tile) = self.map.get_shown_tile_at_coordinates(mouse_coordinates) {
-                //No building on top
-                if clicked_tile.flags & TileFlag::BuildingOnTop as u8
-                    != TileFlag::BuildingOnTop as u8
-                {
-                    self.map.build_building(clicked_tile.coordinates.into(), 0);
-                    self.copy_into_building_buffer();
-                }
-                //Has building on top
-                else {
-                    self.camera.hud_objects[1].toggle_visibility()
-                }
-            }
-        }
-        for key_pressed in &self.input.keys_pressed_this_frame {
-            self.camera.refresh_hud_on_key_press(*key_pressed);
-        }
-        self.copy_into_hud_buffer();
     }
 }

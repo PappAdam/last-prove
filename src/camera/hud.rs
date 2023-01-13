@@ -1,38 +1,55 @@
+use super::Camera;
+use crate::engine::vector2::Vector2;
 use std::vec;
-
 use winit::event::VirtualKeyCode;
 
-use crate::{engine::vector2::Vector2};
-use crate::vulkanapp::gpustoredinstances::GpuStoredHUDObject;
-
-use super::Camera;
-
 pub fn create_hud_elements() -> Vec<HudObject> {
+    let building_hud = HudObject::new_basic(
+        Vector2::new(0.7, -0.7),
+        Vector2::new(1.0, 0.7),
+        HudReference::Building(0),
+        HudActionOnClick::Create,
+    );
+    let troop_hud = HudObject::new_basic(
+        Vector2::new(-1.0, -0.7),
+        Vector2::new(-0.7, 0.7),
+        HudReference::Troop(0),
+        HudActionOnClick::Destroy,
+    );
+
     vec![
         HudObject::new_static(Vector2::new(-0.55, -1.0), Vector2::new(0.55, -0.80)),
-        // HudObject::new_toggleable_by_key(
-        //     Vector2::new(-1.0, -0.7),
-        //     Vector2::new(-0.7, 0.7),
-        //     VirtualKeyCode::A,
-        // ),
-        HudObject::new_toggleable_by_key(
-            Vector2::new(0.7, -0.7),
-            Vector2::new(1.0, 0.7),
-            VirtualKeyCode::E,
-        ),
+        building_hud,
+        troop_hud,
     ]
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum HudReference {
+    None,
+    //Tile((u16, u16)),  //Coordinates
+    Building(usize), //Index
+    Troop(usize),    //Index
+}
+
+#[derive(Debug)]
+pub enum HudActionOnClick {
+    None,
+    Create,
+    Destroy,
 }
 
 pub enum HudFlag {
     Shown = 0b10000000,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum HudType {
-    Static,                     //Object that are always shown
+    Static, //Object is always shown.
+    Basic,  //Object visibility is toggled only through script
     Toggleable(VirtualKeyCode), //Object visibility is toggled by a key
-    Temporary,                  //Object is shown until next action
-    ShownByHover,               //Object is shown when mouse is hovered over an element
+            //Temporary,                  //Object is shown until next action
+            //ShownByHover,               //Object is shown when mouse is hovered over an element
 }
 
 #[derive(Debug)]
@@ -41,14 +58,17 @@ pub struct HudObject {
     pub bottom_right: Vector2, //in relative screen position
     pub z_layer: u8,           //Higher is closer to camera.
     hud_type: HudType,
+    pub reference: HudReference,
+    action_on_click: HudActionOnClick,
     pub flags: u8, //0: Shown (0 if not shown)
-                   //1: NOT SET
-                   //2: NOT SET
-                   //3: NOT SET
-                   //4: NOT SET
-                   //5: NOT SET
-                   //6: NOT SET
-                   //7: NOT SET
+    //1: NOT SET
+    //2: NOT SET
+    //3: NOT SET
+    //4: NOT SET
+    //5: NOT SET
+    //6: NOT SET
+    //7: NOT SET
+    child_huds: Vec<Self>,
 }
 
 impl HudObject {
@@ -58,20 +78,45 @@ impl HudObject {
             bottom_right,
             z_layer: 0,
             hud_type: HudType::Static,
+            reference: HudReference::None,
+            action_on_click: HudActionOnClick::None,
             flags: HudFlag::Shown as u8,
+            child_huds: vec![],
+        }
+    }
+    pub fn new_basic(
+        top_left: Vector2,
+        bottom_right: Vector2,
+        reference: HudReference,
+        action_on_click: HudActionOnClick,
+    ) -> Self {
+        HudObject {
+            top_left,
+            bottom_right,
+            z_layer: 0,
+            hud_type: HudType::Basic,
+            reference,
+            action_on_click,
+            flags: 0,
+            child_huds: vec![],
         }
     }
     pub fn new_toggleable_by_key(
         top_left: Vector2,
         bottom_right: Vector2,
         toggle_key: VirtualKeyCode,
+        reference: HudReference,
+        action_on_click: HudActionOnClick,
     ) -> Self {
         HudObject {
             top_left,
             bottom_right,
             z_layer: 0,
             hud_type: HudType::Toggleable(toggle_key),
+            reference,
+            action_on_click,
             flags: HudFlag::Shown as u8,
+            child_huds: vec![],
         }
     }
 
@@ -91,10 +136,16 @@ impl HudObject {
         self.flags & HudFlag::Shown as u8 == HudFlag::Shown as u8
     }
     pub fn hide(&mut self) {
-        self.flags &= !(HudFlag::Shown as u8)
+        self.flags &= !(HudFlag::Shown as u8);
+        for child_hud_objects in &mut self.child_huds {
+            child_hud_objects.hide()
+        }
     }
     pub fn show(&mut self) {
-        self.flags |= HudFlag::Shown as u8
+        self.flags |= HudFlag::Shown as u8;
+        for child_hud_objects in &mut self.child_huds {
+            child_hud_objects.hide()
+        }
     }
 
     pub fn toggle_visibility(&mut self) {
@@ -119,25 +170,6 @@ impl Camera {
         None
     }
 
-    pub fn get_hud_instance_coordinates(&self) -> Vec<GpuStoredHUDObject> {
-        let mut gpu_stored_hud_objects =
-            vec::from_elem(GpuStoredHUDObject::zero(), self.hud_objects.len());
-        for (vector_index, hud_object) in self.hud_objects.iter().enumerate() {
-            if hud_object.is_shown() {
-                gpu_stored_hud_objects[vector_index] = GpuStoredHUDObject {
-                    screen_position: [
-                        hud_object.top_left.x,
-                        hud_object.top_left.y,
-                        hud_object.z_layer as f32,
-                    ],
-                    object_size: (hud_object.bottom_right - hud_object.top_left).into(),
-                    texture_layer: 0,
-                }
-            }
-        }
-        gpu_stored_hud_objects
-    }
-    
     pub fn refresh_hud_on_key_press(&mut self, key_pressed: VirtualKeyCode) {
         println!("{:?}", key_pressed);
         for hud_object in &mut self.hud_objects {
@@ -147,6 +179,40 @@ impl Camera {
                         hud_object.toggle_visibility()
                     } else if key_pressed == VirtualKeyCode::Escape {
                         hud_object.hide()
+                    }
+                }
+                HudType::Basic => {
+                    if key_pressed == VirtualKeyCode::Escape {
+                        hud_object.hide()
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    pub fn open_hud_related_to(&mut self, reference: HudReference) {
+        //Closing all previous huds.
+        for hud_object in &mut self.hud_objects {
+            if hud_object.hud_type != HudType::Static {
+                hud_object.hide()
+            }
+        }
+
+        //Opening corresponding hud objects to the reference.
+        for hud_object in &mut self.hud_objects {
+            //Opens building tab
+            match hud_object.reference {
+                HudReference::Building(_) => {
+                    if let HudReference::Building(_) = &reference {
+                        hud_object.show();
+                        hud_object.reference = reference.clone();
+                    }
+                }
+                HudReference::Troop(_) => {
+                    if let HudReference::Troop(_) = &reference {
+                        hud_object.show();
+                        hud_object.reference = reference.clone();
                     }
                 }
                 _ => {}

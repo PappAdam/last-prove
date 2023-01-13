@@ -174,7 +174,6 @@ impl Vector2 {
         }
     }
 
-
     pub fn zero() -> Self {
         Self { x: 0.0, y: 0.0 }
     }

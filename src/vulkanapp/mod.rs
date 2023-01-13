@@ -1,9 +1,10 @@
 mod buffers;
-pub mod frames;
+pub mod render;
 pub mod gpustoredinstances;
 mod initialization;
 mod other;
 pub mod shaders;
+pub mod process_input;
 
 use std::sync::Arc;
 
@@ -40,13 +41,16 @@ pub struct VulkanApp {
     hud_pipeline: Arc<GraphicsPipeline>,
     tile_texture_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
     building_texture_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
+    troop_texture_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
     hud_texture_descriptor_set: Arc<PersistentDescriptorSet<StandardDescriptorPoolAlloc>>,
     pub recreate_swapchain: bool,
     previous_frame_end: Option<Box<dyn GpuFuture>>,
     device_local_tile_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredGameObject]>>,
     device_local_building_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredGameObject]>>,
+    device_local_troop_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredGameObject]>>,
     device_local_hud_instance_buffer: Arc<DeviceLocalBuffer<[GpuStoredHUDObject]>>,
     building_instance_count: u16,
+    troop_instance_count: u16,
     hud_instance_count: u8,
     //END OF VULKAN VARIABLES
     //END OF VULKAN VARIABLES

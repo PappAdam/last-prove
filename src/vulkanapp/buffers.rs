@@ -26,6 +26,18 @@ impl VulkanApp {
             gpu_stored_building_vector,
         );
     }
+    pub fn copy_into_troop_buffer(&mut self) {
+        let gpu_stored_troop_vector = self.map.get_troop_instance_coordinates();
+        self.troop_instance_count = gpu_stored_troop_vector.len() as u16;
+        if self.troop_instance_count == 0 {
+            return;
+        }
+        (self.device_local_troop_instance_buffer, _) = Self::create_device_local_buffer(
+            self.device.clone(),
+            self.graphics_queue.clone(),
+            gpu_stored_troop_vector,
+        );
+    }
     pub fn copy_into_hud_buffer(&mut self) {
         let gpu_stored_hud_vector = self.camera.get_hud_instance_coordinates();
         self.hud_instance_count = gpu_stored_hud_vector.len() as u8;
