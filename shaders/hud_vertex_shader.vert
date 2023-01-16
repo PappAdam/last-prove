@@ -10,7 +10,10 @@ layout(location = 1) out vec2 uv_coordinates;
 void main() {
     uint vertex_type = gl_VertexIndex % 4;
 
-    vec2 normalized_offset = vec2(vertex_type / 2, vertex_type % 2);
+    vec2 normalized_offset = vec2(
+         vertex_type / 2,
+         vertex_type % 2
+      );
     vec3 offsets = vec3(
        normalized_offset.x * object_size.x,
        normalized_offset.y * object_size.y,

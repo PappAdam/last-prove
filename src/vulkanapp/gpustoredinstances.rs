@@ -135,7 +135,7 @@ impl Camera {
                         hud_object.z_layer as f32,
                     ],
                     object_size: (hud_object.bottom_right - hud_object.top_left).into(),
-                    texture_layer: 0,
+                    texture_layer: hud_object.texture_layer as u32,
                 }
             }
         }

@@ -7,18 +7,20 @@ pub fn create_hud_elements() -> Vec<HudObject> {
     let building_hud = HudObject::new_basic(
         Vector2::new(0.7, -0.7),
         Vector2::new(1.0, 0.7),
+        1,
         HudReference::Building(0),
         HudActionOnClick::Create,
     );
     let troop_hud = HudObject::new_basic(
         Vector2::new(-1.0, -0.7),
         Vector2::new(-0.7, 0.7),
+        1,
         HudReference::Troop(0),
         HudActionOnClick::Destroy,
     );
 
     vec![
-        HudObject::new_static(Vector2::new(-0.55, -1.0), Vector2::new(0.55, -0.80)),
+        HudObject::new_static(Vector2::new(-0.55, -1.0), Vector2::new(0.55, -0.80), 0),
         building_hud,
         troop_hud,
     ]
@@ -56,6 +58,7 @@ enum HudType {
 pub struct HudObject {
     pub top_left: Vector2,     //Both are stored
     pub bottom_right: Vector2, //in relative screen position
+    pub texture_layer: u8,
     pub z_layer: u8,           //Higher is closer to camera.
     hud_type: HudType,
     pub reference: HudReference,
@@ -72,10 +75,11 @@ pub struct HudObject {
 }
 
 impl HudObject {
-    pub fn new_static(top_left: Vector2, bottom_right: Vector2) -> Self {
+    pub fn new_static(top_left: Vector2, bottom_right: Vector2, texture_layer: u8) -> Self {
         HudObject {
             top_left,
             bottom_right,
+            texture_layer,
             z_layer: 0,
             hud_type: HudType::Static,
             reference: HudReference::None,
@@ -87,12 +91,14 @@ impl HudObject {
     pub fn new_basic(
         top_left: Vector2,
         bottom_right: Vector2,
+        texture_layer: u8,
         reference: HudReference,
         action_on_click: HudActionOnClick,
     ) -> Self {
         HudObject {
             top_left,
             bottom_right,
+            texture_layer,
             z_layer: 0,
             hud_type: HudType::Basic,
             reference,
@@ -104,6 +110,7 @@ impl HudObject {
     pub fn new_toggleable_by_key(
         top_left: Vector2,
         bottom_right: Vector2,
+        texture_layer: u8,
         toggle_key: VirtualKeyCode,
         reference: HudReference,
         action_on_click: HudActionOnClick,
@@ -111,6 +118,7 @@ impl HudObject {
         HudObject {
             top_left,
             bottom_right,
+            texture_layer,
             z_layer: 0,
             hud_type: HudType::Toggleable(toggle_key),
             reference,

@@ -31,6 +31,4 @@ void main() {
    gl_Position = vec4(vertex_position, coordinates.z, 1.0);
    out_texture_layer = texture_layer;
    uv_coordinates = offsets;
-
-    
 }

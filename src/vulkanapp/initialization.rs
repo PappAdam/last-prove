@@ -103,35 +103,39 @@ impl VulkanApp {
 
         let (tile_textures, tile_texture_future) = create_texture!(
             graphics_queue.clone(),
-            "../../Assets/debug_tiles/0.png",          //0
-            "../../Assets/debug_tiles/1_br.png",       //1
-            "../../Assets/debug_tiles/1_bl.png",       //2
-            "../../Assets/debug_tiles/2_bl_br.png",    //3
-            "../../Assets/debug_tiles/1_tl.png",       //4
-            "../../Assets/debug_tiles/2_tl_br.png",    //5
-            "../../Assets/debug_tiles/2_tl_bl.png",    //6
-            "../../Assets/debug_tiles/3_tl_bl_br.png", //7
-            "../../Assets/debug_tiles/1_tr.png",       //8
-            "../../Assets/debug_tiles/2_br_tr.png",    //9
-            "../../Assets/debug_tiles/2_bl_tr.png",    //10
-            "../../Assets/debug_tiles/3_bl_br_tr.png", //11
-            "../../Assets/debug_tiles/2_tl_tr.png",    //12
-            "../../Assets/debug_tiles/3_tl_br_tr.png", //13
-            "../../Assets/debug_tiles/3_tl_bl_tr.png", //14
+            64, 64,
+            "../../Assets/debug_tiles/0.png",           //0
+            "../../Assets/debug_tiles/1_br.png",        //1
+            "../../Assets/debug_tiles/1_bl.png",        //2
+            "../../Assets/debug_tiles/2_bl_br.png",     //3
+            "../../Assets/debug_tiles/1_tl.png",        //4
+            "../../Assets/debug_tiles/2_tl_br.png",     //5
+            "../../Assets/debug_tiles/2_tl_bl.png",     //6
+            "../../Assets/debug_tiles/3_tl_bl_br.png",  //7
+            "../../Assets/debug_tiles/1_tr.png",        //8
+            "../../Assets/debug_tiles/2_br_tr.png",     //9
+            "../../Assets/debug_tiles/2_bl_tr.png",     //10
+            "../../Assets/debug_tiles/3_bl_br_tr.png",  //11
+            "../../Assets/debug_tiles/2_tl_tr.png",     //12
+            "../../Assets/debug_tiles/3_tl_br_tr.png",  //13
+            "../../Assets/debug_tiles/3_tl_bl_tr.png",  //14
             "../../Assets/debug_tiles/4.png"           //15
         );
         let (building_textures, building_texture_future) = create_texture!(
             graphics_queue.clone(),
+            64, 64,
             "../../Assets/debug_buildings/basic.png",
             "../../Assets/debug_buildings/basic.png"
         );
         let (troop_textures, troop_texture_future) = create_texture!(
             graphics_queue.clone(),
+            64, 64,
             "../../Assets/debug_troops/basic.png",
             "../../Assets/debug_troops/basic.png"
         );
         let (hud_textures, hud_texture_future) = create_texture!(
             graphics_queue.clone(),
+            1056, 108,
             "../../Assets/hud/Debug.png",
             "../../Assets/hud/Debug.png"
         );
@@ -434,7 +438,7 @@ pub fn create_pipeline<InstanceType: Vertex>(
 
 #[macro_export]
 macro_rules! create_texture {
-        ($queue:expr, $( $texture:expr ), +) => {
+        ($queue:expr, $width:expr, $height:expr, $( $texture:expr ), +) => {
             {
                 let mut layer_count = 0;
                 $(
@@ -457,8 +461,8 @@ macro_rules! create_texture {
                 })
                 .collect();
                 let dimensions = ImageDimensions::Dim2d {
-                    width: 64,
-                    height: 64,
+                    width: $width,
+                    height: $height,
                     array_layers: layer_count,
                 };
                 let (image, future) = ImmutableImage::from_iter(
