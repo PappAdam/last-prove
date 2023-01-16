@@ -2,8 +2,6 @@ use vulkano::pipeline::Pipeline;
 use vulkano::sync::{self, GpuFuture};
 use vulkano::{command_buffer::RenderPassBeginInfo, swapchain::PresentInfo};
 
-use crate::map::tile::TileFlag;
-
 use super::{shaders, VulkanApp};
 impl VulkanApp {
     pub fn render(&mut self) {

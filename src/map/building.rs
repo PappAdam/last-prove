@@ -7,8 +7,6 @@ use super::{
 
 pub enum BuildingFlag {
     NotNone = 0b10000000,
-    FacingTop = 0b01000000,
-    FacingLeft = 0b00100000,
 }
 
 #[derive(Debug)]
@@ -17,8 +15,8 @@ pub struct Building {
     pub texture_layer: u16,
     pub flags: u8,
     //0: NOT  NONE (0 If None.)
-    //1: FACING DIRECTION T-B   (1 if on top, 0 if on bottom)
-    //2: FACING DIRECTION L-R   (1 if on left, 0 if on bottom)
+    //1: NOT  SET
+    //2: NOT  SET
     //3: NOT  SET
     //4: NOT  SET
     //5: NOT  SET

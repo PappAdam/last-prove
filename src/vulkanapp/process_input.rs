@@ -1,4 +1,4 @@
-use crate::{camera::hud::HudReference, engine::vector2::Vector2, map::tile::TileFlag};
+use crate::camera::hud::HudReference;
 
 use super::VulkanApp;
 
@@ -29,7 +29,9 @@ impl VulkanApp {
                     HudReference::Building(index) => {
                         let building = &self.map.building_vector[index];
                         let troop_coordinates = building.facing() + building.coordinates.into();
-                        if let Some(tile_to_spawn_on) = self.map.get_tile_from_matr(troop_coordinates) {
+                        if let Some(tile_to_spawn_on) =
+                            self.map.get_tile_from_matr(troop_coordinates)
+                        {
                             if !tile_to_spawn_on.is_occupied() {
                                 self.map.spawn_troop(troop_coordinates);
                                 self.copy_into_troop_buffer();

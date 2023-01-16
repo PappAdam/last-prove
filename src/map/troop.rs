@@ -2,7 +2,7 @@ use crate::engine::{object_vector::GameObject, vector2::Vector2};
 
 use super::{
     tile::{Tile, TileFlag},
-    Map, building::Building,
+    Map,
 };
 
 struct TroopStats {

@@ -10,7 +10,6 @@ use std::vec;
 
 use crate::engine::object_vector::ObjVec;
 use crate::engine::vector2::Vector2;
-use crate::vulkanapp::gpustoredinstances::GpuStoredGameObject;
 
 use self::building::Building;
 use self::tile::Tile;
