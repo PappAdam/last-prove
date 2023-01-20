@@ -7,23 +7,31 @@ pub fn create_hud_elements() -> Vec<HudObject> {
     let building_hud = HudObject::new_basic(
         Vector2::new(0.7, -0.7),
         Vector2::new(1.0, 0.7),
-        1,
+        0,
         HudReference::Building(0),
-        HudActionOnClick::Create,
+        HudActionOnClick::None,
     );
-    let troop_hud = HudObject::new_basic(
+    let mut troop_hud = HudObject::new_basic(
         Vector2::new(-1.0, -0.7),
         Vector2::new(-0.7, 0.7),
-        1,
+        0,
         HudReference::Troop(0),
-        HudActionOnClick::Destroy,
+        HudActionOnClick::None,
     );
+
+    troop_hud.add_child_object(HudObject::new_basic(Vector2::new(-0.85, -0.65), Vector2::new(-0.75, -0.55), 1, HudReference::Troop(0), HudActionOnClick::Create));
 
     vec![
         HudObject::new_static(Vector2::new(-0.55, -1.0), Vector2::new(0.55, -0.80), 0),
         building_hud,
         troop_hud,
     ]
+}
+
+enum HudTexture {
+    Background,
+    Create,
+    Destroy
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -71,7 +79,7 @@ pub struct HudObject {
     //5: NOT SET
     //6: NOT SET
     //7: NOT SET
-    child_huds: Vec<Self>,
+    pub child_huds: Vec<Self>,
 }
 
 impl HudObject {
@@ -162,6 +170,10 @@ impl HudObject {
         } else {
             self.show()
         }
+    }
+
+    fn add_child_object(&mut self, object: Self) {
+        self.child_huds.push(object);
     }
 }
 

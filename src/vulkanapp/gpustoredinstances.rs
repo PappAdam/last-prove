@@ -1,6 +1,10 @@
-use std::vec;
+use crate::{
+    camera::{hud::HudObject, Camera},
+    engine::object_vector::GameObject,
+    map::Map,
+};
 use bytemuck::{Pod, Zeroable};
-use crate::{camera::Camera, map::Map, engine::object_vector::GameObject};
+use std::vec;
 
 #[repr(C)]
 #[derive(Default, Clone, Copy, Pod, Zeroable, Debug)]
@@ -124,20 +128,27 @@ impl GpuStoredHUDObject {
 }
 impl Camera {
     pub fn get_hud_instance_coordinates(&self) -> Vec<GpuStoredHUDObject> {
-        let mut gpu_stored_hud_objects =
-            vec::from_elem(GpuStoredHUDObject::zero(), self.hud_objects.len());
-        for (vector_index, hud_object) in self.hud_objects.iter().enumerate() {
-            if hud_object.is_shown() {
-                gpu_stored_hud_objects[vector_index] = GpuStoredHUDObject {
-                    screen_position: [
-                        hud_object.top_left.x,
-                        hud_object.top_left.y,
-                        hud_object.z_layer as f32,
-                    ],
-                    object_size: (hud_object.bottom_right - hud_object.top_left).into(),
-                    texture_layer: hud_object.texture_layer as u32,
-                }
-            }
+        let mut gpu_stored_hud_objects = vec![];
+        for hud_object in self.hud_objects.iter() {
+            gpu_stored_hud_objects.append(&mut hud_object.get_gpustored_hud_and_child_objects())
+        }
+        gpu_stored_hud_objects
+    }
+}
+
+impl HudObject {
+    fn get_gpustored_hud_and_child_objects(&self) -> Vec<GpuStoredHUDObject> {
+        let mut gpu_stored_hud_objects = vec![];
+        if self.is_shown() {
+            gpu_stored_hud_objects.push(GpuStoredHUDObject {
+                screen_position: [self.top_left.x, self.top_left.y, self.z_layer as f32],
+                object_size: (self.bottom_right - self.top_left).into(),
+                texture_layer: self.texture_layer as u32,
+            });
+        }
+        for child_object in &self.child_huds {
+            gpu_stored_hud_objects.append(&mut child_object.get_gpustored_hud_and_child_objects());
+            println!("{:?}", gpu_stored_hud_objects);
         }
         gpu_stored_hud_objects
     }

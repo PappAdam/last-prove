@@ -40,6 +40,7 @@ impl VulkanApp {
                     }
                     _ => {}
                 }
+                self.copy_into_hud_buffer();
                 return;
             }
             //Clicked a tile
@@ -53,20 +54,24 @@ impl VulkanApp {
                     if clicked_tile.is_building_on_top() {
                         self.camera.open_hud_related_to(HudReference::Building(
                             clicked_tile.object_on_top_index_in_vector as usize,
-                        ))
+                        ));
+                        self.copy_into_hud_buffer();
                     }
                     //Has troop on top
                     else if clicked_tile.is_troop_on_top() {
                         self.camera.open_hud_related_to(HudReference::Troop(
                             clicked_tile.object_on_top_index_in_vector as usize,
-                        ))
+                        ));
+                        self.copy_into_hud_buffer();
                     }
                 }
             }
         }
-        for key_pressed in &self.input.keys_pressed_this_frame {
-            self.camera.refresh_hud_on_key_press(*key_pressed);
+        if &self.input.keys_pressed_this_frame.len() != &0usize {
+            for key_pressed in &self.input.keys_pressed_this_frame {
+                self.camera.refresh_hud_on_key_press(*key_pressed);
+            }
+            self.copy_into_hud_buffer();
         }
-        self.copy_into_hud_buffer();
     }
 }

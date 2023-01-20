@@ -3,6 +3,7 @@ use super::{automata, perlin};
 use super::{tile::Tile, Map};
 use crate::engine::vector2::Vector2;
 use std::fs;
+use bmp;
 
 impl Map {
     pub fn generate(&mut self, seed: Option<u16>) {
@@ -65,7 +66,7 @@ impl Map {
     }
 
     #[allow(unused)]
-    pub fn from_file(mut self, path: &str) -> Self {
+    pub fn from_txt(mut self, path: &str) -> Self {
         let read = fs::read_to_string(&path).unwrap();
         let rows = read.split("\r\n").collect::<Vec<&str>>();
         for (rowindex, row) in rows.iter().enumerate() {
@@ -86,6 +87,32 @@ impl Map {
         self
     }
 
+    pub fn from_bmp(&mut self, path: &str) {
+        let bmp = bmp::open(path).expect("Bitmap file not found");
+        let bmp_width = bmp.get_width() as usize;
+        let bmp_height = bmp.get_height() as usize;
+        assert_eq!(bmp_width, bmp_height);
+        let pixel_per_tile = bmp_height as f32 / self.size as f32;
+        let value_per_height = 255 / (self.height + 1);
+
+        for x in 0..self.size {
+            for y in 0..self.size {
+                let tile_height = bmp.get_pixel((x as f32 * pixel_per_tile).floor() as u32, (y as f32 * pixel_per_tile).floor() as u32).r / value_per_height;
+                let tile;
+                if tile_height == 0 {
+                    tile = None;
+                }
+                else {
+                    tile = Some(Tile::new([x as u16, y as u16], tile_height - 1));
+                }
+                self.tile_matr[y][x] = tile;
+            }
+        }
+        self.set_tile_types();
+        self.calculate_min_z();
+        self.calculate_vulkan_instances();
+    }
+
     fn calculate_min_z(&mut self) {
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
@@ -101,7 +128,7 @@ impl Map {
                         let mut z_up = 0;
 
                         //Going 1 tile behind every iteration
-                        while z_down > 0 {
+                        while z_down > 0 && z_up < x && z_up < y {
                             z_up += 1;
                             if let Some(mut other_tile) =
                                 self.get_mut_tile_from_matr(Vector2::new_usize(x - z_up, y - z_up))

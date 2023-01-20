@@ -135,9 +135,10 @@ impl VulkanApp {
         );
         let (hud_textures, hud_texture_future) = create_texture!(
             graphics_queue.clone(),
-            1056, 108,
-            "../../Assets/hud/Debug.png",
-            "../../Assets/hud/Debug.png"
+            20, 20,
+            "../../Assets/hud/Background.png",
+            "../../Assets/hud/Create.png",
+            "../../Assets/hud/Destroy.png"
         );
 
         let sampler = Sampler::new(
@@ -207,9 +208,9 @@ impl VulkanApp {
 
         let recreate_swapchain = false;
 
-        let mapsize = 2000;
-        let mut map = Map::new(mapsize, 8);
-        map.generate(None);
+        let mapsize = 128;
+        let mut map = Map::new(mapsize, 20);
+        map.from_bmp("mask1.bmp");
         //map.generate_automata(0.7, 17);
         //println!("{}", map);
 
