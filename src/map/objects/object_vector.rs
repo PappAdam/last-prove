@@ -1,8 +1,12 @@
-use std::{ops::{Index, IndexMut}, fmt::Debug};
+use std::{
+    fmt::Debug,
+    ops::{Index, IndexMut},
+};
 
 pub trait GameObject {
     fn is_none(&self) -> bool;
     fn set_to_none(&mut self);
+
 }
 
 #[derive(Debug)]
@@ -58,7 +62,7 @@ impl<T: GameObject + Debug> ObjVec<T> {
         self.first_empty_index = index;
     }
 
-    pub fn len(&self) -> usize{
+    pub fn len(&self) -> usize {
         let mut len = 0;
         for element in &self.content {
             if !element.is_none() {
@@ -85,20 +89,22 @@ impl<T: GameObject> IndexMut<usize> for ObjVec<T> {
     }
 }
 
-impl<'a, T: GameObject> IntoIterator for &'a ObjVec<T> 
-{
+impl<'a, T: GameObject> IntoIterator for &'a ObjVec<T> {
     type Item = &'a T;
 
     type IntoIter = ObjVecIterator<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        ObjVecIterator{ vector: &self.content, index: 0 }
+        ObjVecIterator {
+            vector: &self.content,
+            index: 0,
+        }
     }
 }
 
 pub struct ObjVecIterator<'a, T: GameObject> {
     vector: &'a Vec<T>,
-    index: usize
+    index: usize,
 }
 
 impl<'a, T: GameObject> Iterator for ObjVecIterator<'a, T> {

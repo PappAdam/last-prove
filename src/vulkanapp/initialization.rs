@@ -210,7 +210,8 @@ impl VulkanApp {
 
         let mapsize = 128;
         let mut map = Map::new(mapsize, 20);
-        map.from_bmp("mask1.bmp");
+        map.generate(None);
+        //map.from_bmp("mask1.bmp");
         //map.generate_automata(0.7, 17);
         //println!("{}", map);
 

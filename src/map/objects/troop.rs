@@ -1,8 +1,9 @@
-use crate::engine::{object_vector::GameObject, vector2::Vector2};
+use super::object_vector::GameObject;
+use crate::engine::vector2::Vector2;
 
 use super::{
+    super::Map,
     tile::{Tile, TileFlag},
-    Map,
 };
 
 struct TroopStats {
@@ -24,7 +25,7 @@ pub struct Troop {
 }
 
 impl Troop {
-    pub fn new(coordinates: Vector2) -> Self {
+    pub fn new(coordinates: Vector2<f32>) -> Self {
         Troop {
             coordinates: coordinates.into(),
             flags: TroopFlag::NotNone as u8,
@@ -33,20 +34,32 @@ impl Troop {
 }
 
 impl Map {
-    pub fn spawn_troop(&mut self, cooridnates: Vector2) {
+    pub fn spawn_troop(&mut self, cooridnates: Vector2<u16>) {
         let troop = Troop::new(cooridnates);
         let troop_index = self.troop_vector.push(troop);
 
         self.get_mut_tile_from_matr(cooridnates)
             .expect("No tile found at build position")
-            .set_troop_on_top(troop_index)
+            .set_troop_on_top(Some(troop_index));
+    }
+    pub fn destroy_troop(&mut self, index: usize) {
+        let troop_coordinates = self.troop_vector[index as usize].coordinates;
+        self.get_mut_tile_from_matr(troop_coordinates.into())
+            .expect("No tile found at build position")
+            .set_troop_on_top(None);
+        self.troop_vector.remove(index);
     }
 }
 
 impl Tile {
-    fn set_troop_on_top(&mut self, index: u16) {
-        self.flags |= TileFlag::TroopOnTop as u8;
-        self.object_on_top_index_in_vector = index;
+    fn set_troop_on_top(&mut self, index: Option<u16>) {
+        match index {
+            Some(index) => {
+                self.flags |= TileFlag::TroopOnTop as u8;
+                self.object_on_top_index_in_vector = index;
+            }
+            None => self.flags &= !(TileFlag::TroopOnTop as u8),
+        }
     }
 }
 

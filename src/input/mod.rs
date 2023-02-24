@@ -12,8 +12,8 @@ pub enum Keystate {
 
 pub struct Input {
     mouse_wheel: i8,            //Can be -1, 0, or 1.
-    mouse_position: Vector2,    //Relative screen position range is from -1 to 1
-    mouse_movement: Vector2,    //Mouse movement means the position between last and current frame.
+    mouse_position: Vector2<f32>,    //Relative screen position range is from -1 to 1
+    mouse_movement: Vector2<f32>,    //Mouse movement means the position between last and current frame.
     mousebuttons: HashMap<MouseButton, Keystate>,
     buttons: HashMap<VirtualKeyCode, Keystate>,
     mouse_stationary: f32, //Amount of time indicating for how long hasn't the mouse been moved in seconds
@@ -65,9 +65,9 @@ impl Input {
             MouseScrollDelta::PixelDelta(_) => {}
         }
     }
-    pub fn on_mouse_moved(&mut self, new_mouse_position: Vector2, camera_size: Vector2) {
+    pub fn on_mouse_moved(&mut self, new_mouse_position: Vector2<f32>, camera_size: Vector2<u16>) {
         let relative_new_mouse_position =
-            new_mouse_position / (camera_size / 2.0) - Vector2::new(1u8, 1);
+            new_mouse_position / (camera_size.into::<f32>() / 2.0) - Vector2::new(1u8, 1);
         self.mouse_movement += relative_new_mouse_position - self.mouse_position;
         self.mouse_position = relative_new_mouse_position;
     }
@@ -157,7 +157,7 @@ impl Input {
         }
     }
 
-    pub fn get_mouse_position(&self) -> Vector2 {
+    pub fn get_mouse_position(&self) -> Vector2<f32> {
         self.mouse_position
     }
     pub fn get_rel_mouse_position(&self, window_size: (u16, u16)) -> (f32, f32) {
@@ -167,7 +167,7 @@ impl Input {
             (mouse_position.y as f32) / (window_size.1 as f32 - 1.0),
         )
     }
-    pub fn get_mouse_movement(&self) -> Vector2 {
+    pub fn get_mouse_movement(&self) -> Vector2<f32> {
         self.mouse_movement
     }
     pub fn get_mouse_wheel(&self) -> i8 {

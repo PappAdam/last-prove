@@ -1,4 +1,4 @@
-use crate::camera::hud::HudReference;
+use crate::camera::hud::{HudActionOnClick, HudReference};
 
 use super::VulkanApp;
 
@@ -28,15 +28,38 @@ impl VulkanApp {
                 match hud_object.reference {
                     HudReference::Building(index) => {
                         let building = &self.map.building_vector[index];
-                        let troop_coordinates = building.facing() + building.coordinates.into();
-                        if let Some(tile_to_spawn_on) =
-                            self.map.get_tile_from_matr(troop_coordinates)
-                        {
-                            if !tile_to_spawn_on.is_occupied() {
-                                self.map.spawn_troop(troop_coordinates);
-                                self.copy_into_troop_buffer();
+                        match hud_object.action_on_click {
+                            HudActionOnClick::Create => {
+                                let troop_coordinates =
+                                    building.facing() + building.coordinates.into();
+                                if let Some(tile_to_spawn_on) =
+                                    self.map.get_tile_from_matr(troop_coordinates)
+                                {
+                                    if !tile_to_spawn_on.is_object_on_top() {
+                                        self.map.spawn_troop(troop_coordinates);
+                                        self.copy_into_troop_buffer();
+                                    }
+                                }
                             }
+                            HudActionOnClick::Destroy => {
+                                self.map.destroy_building(index);
+                                self.copy_into_building_buffer();
+                                self.camera.close_hud_related_to(HudReference::Building(0))
+                            }
+                            _ => {}
                         }
+                    }
+                    //Troop HUD
+                    HudReference::Troop(index) => {
+                        match hud_object.action_on_click {
+                            HudActionOnClick::Destroy => {
+                                self.map.destroy_troop(index);
+                                self.copy_into_troop_buffer();
+                                self.camera.close_hud_related_to(HudReference::Troop(0))
+                            },
+                            _ => {}
+                        }
+                        
                     }
                     _ => {}
                 }
@@ -46,7 +69,7 @@ impl VulkanApp {
             //Clicked a tile
             if let Some(clicked_tile) = self.map.get_shown_tile_at_coordinates(mouse_coordinates) {
                 //No object on top
-                if !clicked_tile.is_occupied() {
+                if !clicked_tile.is_object_on_top() {
                     self.map.build_building(clicked_tile.coordinates.into(), 0);
                     self.copy_into_building_buffer();
                 } else {

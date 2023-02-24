@@ -1,6 +1,6 @@
-use super::tile::TileFlag;
+use super::objects::tile::TileFlag;
 use super::{automata, perlin};
-use super::{tile::Tile, Map};
+use super::{objects::tile::Tile, Map};
 use crate::engine::vector2::Vector2;
 use std::fs;
 use bmp;

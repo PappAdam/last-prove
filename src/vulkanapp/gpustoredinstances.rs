@@ -1,6 +1,6 @@
 use crate::{
     camera::{hud::HudObject, Camera},
-    engine::object_vector::GameObject,
+    map::objects::object_vector::GameObject,
     map::Map,
 };
 use bytemuck::{Pod, Zeroable};
@@ -132,6 +132,8 @@ impl Camera {
         for hud_object in self.hud_objects.iter() {
             gpu_stored_hud_objects.append(&mut hud_object.get_gpustored_hud_and_child_objects())
         }
+        //println!();
+        //println!("{:?}", gpu_stored_hud_objects);
         gpu_stored_hud_objects
     }
 }
@@ -148,7 +150,6 @@ impl HudObject {
         }
         for child_object in &self.child_huds {
             gpu_stored_hud_objects.append(&mut child_object.get_gpustored_hud_and_child_objects());
-            println!("{:?}", gpu_stored_hud_objects);
         }
         gpu_stored_hud_objects
     }

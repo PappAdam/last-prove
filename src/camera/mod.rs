@@ -1,4 +1,5 @@
 pub mod hud;
+mod colliders;
 
 use crate::{
     engine::vector2::Vector2,
@@ -7,18 +8,18 @@ use crate::{
 use hud::HudObject;
 
 pub struct Camera {
-    pub coordinates: Vector2, //The cameras coordinates are the coordinates of the tile in the center
-    pub target_coordinates: Vector2,
-    pub tiles_fit: Vector2,
-    pub target_tiles_fit: Vector2,
-    pub camera_size: Vector2,   //Number represents pixels on both axis.
+    pub coordinates: Vector2<f32>, //The cameras coordinates are the coordinates of the tile in the center
+    pub target_coordinates: Vector2<f32>,
+    pub tiles_fit: Vector2<f32>,
+    pub target_tiles_fit: Vector2<f32>,
+    pub camera_size: Vector2<u16>,   //Number represents pixels on both axis.
     pub hud_objects: Vec<HudObject>,
     //All hud related things are found in hud.rs, not here.
 }
 
 impl Camera {
-    pub fn new(camera_size: Vector2) -> Self {
-        let tiles_fit = camera_size / Vector2::new(64u8, 64);
+    pub fn new(camera_size: Vector2<u16>) -> Self {
+        let tiles_fit = camera_size.into() / Vector2::new(64f32, 64f32);
         let hud_objects = hud::create_hud_elements();
 
         Self {
@@ -63,22 +64,22 @@ impl Camera {
         }
     }
 
-    pub fn window_resized(&mut self, new_screen_size: Vector2) {
-        self.target_tiles_fit = self.target_tiles_fit / (self.camera_size / new_screen_size);
+    pub fn window_resized(&mut self, new_screen_size: Vector2<u16>) {
+        self.target_tiles_fit = self.target_tiles_fit / (self.camera_size.into::<f32>() / new_screen_size.into::<f32>());
         self.tiles_fit = self.target_tiles_fit;
         self.camera_size = new_screen_size;
     }
 
-    pub fn ease_to_tile(&mut self, coordinates: Vector2) {
+    pub fn ease_to_tile(&mut self, coordinates: Vector2<f32>) {
         self.target_coordinates = coordinates;
     }
 
-    pub fn snap_to_tile(&mut self, coordinates: Vector2) {
+    pub fn snap_to_tile(&mut self, coordinates: Vector2<f32>) {
         self.target_coordinates = coordinates;
         self.coordinates = coordinates;
     }
 
-    pub fn screen_position_to_tile_coordinates(&self, screen_position: Vector2) -> Vector2 {
+    pub fn screen_position_to_tile_coordinates(&self, screen_position: Vector2<f32>) -> Vector2<f32> {
         let x = screen_position.x / (2.0 / self.tiles_fit.x)
             + screen_position.y * 2.0 / (2.0 / self.tiles_fit.y);
         let y = -screen_position.x / (2.0 / self.tiles_fit.x)

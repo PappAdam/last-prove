@@ -11,7 +11,7 @@ pub enum TileFlag {
 }
 
 #[repr(C)]
-#[derive(Default, Debug, Clone, Copy, Pod, Zeroable)]
+#[derive(Default, Debug, Clone, Copy, Pod, Zeroable, PartialEq)]
 pub struct Tile {
     pub coordinates: [u16; 2],
     texture_layer: u8,
@@ -47,7 +47,7 @@ impl Tile {
     pub fn is_troop_on_top(&self) -> bool {
         self.flags & TileFlag::TroopOnTop as u8 == TileFlag::TroopOnTop as u8
     }
-    pub fn is_occupied(&self) -> bool {
+    pub fn is_object_on_top(&self) -> bool {
         self.is_building_on_top() || self.is_troop_on_top()
     }
 }

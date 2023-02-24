@@ -1,24 +1,22 @@
 mod automata;
-pub mod building;
-pub mod troop;
 pub mod generate;
 pub mod perlin;
-pub mod tile;
+pub mod objects;
 
 use std::fmt::{self, Display};
 use std::vec;
 
-use crate::engine::object_vector::ObjVec;
 use crate::engine::vector2::Vector2;
+use objects::object_vector::ObjVec;
 
-use self::building::Building;
-use self::tile::Tile;
-use self::troop::Troop;
+use self::objects::building::Building;
+use self::objects::tile::Tile;
+use self::objects::troop::Troop;
 
 pub struct Map {
     pub size: usize,
     pub height: u8,
-    pub tile_matr: Vec<Vec<Option<tile::Tile>>>,
+    pub tile_matr: Vec<Vec<Option<Tile>>>,
     pub building_vector: ObjVec<Building>,
     pub troop_vector: ObjVec<Troop>,
     pub num_of_vulkan_instances: u32,
@@ -39,17 +37,16 @@ impl Map {
         }
     }
 
-    pub fn get_shown_tile_at_coordinates(&self, mouse_tile_coordinates: Vector2) -> Option<&Tile> {
+    pub fn get_shown_tile_at_coordinates(&self, mouse_tile_coordinates: Vector2<f32>) -> Option<&Tile> {
         let rounded_mouse_coordinates = mouse_tile_coordinates.round();
 
         //Checking tiles in front of the click position
-        let (mut final_clicked_tile, mut height_of_click) =
-            self.get_tile_on_top_at_coordinates(rounded_mouse_coordinates);
-        let side = (mouse_tile_coordinates.x - mouse_tile_coordinates.x.round())
-        //Side is < 0 if on the left, > 0 if on the right.
-            - (mouse_tile_coordinates.y - mouse_tile_coordinates.y.round());
+        let (mut final_clicked_tile, height_of_click) =
+            self.get_tile_in_front_at_coordinates(rounded_mouse_coordinates);
 
-        //Checking tiles to the sides from the click position
+        let side = (mouse_tile_coordinates.x - mouse_tile_coordinates.x.round())
+            - (mouse_tile_coordinates.y - mouse_tile_coordinates.y.round());
+        //Side is < 0 if on the left, > 0 if on the right.
         let side_offset = {
             if side < 0.0 {
                 Vector2::new(-1.0, 0.0)
@@ -58,16 +55,14 @@ impl Map {
             }
         };
         let (clicked_tile_on_side, height_of_side_of_click) =
-            self.get_tile_on_top_at_coordinates(rounded_mouse_coordinates + side_offset);
+            self.get_tile_in_front_at_coordinates(rounded_mouse_coordinates + side_offset);
 
-        if let Some(mut clicked_tile) = final_clicked_tile {
+        if let Some(_) = final_clicked_tile {
             if let Some(clicked_tile_on_side) = clicked_tile_on_side {
-                height_of_click += 1;
-                if height_of_side_of_click >= height_of_click {
-                    clicked_tile = clicked_tile_on_side;
+                if height_of_side_of_click >= height_of_click + 1 {
+                    final_clicked_tile = Some(clicked_tile_on_side);
                 }
             }
-            final_clicked_tile = Some(clicked_tile)
         } else {
             final_clicked_tile = self.get_tile_from_matr(rounded_mouse_coordinates + side_offset);
             if let None = final_clicked_tile {
@@ -75,33 +70,27 @@ impl Map {
                     self.get_tile_from_matr(rounded_mouse_coordinates + Vector2::uniform(-1.0))
             }
         }
-
         final_clicked_tile
     }
 
-    fn get_tile_on_top_at_coordinates(&self, rounded_coordinates: Vector2) -> (Option<&Tile>, u8) {
+    fn get_tile_in_front_at_coordinates(
+        &self,
+        rounded_coordinates: Vector2<u16>,
+    ) -> (Option<&Tile>, u8) {
         //Returns the tile that is drawn on top of the original. (The tile that is shown on the screen)
-        let mut tile_at_coordinate = self.get_tile_from_matr(rounded_coordinates);
-        let mut tile_at_coordinate_z = if let Some(tile_at_coordinate) = tile_at_coordinate {
-            tile_at_coordinate.max_z
-        } else {
-            0
-        };
-        for z_up in 1..self.height + 1 {
-            if let Some(other_tile) =
-                self.get_tile_from_matr(Vector2::uniform(z_up) + rounded_coordinates)
-            {
-                if other_tile.max_z >= z_up {
-                    tile_at_coordinate = Some(other_tile);
-                    tile_at_coordinate_z = z_up;
+        for z_up in 1..self.height {
+            if let Some(other_tile) = self.get_tile_from_matr(
+                rounded_coordinates + Vector2::uniform(self.height) - Vector2::uniform(z_up),
+            ) {
+                if other_tile.max_z >= self.height - z_up {
+                    return (Some(other_tile), self.height - z_up);
                 }
             }
         }
-
-        (tile_at_coordinate, tile_at_coordinate_z)
+        (None, 0)
     }
 
-    pub fn get_mut_tile_from_matr(&mut self, coordinates: Vector2) -> Option<&mut Tile> {
+    pub fn get_mut_tile_from_matr(&mut self, coordinates: Vector2<u16>) -> Option<&mut Tile> {
         if coordinates.x >= 0f32
             && coordinates.x < self.size as f32
             && coordinates.y >= 0f32
@@ -111,7 +100,7 @@ impl Map {
         }
         None
     }
-    pub fn get_tile_from_matr(&self, coordinates: Vector2) -> Option<&Tile> {
+    pub fn get_tile_from_matr(&self, coordinates: Vector2<u16>) -> Option<&Tile> {
         if coordinates.x >= 0f32
             && coordinates.x < self.size as f32
             && coordinates.y >= 0f32
@@ -121,7 +110,7 @@ impl Map {
         }
         None
     }
-    pub fn copy_tile_from_matr(&self, coordinates: Vector2) -> Option<Tile> {
+    pub fn copy_tile_from_matr(&self, coordinates: Vector2<u16>) -> Option<Tile> {
         if coordinates.x >= 0f32
             && coordinates.x < self.size as f32
             && coordinates.y >= 0f32
