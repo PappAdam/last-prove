@@ -1,4 +1,4 @@
-use crate::{engine::vector2::Vector2};
+use crate::{engine::vector2::{Vector2, Convert}};
 use std::collections::HashMap;
 use winit::event::{ElementState, KeyboardInput, MouseButton, MouseScrollDelta, VirtualKeyCode};
 
@@ -67,7 +67,7 @@ impl Input {
     }
     pub fn on_mouse_moved(&mut self, new_mouse_position: Vector2<f32>, camera_size: Vector2<u16>) {
         let relative_new_mouse_position =
-            new_mouse_position / (camera_size.into::<f32>() / 2.0) - Vector2::new(1u8, 1);
+            new_mouse_position / (camera_size.convert() / 2.0) - Vector2::new(1f32, 1f32);
         self.mouse_movement += relative_new_mouse_position - self.mouse_position;
         self.mouse_position = relative_new_mouse_position;
     }

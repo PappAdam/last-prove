@@ -1,7 +1,7 @@
 use super::objects::tile::TileFlag;
 use super::{automata, perlin};
 use super::{objects::tile::Tile, Map};
-use crate::engine::vector2::Vector2;
+use crate::engine::vector2::{Vector2, Convert};
 use std::fs;
 use bmp;
 
@@ -22,10 +22,10 @@ impl Map {
 
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
-                let tile_position = Vector2::new_usize(x, y);
+                let tile_position = Vector2::new(x, y);
 
                 //Treshold gets higher when further from the center
-                let treshold: f32 = Vector2::distance(map_center, tile_position) / center_on_row;
+                let treshold: f32 = Vector2::distance(map_center, tile_position.into()) / center_on_row;
 
                 let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.1, 2);
 
@@ -116,7 +116,7 @@ impl Map {
     fn calculate_min_z(&mut self) {
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
-                if let Some(mut tile) = self.copy_tile_from_matr(Vector2::new_usize(x, y)) {
+                if let Some(mut tile) = self.copy_tile_from_matr(Vector2::new(x, y).convert()) {
                     //Calculate min_z for tiles behid this one
                     //If tile.max_z = 0 there are no tiles behind this one.
                     if tile.max_z > 0 {
@@ -131,7 +131,7 @@ impl Map {
                         while z_down > 0 && z_up < x && z_up < y {
                             z_up += 1;
                             if let Some(mut other_tile) =
-                                self.get_mut_tile_from_matr(Vector2::new_usize(x - z_up, y - z_up))
+                                self.get_mut_tile_from_matr(Vector2::new(x - z_up, y - z_up).convert())
                             {
                                 //Multiple other tiles can set this tile's min_z
                                 //Only setting min_z if z_down is higher than min_z so we get the highest value of all.
@@ -146,7 +146,7 @@ impl Map {
 
                     //Calculate min_z for tiles that are blocked by neighbors
                     let left_neighbor: u8 = if let Some(other_tile) =
-                        self.get_tile_from_matr(Vector2::new_usize(x, y + 1))
+                        self.get_tile_from_matr(Vector2::new(x, y + 1).convert())
                     {
                         other_tile.max_z
                     } else {
@@ -154,7 +154,7 @@ impl Map {
                     };
 
                     let right_neighbor: u8 = if let Some(other_tile) =
-                        self.get_tile_from_matr(Vector2::new_usize(x + 1, y))
+                        self.get_tile_from_matr(Vector2::new(x + 1, y).convert())
                     {
                         other_tile.max_z
                     } else {
@@ -211,16 +211,16 @@ impl Map {
     pub fn set_tile_types(&mut self) {
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
-                if let Some(mut tile) = self.copy_tile_from_matr(Vector2::new_usize(x, y)) {
+                if let Some(mut tile) = self.copy_tile_from_matr(Vector2::new(x, y).convert()) {
                     if let Some(other_tile) =
-                        self.get_tile_from_matr(Vector2::new(x as f32, y as f32 - 1f32))
+                        self.get_tile_from_matr(Vector2::new(x as f32, y as f32 - 1f32).convert())
                     //Using floats to prevent subtracing with overflow
                     {
                         if other_tile.max_z == tile.max_z {
                             tile.flags |= TileFlag::NeighborOnTop as u8;
                         }
                     }
-                    if let Some(other_tile) = self.get_tile_from_matr(Vector2::new_usize(x, y + 1))
+                    if let Some(other_tile) = self.get_tile_from_matr(Vector2::new(x, y + 1).convert())
                     {
                         if other_tile.max_z == tile.max_z {
                             tile.flags |= TileFlag::NeighborOnBottom as u8;
@@ -228,7 +228,7 @@ impl Map {
                     }
 
                     if let Some(other_tile) =
-                        self.get_tile_from_matr(Vector2::new(x as f32 - 1f32, y as f32))
+                        self.get_tile_from_matr(Vector2::new(x - 1, y).convert())
                     //Using floats to prevent subtracing with overflow
                     {
                         if other_tile.max_z == tile.max_z {
@@ -236,7 +236,7 @@ impl Map {
                         }
                     }
 
-                    if let Some(other_tile) = self.get_tile_from_matr(Vector2::new_usize(x + 1, y))
+                    if let Some(other_tile) = self.get_tile_from_matr(Vector2::new(x + 1, y).convert())
                     {
                         if other_tile.max_z == tile.max_z {
                             tile.flags |= TileFlag::NeighborOnRight as u8;

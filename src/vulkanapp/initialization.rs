@@ -34,7 +34,7 @@ use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
 use crate::camera::Camera;
-use crate::engine::vector2::Vector2;
+use crate::engine::vector2::{Vector2, Convert};
 use crate::input::Input;
 use crate::map::Map;
 
@@ -216,7 +216,7 @@ impl VulkanApp {
         //println!("{}", map);
 
         let mut camera = Camera::new(surface.window().inner_size().into());
-        camera.snap_to_tile(Vector2::new_usize(mapsize / 2, mapsize / 2));
+        camera.snap_to_tile(Vector2::new(mapsize / 2, mapsize / 2).convert());
 
         let (device_local_tile_instance_buffer, tile_copy_future) =
             Self::create_device_local_buffer(

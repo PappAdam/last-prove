@@ -2,6 +2,8 @@ use vulkano::pipeline::Pipeline;
 use vulkano::sync::{self, GpuFuture};
 use vulkano::{command_buffer::RenderPassBeginInfo, swapchain::PresentInfo};
 
+use crate::engine::vector2::Vector2;
+
 use super::{shaders, VulkanApp};
 impl VulkanApp {
     pub fn render(&mut self) {
@@ -16,7 +18,7 @@ impl VulkanApp {
     
         let push_constants = shaders::tile_vertex_shader::ty::Camera {
             coordinates: self.camera.coordinates.into(),
-            tile_size: (2.0 / self.camera.tiles_fit).into(),
+            tile_size: (Vector2::uniform(2.0) / self.camera.tiles_fit).into(),
             size: self.camera.camera_size.into(),
         };
     

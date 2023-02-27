@@ -25,7 +25,7 @@ pub struct Troop {
 }
 
 impl Troop {
-    pub fn new(coordinates: Vector2<f32>) -> Self {
+    pub fn new(coordinates: Vector2<u16>) -> Self {
         Troop {
             coordinates: coordinates.into(),
             flags: TroopFlag::NotNone as u8,

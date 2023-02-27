@@ -6,7 +6,7 @@ pub mod objects;
 use std::fmt::{self, Display};
 use std::vec;
 
-use crate::engine::vector2::Vector2;
+use crate::engine::vector2::{Vector2, Convert};
 use objects::object_vector::ObjVec;
 
 use self::objects::building::Building;
@@ -38,11 +38,12 @@ impl Map {
     }
 
     pub fn get_shown_tile_at_coordinates(&self, mouse_tile_coordinates: Vector2<f32>) -> Option<&Tile> {
-        let rounded_mouse_coordinates = mouse_tile_coordinates.round();
+        let rounded_mouse_coordinates = mouse_tile_coordinates.round().convert();
 
         //Checking tiles in front of the click position
         let (mut final_clicked_tile, height_of_click) =
             self.get_tile_in_front_at_coordinates(rounded_mouse_coordinates);
+        dbg!(final_clicked_tile);
 
         let side = (mouse_tile_coordinates.x - mouse_tile_coordinates.x.round())
             - (mouse_tile_coordinates.y - mouse_tile_coordinates.y.round());
@@ -55,7 +56,7 @@ impl Map {
             }
         };
         let (clicked_tile_on_side, height_of_side_of_click) =
-            self.get_tile_in_front_at_coordinates(rounded_mouse_coordinates + side_offset);
+            self.get_tile_in_front_at_coordinates((rounded_mouse_coordinates.convert() + side_offset).convert());
 
         if let Some(_) = final_clicked_tile {
             if let Some(clicked_tile_on_side) = clicked_tile_on_side {
@@ -64,10 +65,10 @@ impl Map {
                 }
             }
         } else {
-            final_clicked_tile = self.get_tile_from_matr(rounded_mouse_coordinates + side_offset);
+            final_clicked_tile = self.get_tile_from_matr((rounded_mouse_coordinates.convert() + side_offset).convert());
             if let None = final_clicked_tile {
                 final_clicked_tile =
-                    self.get_tile_from_matr(rounded_mouse_coordinates + Vector2::uniform(-1.0))
+                    self.get_tile_from_matr(rounded_mouse_coordinates - Vector2::uniform(1))
             }
         }
         final_clicked_tile
@@ -78,9 +79,9 @@ impl Map {
         rounded_coordinates: Vector2<u16>,
     ) -> (Option<&Tile>, u8) {
         //Returns the tile that is drawn on top of the original. (The tile that is shown on the screen)
-        for z_up in 1..self.height {
+        for z_up in 1..self.height + 1 {
             if let Some(other_tile) = self.get_tile_from_matr(
-                rounded_coordinates + Vector2::uniform(self.height) - Vector2::uniform(z_up),
+                rounded_coordinates + Vector2::uniform(self.height as u16) - Vector2::uniform(z_up as u16),
             ) {
                 if other_tile.max_z >= self.height - z_up {
                     return (Some(other_tile), self.height - z_up);
@@ -91,30 +92,30 @@ impl Map {
     }
 
     pub fn get_mut_tile_from_matr(&mut self, coordinates: Vector2<u16>) -> Option<&mut Tile> {
-        if coordinates.x >= 0f32
-            && coordinates.x < self.size as f32
-            && coordinates.y >= 0f32
-            && coordinates.y < self.size as f32
+        if coordinates.x >= 0
+            && coordinates.x < self.size as u16
+            && coordinates.y >= 0
+            && coordinates.y < self.size as u16
         {
             return self.tile_matr[coordinates.y as usize][coordinates.x as usize].as_mut();
         }
         None
     }
     pub fn get_tile_from_matr(&self, coordinates: Vector2<u16>) -> Option<&Tile> {
-        if coordinates.x >= 0f32
-            && coordinates.x < self.size as f32
-            && coordinates.y >= 0f32
-            && coordinates.y < self.size as f32
+        if coordinates.x >= 0
+            && coordinates.x < self.size as u16
+            && coordinates.y >= 0
+            && coordinates.y < self.size as u16
         {
             return self.tile_matr[coordinates.y as usize][coordinates.x as usize].as_ref();
         }
         None
     }
     pub fn copy_tile_from_matr(&self, coordinates: Vector2<u16>) -> Option<Tile> {
-        if coordinates.x >= 0f32
-            && coordinates.x < self.size as f32
-            && coordinates.y >= 0f32
-            && coordinates.y < self.size as f32
+        if coordinates.x >= 0
+            && coordinates.x < self.size as u16
+            && coordinates.y >= 0
+            && coordinates.y < self.size as u16
         {
             return self.tile_matr[coordinates.y as usize][coordinates.x as usize].clone();
         }

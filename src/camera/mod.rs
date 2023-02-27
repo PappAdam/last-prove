@@ -2,7 +2,7 @@ pub mod hud;
 mod colliders;
 
 use crate::{
-    engine::vector2::Vector2,
+    engine::vector2::{Vector2, Convert},
     input::Input,
 };
 use hud::HudObject;
@@ -19,7 +19,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn new(camera_size: Vector2<u16>) -> Self {
-        let tiles_fit = camera_size.into() / Vector2::new(64f32, 64f32);
+        let tiles_fit = camera_size.convert() / Vector2::new(64f32, 64f32);
         let hud_objects = hud::create_hud_elements();
 
         Self {
@@ -65,7 +65,7 @@ impl Camera {
     }
 
     pub fn window_resized(&mut self, new_screen_size: Vector2<u16>) {
-        self.target_tiles_fit = self.target_tiles_fit / (self.camera_size.into::<f32>() / new_screen_size.into::<f32>());
+        self.target_tiles_fit = self.target_tiles_fit / (self.camera_size.convert() / new_screen_size.convert());
         self.tiles_fit = self.target_tiles_fit;
         self.camera_size = new_screen_size;
     }

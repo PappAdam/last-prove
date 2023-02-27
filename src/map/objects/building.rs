@@ -1,4 +1,4 @@
-use crate::engine::vector2::Vector2;
+use crate::engine::vector2::{Vector2, Convert};
 use super::object_vector::GameObject;
 
 use super::{
@@ -26,14 +26,16 @@ pub struct Building {
 }
 
 impl Building {
-    pub fn facing(&self) -> Vector2<i8> {
-        match self.texture_layer % 4 {
+    pub fn troop_spawn_position(&self) -> Vector2<u16> {
+        let offset: Vector2<i32> = match self.texture_layer % 4 {
             0 => Vector2::new(0, -1),
             1 => Vector2::new(1, 0),
             2 => Vector2::new(0, 1),
             3 => Vector2::new(-1, 0),
             _ => panic!("This cannot happen, just need to match because the compiler."),
-        }
+        }.convert();
+
+        (offset + self.coordinates.into()).convert()
     }
 }
 

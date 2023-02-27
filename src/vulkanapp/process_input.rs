@@ -1,4 +1,7 @@
-use crate::camera::hud::{HudActionOnClick, HudReference};
+use crate::{
+    camera::hud::{HudActionOnClick, HudReference},
+    engine::vector2::Convert,
+};
 
 use super::VulkanApp;
 
@@ -30,8 +33,7 @@ impl VulkanApp {
                         let building = &self.map.building_vector[index];
                         match hud_object.action_on_click {
                             HudActionOnClick::Create => {
-                                let troop_coordinates =
-                                    building.facing() + building.coordinates.into();
+                                let troop_coordinates = building.troop_spawn_position();
                                 if let Some(tile_to_spawn_on) =
                                     self.map.get_tile_from_matr(troop_coordinates)
                                 {
@@ -50,17 +52,14 @@ impl VulkanApp {
                         }
                     }
                     //Troop HUD
-                    HudReference::Troop(index) => {
-                        match hud_object.action_on_click {
-                            HudActionOnClick::Destroy => {
-                                self.map.destroy_troop(index);
-                                self.copy_into_troop_buffer();
-                                self.camera.close_hud_related_to(HudReference::Troop(0))
-                            },
-                            _ => {}
+                    HudReference::Troop(index) => match hud_object.action_on_click {
+                        HudActionOnClick::Destroy => {
+                            self.map.destroy_troop(index);
+                            self.copy_into_troop_buffer();
+                            self.camera.close_hud_related_to(HudReference::Troop(0))
                         }
-                        
-                    }
+                        _ => {}
+                    },
                     _ => {}
                 }
                 self.copy_into_hud_buffer();
