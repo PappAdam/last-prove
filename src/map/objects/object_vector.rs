@@ -2,12 +2,7 @@ use std::{
     fmt::Debug,
     ops::{Index, IndexMut},
 };
-
-pub trait GameObject {
-    fn is_none(&self) -> bool;
-    fn set_to_none(&mut self);
-
-}
+use super::GameObject;
 
 #[derive(Debug)]
 pub struct ObjVec<T: GameObject> {

@@ -1,9 +1,8 @@
 use crate::engine::vector2::{Vector2, Convert};
-use super::object_vector::GameObject;
-
 use super::{
     super::Map,
     tile::{Tile, TileFlag},
+    GameObject
 };
 
 pub enum BuildingFlag {
@@ -46,6 +45,10 @@ impl GameObject for Building {
 
     fn set_to_none(&mut self) {
         self.flags &= !(BuildingFlag::NotNone as u8);
+    }
+
+    fn get_coordinates(&self) -> Vector2<f32> {
+        self.coordinates.into()
     }
 }
 

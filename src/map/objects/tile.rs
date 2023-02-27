@@ -1,6 +1,8 @@
 use bytemuck::{Pod, Zeroable};
 use std::fmt::{Display, Result};
 
+use super::GameObject;
+
 pub enum TileFlag {
     NeighborOnTop = 0b10000000,
     NeighborOnLeft = 0b01000000,
@@ -49,6 +51,20 @@ impl Tile {
     }
     pub fn is_object_on_top(&self) -> bool {
         self.is_building_on_top() || self.is_troop_on_top()
+    }
+}
+
+impl GameObject for Tile {
+    fn is_none(&self) -> bool {
+        return false;
+    }
+
+    fn set_to_none(&mut self) {
+        panic!("Cannot set a tile to none!")
+    }
+
+    fn get_coordinates(&self) -> crate::engine::vector2::Vector2<f32> {
+        self.coordinates.into()
     }
 }
 

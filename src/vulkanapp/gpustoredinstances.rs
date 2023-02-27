@@ -1,6 +1,6 @@
 use crate::{
     camera::{hud::HudObject, Camera},
-    map::objects::object_vector::GameObject,
+    map::objects::GameObject,
     map::Map,
 };
 use bytemuck::{Pod, Zeroable};

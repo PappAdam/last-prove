@@ -9,6 +9,7 @@ use std::vec;
 use crate::engine::vector2::{Vector2, Convert};
 use objects::object_vector::ObjVec;
 
+use self::objects::GameObject;
 use self::objects::building::Building;
 use self::objects::tile::Tile;
 use self::objects::troop::Troop;

@@ -1,9 +1,9 @@
-use super::object_vector::GameObject;
 use crate::engine::vector2::Vector2;
 
 use super::{
     super::Map,
     tile::{Tile, TileFlag},
+    GameObject,
 };
 
 struct TroopStats {
@@ -30,6 +30,20 @@ impl Troop {
             coordinates: coordinates.into(),
             flags: TroopFlag::NotNone as u8,
         }
+    }
+}
+
+impl GameObject for Troop {
+    fn is_none(&self) -> bool {
+        self.flags & TroopFlag::NotNone as u8 != TroopFlag::NotNone as u8
+    }
+
+    fn set_to_none(&mut self) {
+        self.flags &= !(TroopFlag::NotNone as u8);
+    }
+
+    fn get_coordinates(&self) -> Vector2<f32> {
+        self.coordinates.into()
     }
 }
 
@@ -60,15 +74,5 @@ impl Tile {
             }
             None => self.flags &= !(TileFlag::TroopOnTop as u8),
         }
-    }
-}
-
-impl GameObject for Troop {
-    fn is_none(&self) -> bool {
-        self.flags & TroopFlag::NotNone as u8 != TroopFlag::NotNone as u8
-    }
-
-    fn set_to_none(&mut self) {
-        self.flags &= !(TroopFlag::NotNone as u8);
     }
 }
