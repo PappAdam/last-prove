@@ -1,6 +1,6 @@
 use crate::{
     camera::hud::{HudActionOnClick, HudReference},
-    engine::vector2::Convert,
+    map::objects::GameObjects,
 };
 
 use super::VulkanApp;
@@ -66,7 +66,9 @@ impl VulkanApp {
                 return;
             }
             //Clicked a tile
-            if let Some(clicked_tile) = self.map.get_shown_tile_at_coordinates(mouse_coordinates) {
+            if let GameObjects::Tile(clicked_tile) =
+                self.map.get_shown_tile_at_coordinates(mouse_coordinates)
+            {
                 //No object on top
                 if !clicked_tile.is_object_on_top() {
                     self.map.build_building(clicked_tile.coordinates.into(), 0);

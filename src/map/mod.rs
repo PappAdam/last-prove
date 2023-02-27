@@ -1,18 +1,18 @@
 mod automata;
 pub mod generate;
-pub mod perlin;
 pub mod objects;
+pub mod perlin;
 
 use std::fmt::{self, Display};
 use std::vec;
 
-use crate::engine::vector2::{Vector2, Convert};
+use crate::engine::vector2::{Convert, Vector2};
 use objects::object_vector::ObjVec;
 
-use self::objects::GameObject;
 use self::objects::building::Building;
 use self::objects::tile::Tile;
 use self::objects::troop::Troop;
+use self::objects::{GameObject, GameObjects};
 
 pub struct Map {
     pub size: usize,
@@ -38,7 +38,10 @@ impl Map {
         }
     }
 
-    pub fn get_shown_tile_at_coordinates(&self, mouse_tile_coordinates: Vector2<f32>) -> Option<&Tile> {
+    pub fn get_shown_tile_at_coordinates(
+        &self,
+        mouse_tile_coordinates: Vector2<f32>,
+    ) -> GameObjects {
         let rounded_mouse_coordinates = mouse_tile_coordinates.round().convert();
 
         //Checking tiles in front of the click position
@@ -56,8 +59,10 @@ impl Map {
                 Vector2::new(0.0, -1.0)
             }
         };
-        let (clicked_tile_on_side, height_of_side_of_click) =
-            self.get_tile_in_front_at_coordinates((rounded_mouse_coordinates.convert() + side_offset).convert());
+        let (clicked_tile_on_side, height_of_side_of_click) = self
+            .get_tile_in_front_at_coordinates(
+                (rounded_mouse_coordinates.convert() + side_offset).convert(),
+            );
 
         if let Some(_) = final_clicked_tile {
             if let Some(clicked_tile_on_side) = clicked_tile_on_side {
@@ -66,13 +71,17 @@ impl Map {
                 }
             }
         } else {
-            final_clicked_tile = self.get_tile_from_matr((rounded_mouse_coordinates.convert() + side_offset).convert());
+            final_clicked_tile = self
+                .get_tile_from_matr((rounded_mouse_coordinates.convert() + side_offset).convert());
             if let None = final_clicked_tile {
                 final_clicked_tile =
                     self.get_tile_from_matr(rounded_mouse_coordinates - Vector2::uniform(1))
             }
         }
-        final_clicked_tile
+        if let None = final_clicked_tile {
+            return GameObjects::None
+        }
+        GameObjects::Tile(final_clicked_tile.unwrap())
     }
 
     fn get_tile_in_front_at_coordinates(
@@ -82,7 +91,8 @@ impl Map {
         //Returns the tile that is drawn on top of the original. (The tile that is shown on the screen)
         for z_up in 1..self.height + 1 {
             if let Some(other_tile) = self.get_tile_from_matr(
-                rounded_coordinates + Vector2::uniform(self.height as u16) - Vector2::uniform(z_up as u16),
+                rounded_coordinates + Vector2::uniform(self.height as u16)
+                    - Vector2::uniform(z_up as u16),
             ) {
                 if other_tile.max_z >= self.height - z_up {
                     return (Some(other_tile), self.height - z_up);
