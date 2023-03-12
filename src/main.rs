@@ -4,16 +4,12 @@ mod input;
 mod map;
 mod vulkanapp;
 
-use std::{vec, time::Instant};
-
-use engine::vector2::Vector2;
 use vulkanapp::VulkanApp;
 use winit::event::{Event, WindowEvent};
 
 fn main() {
     let (mut vulkan_app, event_loop) = VulkanApp::init();
     let mut last_frame = std::time::Instant::now();
-
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent { event, .. } => match event {

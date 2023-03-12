@@ -1,13 +1,13 @@
+use super::GameObject;
 use std::{
     fmt::Debug,
     ops::{Index, IndexMut},
 };
-use super::GameObject;
 
 #[derive(Debug)]
 pub struct ObjVec<T: GameObject> {
     first_empty_index: usize,
-    content: Vec<T>,
+    pub content: Vec<T>,
 }
 
 impl<T: GameObject + Debug> ObjVec<T> {

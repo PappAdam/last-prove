@@ -1,5 +1,5 @@
 use super::Camera;
-use crate::engine::{vector2::Vector2};
+use crate::engine::vector2::Vector2;
 use std::vec;
 use winit::event::VirtualKeyCode;
 
@@ -95,7 +95,11 @@ pub struct HudObject {
 }
 
 impl HudObject {
-    pub fn new_static(top_left: Vector2<f32>, bottom_right: Vector2<f32>, texture_layer: u8) -> Self {
+    pub fn new_static(
+        top_left: Vector2<f32>,
+        bottom_right: Vector2<f32>,
+        texture_layer: u8,
+    ) -> Self {
         HudObject {
             top_left,
             bottom_right,
@@ -157,6 +161,7 @@ impl HudObject {
         {
             return true;
         }
+
         false
     }
 

@@ -1,9 +1,10 @@
-use crate::engine::vector2::{Vector2, Convert};
 use super::{
     super::Map,
+    colliders::{Collider, ColliderIndex, COLLIDER_ARRAY, HasCollider},
     tile::{Tile, TileFlag},
-    GameObject
+    GameObject,
 };
+use crate::engine::vector2::{Convert, Vector2};
 
 pub enum BuildingFlag {
     NotNone = 0b10000000,
@@ -11,9 +12,10 @@ pub enum BuildingFlag {
 
 #[derive(Debug)]
 pub struct Building {
-    pub coordinates: [u16; 2],
+    pub coordinates: Vector2<u16>,
     pub texture_layer: u16,
-    pub flags: u8,
+    flags: u8,
+    pub collider_index: ColliderIndex,
     //0: NOT  NONE (0 If None.)
     //1: NOT  SET
     //2: NOT  SET
@@ -26,15 +28,16 @@ pub struct Building {
 
 impl Building {
     pub fn troop_spawn_position(&self) -> Vector2<u16> {
-        let offset: Vector2<i32> = match self.texture_layer % 4 {
+        let offset: Vector2<i16> = match self.texture_layer % 4 {
             0 => Vector2::new(0, -1),
             1 => Vector2::new(1, 0),
             2 => Vector2::new(0, 1),
             3 => Vector2::new(-1, 0),
             _ => panic!("This cannot happen, just need to match because the compiler."),
-        }.convert();
+        }
+        .convert();
 
-        (offset + self.coordinates.into()).convert()
+        (offset + self.coordinates.convert()).convert()
     }
 }
 
@@ -48,7 +51,13 @@ impl GameObject for Building {
     }
 
     fn get_coordinates(&self) -> Vector2<f32> {
-        self.coordinates.into()
+        self.coordinates.convert()
+    }
+}
+
+impl HasCollider for Building {
+    fn get_collider(&self) -> &'static Collider {
+        &COLLIDER_ARRAY[self.collider_index]
     }
 }
 
@@ -58,6 +67,7 @@ impl Map {
             coordinates: coordinates.into(),
             texture_layer: building_texture_layer,
             flags: BuildingFlag::NotNone as u8,
+            collider_index: ColliderIndex::BuildingCollider,
         };
 
         let building_index = self.building_vector.push(building);

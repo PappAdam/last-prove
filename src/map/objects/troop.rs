@@ -1,7 +1,9 @@
-use crate::engine::vector2::Vector2;
+use crate::engine::vector2::{Convert, Vector2};
 
 use super::{
     super::Map,
+    building::Building,
+    colliders::{Collider, ColliderIndex, COLLIDER_ARRAY, HasCollider},
     tile::{Tile, TileFlag},
     GameObject,
 };
@@ -20,16 +22,23 @@ enum TroopFlag {
 
 #[derive(Debug)]
 pub struct Troop {
-    pub coordinates: [u16; 2],
+    pub coordinates: Vector2<f32>,
     flags: u8,
+    pub collider_index: ColliderIndex,
 }
 
 impl Troop {
     pub fn new(coordinates: Vector2<u16>) -> Self {
         Troop {
-            coordinates: coordinates.into(),
+            coordinates: coordinates.convert(),
             flags: TroopFlag::NotNone as u8,
+            collider_index: ColliderIndex::TroopCollider,
         }
+    }
+
+    pub fn coordinates_inside_collider(&self, coordinates: Vector2<f32>) -> bool {
+        &COLLIDER_ARRAY[self.collider_index];
+        false
     }
 }
 
@@ -47,7 +56,24 @@ impl GameObject for Troop {
     }
 }
 
+impl HasCollider for Troop {
+    fn get_collider(&self) -> &'static Collider {
+        &COLLIDER_ARRAY[self.collider_index]
+    }
+}
+
 impl Map {
+    pub fn try_troop_spawn(&mut self, building_index: usize) -> bool {
+        let building = &self.building_vector[building_index];
+        let troop_coordinates = building.troop_spawn_position();
+        if let Some(tile_to_spawn_on) = self.get_tile_from_matr(troop_coordinates) {
+            if !tile_to_spawn_on.is_object_on_top() {
+                self.spawn_troop(troop_coordinates);
+                return true;
+            }
+        }
+        return false;
+    }
     pub fn spawn_troop(&mut self, cooridnates: Vector2<u16>) {
         let troop = Troop::new(cooridnates);
         let troop_index = self.troop_vector.push(troop);
@@ -58,7 +84,7 @@ impl Map {
     }
     pub fn destroy_troop(&mut self, index: usize) {
         let troop_coordinates = self.troop_vector[index as usize].coordinates;
-        self.get_mut_tile_from_matr(troop_coordinates.into())
+        self.get_mut_tile_from_matr(troop_coordinates.round().convert())
             .expect("No tile found at build position")
             .set_troop_on_top(None);
         self.troop_vector.remove(index);

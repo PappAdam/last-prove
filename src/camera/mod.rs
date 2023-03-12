@@ -1,5 +1,4 @@
 pub mod hud;
-mod colliders;
 
 use crate::{
     engine::vector2::{Vector2, Convert},

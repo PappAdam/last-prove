@@ -1,7 +1,7 @@
 use crate::{
     camera::{hud::HudObject, Camera},
     map::objects::GameObject,
-    map::Map,
+    map::Map, engine::vector2::Convert,
 };
 use bytemuck::{Pod, Zeroable};
 use std::vec;
@@ -64,9 +64,9 @@ impl Map {
                     + 1;
                 gpu_stored_building_vector[vector_index] = GpuStoredGameObject {
                     coordinates: [
-                        building.coordinates[0] as f32 - z as f32,
-                        building.coordinates[1] as f32 - z as f32,
-                        (building.coordinates[0] + building.coordinates[1] + z as u16 + 1) as f32
+                        building.coordinates.x as f32 - z as f32,
+                        building.coordinates.y as f32 - z as f32,
+                        (building.coordinates.x + building.coordinates.y + z as u16 + 1) as f32
                             / (self.size * 2 + self.height as usize) as f32,
                     ],
                     texture_layer: 0,
@@ -84,15 +84,15 @@ impl Map {
         for troop in &self.troop_vector {
             if !troop.is_none() {
                 let z = self
-                    .get_tile_from_matr(troop.coordinates.into())
+                    .get_tile_from_matr(troop.coordinates.round().convert())
                     .unwrap()
                     .max_z
                     + 1;
                 gpu_stored_troop_vector[vector_index] = GpuStoredGameObject {
                     coordinates: [
-                        troop.coordinates[0] as f32 - z as f32,
-                        troop.coordinates[1] as f32 - z as f32,
-                        (troop.coordinates[0] + troop.coordinates[1] + z as u16 + 1) as f32
+                        troop.coordinates.x as f32 - z as f32,
+                        troop.coordinates.y as f32 - z as f32,
+                        (troop.coordinates.x + troop.coordinates.y + z as f32 + 1.)
                             / (self.size * 2 + self.height as usize) as f32,
                     ],
                     texture_layer: 0,
