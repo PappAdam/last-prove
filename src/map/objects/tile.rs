@@ -10,6 +10,7 @@ pub enum TileFlag {
     NeighborOnRight = 0b00010000,
     BuildingOnTop = 0b00001000,
     TroopOnTop = 0b00000100,
+    IsWater = 0b00000010,
 }
 
 #[repr(C)]
@@ -26,7 +27,7 @@ pub struct Tile {
     //3 NEIGHBOR ON RIGHT
     //4 BUILDING ON TOP
     //5 TROOP ON TOP
-    //6 NOT USED
+    //6 IS WATER
     //7 NOT USED
     pub object_on_top_index_in_vector: u16,
 }

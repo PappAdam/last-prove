@@ -2,7 +2,6 @@ use std::mem::size_of_val;
 
 use crate::{
     camera::hud::{HudActionOnClick, HudReference},
-    engine::vector2::{Convert, Vector2},
     map::objects::GameObjectReference,
 };
 
