@@ -74,11 +74,10 @@ impl Map {
         //Returns the tile that is drawn on top of the original. (The tile that is shown on the screen)
 
         let rounded_coordinates = (mouse_coordinates + side_offset).round().convert();
-
         for z_up in 1..self.height + 1 {
             if let Some(checked_tile) = self.get_tile_from_matr(
-                rounded_coordinates + Vector2::uniform(self.height as u16)
-                    - Vector2::uniform(z_up as u16),
+                (rounded_coordinates + Vector2::uniform(self.height as i16)
+                    - Vector2::uniform(z_up as i16)).convert(),
             ) {
                 let object_on_top_index = checked_tile.object_on_top_index_in_vector;
                 if checked_tile.is_building_on_top() {
@@ -116,7 +115,7 @@ impl Map {
             }
         }
 
-        (self.get_tile_from_matr(rounded_coordinates - Vector2::uniform(1))
+        (self.get_tile_from_matr((rounded_coordinates - Vector2::uniform(1)).convert())
             .into(), 0)
     }
 

@@ -45,8 +45,8 @@ impl Camera {
                 1.0 - (1.0 / 1.2),
             );
         } else if mouse_wheel < 0
-            && self.target_tiles_fit.x < 100.0
-            && self.target_tiles_fit.x < 100.0
+            && self.target_tiles_fit.x < 400.0
+            && self.target_tiles_fit.x < 400.0
         {
             self.target_tiles_fit *= 1.2;
             self.target_coordinates = Vector2::lerp(

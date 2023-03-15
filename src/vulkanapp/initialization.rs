@@ -34,7 +34,7 @@ use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
 use crate::camera::Camera;
-use crate::engine::vector2::{Vector2, Convert};
+use crate::engine::vector2::{Convert, Vector2};
 use crate::input::Input;
 use crate::map::Map;
 
@@ -103,39 +103,46 @@ impl VulkanApp {
 
         let (tile_textures, tile_texture_future) = create_texture!(
             graphics_queue.clone(),
-            64, 64,
-            "../../Assets/debug_tiles/0.png",           //0
-            "../../Assets/debug_tiles/1_br.png",        //1
-            "../../Assets/debug_tiles/1_bl.png",        //2
-            "../../Assets/debug_tiles/2_bl_br.png",     //3
-            "../../Assets/debug_tiles/1_tl.png",        //4
-            "../../Assets/debug_tiles/2_tl_br.png",     //5
-            "../../Assets/debug_tiles/2_tl_bl.png",     //6
-            "../../Assets/debug_tiles/3_tl_bl_br.png",  //7
-            "../../Assets/debug_tiles/1_tr.png",        //8
-            "../../Assets/debug_tiles/2_br_tr.png",     //9
-            "../../Assets/debug_tiles/2_bl_tr.png",     //10
-            "../../Assets/debug_tiles/3_bl_br_tr.png",  //11
-            "../../Assets/debug_tiles/2_tl_tr.png",     //12
-            "../../Assets/debug_tiles/3_tl_br_tr.png",  //13
-            "../../Assets/debug_tiles/3_tl_bl_tr.png",  //14
-            "../../Assets/debug_tiles/4.png"           //15
+            64,
+            64,
+            "../../Assets/debug_tiles/0.png",          //0
+            "../../Assets/debug_tiles/1_br.png",       //1
+            "../../Assets/debug_tiles/1_bl.png",       //2
+            "../../Assets/debug_tiles/2_bl_br.png",    //3
+            "../../Assets/debug_tiles/1_tl.png",       //4
+            "../../Assets/debug_tiles/2_tl_br.png",    //5
+            "../../Assets/debug_tiles/2_tl_bl.png",    //6
+            "../../Assets/debug_tiles/3_tl_bl_br.png", //7
+            "../../Assets/debug_tiles/1_tr.png",       //8
+            "../../Assets/debug_tiles/2_br_tr.png",    //9
+            "../../Assets/debug_tiles/2_bl_tr.png",    //10
+            "../../Assets/debug_tiles/3_bl_br_tr.png", //11
+            "../../Assets/debug_tiles/2_tl_tr.png",    //12
+            "../../Assets/debug_tiles/3_tl_br_tr.png", //13
+            "../../Assets/debug_tiles/3_tl_bl_tr.png", //14
+            "../../Assets/debug_tiles/4.png",          //15
+            "../../Assets/debug_tiles/Water.png",      //16
+            "../../Assets/debug_tiles/Water_R.png",    //17
+            "../../Assets/debug_tiles/Water_L.png"     //18
         );
         let (building_textures, building_texture_future) = create_texture!(
             graphics_queue.clone(),
-            64, 64,
+            64,
+            64,
             "../../Assets/debug_buildings/basic.png",
             "../../Assets/debug_buildings/basic.png"
         );
         let (troop_textures, troop_texture_future) = create_texture!(
             graphics_queue.clone(),
-            64, 64,
+            64,
+            64,
             "../../Assets/debug_troops/basic.png",
             "../../Assets/debug_troops/basic.png"
         );
         let (hud_textures, hud_texture_future) = create_texture!(
             graphics_queue.clone(),
-            20, 20,
+            20,
+            20,
             "../../Assets/hud/Background.png",
             "../../Assets/hud/Create.png",
             "../../Assets/hud/Destroy.png"
@@ -208,8 +215,8 @@ impl VulkanApp {
 
         let recreate_swapchain = false;
 
-        let mapsize = 128;
-        let mut map = Map::new(mapsize, 20);
+        let mapsize = 512;
+        let mut map = Map::new(mapsize, 64);
         map.generate(None);
         //map.from_bmp("mask1.bmp");
         //map.generate_automata(0.7, 17);
@@ -236,18 +243,17 @@ impl VulkanApp {
                 [graphics_queue.queue_family_index()],
             )
             .unwrap();
-        let device_local_troop_instance_buffer =
-            DeviceLocalBuffer::<[GpuStoredGameObject]>::array(
-                device.clone(),
-                1,
-                BufferUsage {
-                    vertex_buffer: true,
-                    transfer_src: true,
-                    ..Default::default()
-                },
-                [graphics_queue.queue_family_index()],
-            )
-            .unwrap();
+        let device_local_troop_instance_buffer = DeviceLocalBuffer::<[GpuStoredGameObject]>::array(
+            device.clone(),
+            1,
+            BufferUsage {
+                vertex_buffer: true,
+                transfer_src: true,
+                ..Default::default()
+            },
+            [graphics_queue.queue_family_index()],
+        )
+        .unwrap();
         let (device_local_hud_instance_buffer, hud_copy_future) = Self::create_device_local_buffer(
             device.clone(),
             graphics_queue.clone(),

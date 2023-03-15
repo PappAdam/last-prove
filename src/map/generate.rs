@@ -1,9 +1,9 @@
 use super::objects::tile::TileFlag;
 use super::{automata, perlin};
 use super::{objects::tile::Tile, Map};
-use crate::engine::vector2::{Vector2, Convert};
-use std::fs;
+use crate::engine::vector2::{Convert, Vector2};
 use bmp;
+use std::fs;
 
 impl Map {
     pub fn generate(&mut self, seed: Option<u16>) {
@@ -24,19 +24,14 @@ impl Map {
             for x in 0..self.size as usize {
                 let tile_position = Vector2::new(x, y);
 
-                //Treshold gets higher when further from the center
-                let treshold: f32 = Vector2::distance(map_center, tile_position.into()) / center_on_row;
+                let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.01, 1);
 
-                let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.1, 2);
-
-                if perlin_value > treshold {
-                    let tile = Tile::new(
-                        tile_position.into(),
-                        ((perlin_value - treshold) / z_difference_for_height) as u8,
-                    );
-                    self.tile_matr[y][x] = Some(tile);
-                    //self.building_vector.push(Building { coordinates: tile_position.into(), texture_layer: 0 })
-                }
+                let tile = Tile::new(
+                    tile_position.into(),
+                    (perlin_value / z_difference_for_height) as u8,
+                );
+                self.tile_matr[y][x] = Some(tile);
+                //self.building_vector.push(Building { coordinates: tile_position.into(), texture_layer: 0 })
             }
         }
         //Calculating minimum Z values for optimized render, than returning the result.
@@ -55,7 +50,8 @@ impl Map {
                 if automata_matr[y][x] == 0 {
                     self.tile_matr[y][x] = None;
                 } else {
-                    self.tile_matr[y][x] = Some(Tile::new([x as u16, y as u16], automata_matr[y][x] - 1));
+                    self.tile_matr[y][x] =
+                        Some(Tile::new([x as u16, y as u16], automata_matr[y][x] - 1));
                 }
             }
         }
@@ -97,12 +93,16 @@ impl Map {
 
         for x in 0..self.size {
             for y in 0..self.size {
-                let tile_height = bmp.get_pixel((x as f32 * pixel_per_tile).floor() as u32, (y as f32 * pixel_per_tile).floor() as u32).r / value_per_height;
+                let tile_height =
+                    bmp.get_pixel(
+                        (x as f32 * pixel_per_tile).floor() as u32,
+                        (y as f32 * pixel_per_tile).floor() as u32,
+                    )
+                    .r / value_per_height;
                 let tile;
                 if tile_height == 0 {
                     tile = None;
-                }
-                else {
+                } else {
                     tile = Some(Tile::new([x as u16, y as u16], tile_height - 1));
                 }
                 self.tile_matr[y][x] = tile;
@@ -130,8 +130,8 @@ impl Map {
                         //Going 1 tile behind every iteration
                         while z_down > 0 && z_up < x && z_up < y {
                             z_up += 1;
-                            if let Some(mut other_tile) =
-                                self.get_mut_tile_from_matr(Vector2::new(x - z_up, y - z_up).convert())
+                            if let Some(mut other_tile) = self
+                                .get_mut_tile_from_matr(Vector2::new(x - z_up, y - z_up).convert())
                             {
                                 //Multiple other tiles can set this tile's min_z
                                 //Only setting min_z if z_down is higher than min_z so we get the highest value of all.
@@ -203,6 +203,15 @@ impl Map {
                     } else {
                         0u32
                     };
+                    if tile.max_z < self.height / 2 {
+                        self.num_of_vulkan_instances += 1;
+                        if tile.coordinates[0] + 1 == self.size as u16 {
+                            self.num_of_vulkan_instances += (self.height / 2 - tile.max_z) as u32
+                        }
+                        if tile.coordinates[1] + 1 == self.size as u16 {
+                            self.num_of_vulkan_instances += (self.height / 2 - tile.max_z) as u32
+                        }
+                    }
                 }
             }
         }
@@ -220,7 +229,8 @@ impl Map {
                             tile.flags |= TileFlag::NeighborOnTop as u8;
                         }
                     }
-                    if let Some(other_tile) = self.get_tile_from_matr(Vector2::new(x, y + 1).convert())
+                    if let Some(other_tile) =
+                        self.get_tile_from_matr(Vector2::new(x, y + 1).convert())
                     {
                         if other_tile.max_z == tile.max_z {
                             tile.flags |= TileFlag::NeighborOnBottom as u8;
@@ -228,7 +238,7 @@ impl Map {
                     }
 
                     if let Some(other_tile) =
-                        self.get_tile_from_matr(Vector2::new(x - 1, y).convert())
+                        self.get_tile_from_matr(Vector2::new(x as f32 - 1f32, y as f32).convert())
                     //Using floats to prevent subtracing with overflow
                     {
                         if other_tile.max_z == tile.max_z {
@@ -236,7 +246,8 @@ impl Map {
                         }
                     }
 
-                    if let Some(other_tile) = self.get_tile_from_matr(Vector2::new(x + 1, y).convert())
+                    if let Some(other_tile) =
+                        self.get_tile_from_matr(Vector2::new(x + 1, y).convert())
                     {
                         if other_tile.max_z == tile.max_z {
                             tile.flags |= TileFlag::NeighborOnRight as u8;
