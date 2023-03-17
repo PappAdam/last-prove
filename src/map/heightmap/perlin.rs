@@ -1,3 +1,26 @@
+use num::traits::AsPrimitive;
+
+use super::HeightMap;
+
+impl HeightMap {
+    pub fn perlin_noise(seed: Option<u16>, size: usize) -> HeightMap {
+        let perlin_noise = Perlin2D::new(match seed {
+            None => rand::Rng::gen::<u16>(&mut rand::thread_rng()),
+            Some(i) => i,
+        });
+
+        let mut heightmap = HeightMap::new(size);
+
+        for y in 0..size {
+            for x in 0..size {
+                heightmap[y][x] = perlin_noise.perlin2d(x.as_(), y.as_(), 0.02, 1)
+            }
+        }
+
+        heightmap
+    }
+}
+
 const HASH: [u8; 256] = [
     208, 34, 231, 213, 32, 248, 233, 56, 161, 78, 24, 140, 71, 48, 140, 254, 245, 255, 247, 247,
     40, 185, 248, 251, 245, 28, 124, 204, 204, 76, 36, 1, 107, 28, 234, 163, 202, 224, 245, 128,

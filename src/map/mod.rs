@@ -1,7 +1,7 @@
 mod automata;
+mod heightmap;
 pub mod generate;
 pub mod objects;
-pub mod perlin;
 
 use std::fmt::{self, Display};
 use std::vec;
@@ -18,6 +18,7 @@ use self::objects::GameObjectReference;
 pub struct Map {
     pub size: usize,
     pub height: u8,
+    pub sea_level: u8,
     pub tile_matr: Vec<Vec<Tile>>,
     pub building_vector: ObjVec<Building>,
     pub troop_vector: ObjVec<Troop>,
@@ -31,6 +32,7 @@ impl Map {
         Self {
             size,
             height,
+            sea_level: height / 2,
             tile_matr: vec::from_elem(
                 vec::from_elem(Tile::default(), size as usize),
                 size as usize,

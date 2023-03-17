@@ -215,7 +215,7 @@ impl VulkanApp {
 
         let recreate_swapchain = false;
 
-        let mapsize = 2048;
+        let mapsize = 256;
         let mut map = Map::new(mapsize, 32);
         map.generate(None);
         //map.from_bmp("mask1.bmp");

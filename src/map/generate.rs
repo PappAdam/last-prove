@@ -1,5 +1,5 @@
+use super::heightmap::HeightMap;
 use super::objects::tile::TileFlag;
-use super::{automata, perlin};
 use super::{objects::tile::Tile, Map};
 use crate::engine::vector2::{Convert, Vector2};
 use bmp;
@@ -7,10 +7,8 @@ use std::fs;
 
 impl Map {
     pub fn generate(&mut self, seed: Option<u16>) {
-        let perlin_noise = perlin::Perlin2D::new(match seed {
-            None => rand::Rng::gen::<u16>(&mut rand::thread_rng()),
-            Some(i) => i,
-        });
+        let noise = HeightMap::island(self.size) * HeightMap::perlin_noise(seed, self.size);
+        // let noise = HeightMap::island(self.size);
 
         //The perlin noise value will be divided by this number
         //The result will be the height
@@ -21,11 +19,11 @@ impl Map {
             for x in 0..self.size as usize {
                 let tile_position = Vector2::new(x, y);
 
-                let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.05, 1);
+                let noise_value = noise[y][x];
 
                 let tile = Tile::new(
                     tile_position.into(),
-                    (perlin_value / z_difference_for_height) as u8,
+                    (noise_value / z_difference_for_height) as u8,
                 );
                 self.tile_matr[y][x] = tile;
                 //self.building_vector.push(Building { coordinates: tile_position.into(), texture_layer: 0 })
@@ -199,13 +197,13 @@ impl Map {
                 } else {
                     0u32
                 };
-                if tile.max_z < self.height / 2 {
+                if tile.max_z < self.sea_level {
                     self.num_of_vulkan_instances += 1;
                     if tile.coordinates[0] + 1 == self.size as u16 {
-                        self.num_of_vulkan_instances += (self.height / 2 - tile.max_z) as u32
+                        self.num_of_vulkan_instances += (self.sea_level - tile.max_z) as u32
                     }
                     if tile.coordinates[1] + 1 == self.size as u16 {
-                        self.num_of_vulkan_instances += (self.height / 2 - tile.max_z) as u32
+                        self.num_of_vulkan_instances += (self.sea_level - tile.max_z) as u32
                     }
                 }
             }

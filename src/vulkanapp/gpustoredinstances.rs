@@ -45,9 +45,9 @@ impl Map {
                     };
                     vector_index += 1;
                 }
-                if tile.max_z < self.height / 2 {
+                if tile.max_z < self.sea_level {
                     if tile.coordinates[0] + 1 == self.size as u16 {
-                        for z in tile.max_z + 1..(self.height / 2) + 1 {
+                        for z in tile.max_z + 1..self.sea_level + 1 {
                             coordinate_vec[vector_index] = GpuStoredGameObject {
                                 coordinates: [
                                     tile.coordinates[0] as f32 - z as f32,
@@ -60,7 +60,7 @@ impl Map {
                         }
                     }
                     if tile.coordinates[1] + 1 == self.size as u16 {
-                        for z in tile.max_z + 1..(self.height / 2) + 1 {
+                        for z in tile.max_z + 1..self.sea_level + 1 {
                             coordinate_vec[vector_index] = GpuStoredGameObject {
                                 coordinates: [
                                     tile.coordinates[0] as f32 - z as f32,
@@ -74,11 +74,12 @@ impl Map {
                     }
                     coordinate_vec[vector_index] = GpuStoredGameObject {
                         coordinates: [
-                            tile.coordinates[0] as f32 - self.height as f32 / 2.,
-                            tile.coordinates[1] as f32 - self.height as f32 / 2.,
-                            (tile.coordinates[0] + tile.coordinates[1] + self.height as u16 + 1)
-                                as f32
-                                / (self.size * 2 + self.height as usize) as f32,
+                            tile.coordinates[0] as f32 - self.sea_level as f32,
+                            tile.coordinates[1] as f32 - self.sea_level as f32,
+                            // (tile.coordinates[0] + tile.coordinates[1] + self.height as u16 + 1)
+                            //     as f32
+                            //     / (self.size * 2 + self.height as usize) as f32,
+                            0.,
                         ],
                         texture_layer: 16,
                     };
