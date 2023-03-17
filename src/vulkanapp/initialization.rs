@@ -100,30 +100,16 @@ impl VulkanApp {
             hud_vertex_shader,
             general_fragment_shader,
         );
-
         let (tile_textures, tile_texture_future) = create_texture!(
             graphics_queue.clone(),
             64,
             64,
-            "../../Assets/debug_tiles/0.png",          //0
-            "../../Assets/debug_tiles/1_br.png",       //1
-            "../../Assets/debug_tiles/1_bl.png",       //2
-            "../../Assets/debug_tiles/2_bl_br.png",    //3
-            "../../Assets/debug_tiles/1_tl.png",       //4
-            "../../Assets/debug_tiles/2_tl_br.png",    //5
-            "../../Assets/debug_tiles/2_tl_bl.png",    //6
-            "../../Assets/debug_tiles/3_tl_bl_br.png", //7
-            "../../Assets/debug_tiles/1_tr.png",       //8
-            "../../Assets/debug_tiles/2_br_tr.png",    //9
-            "../../Assets/debug_tiles/2_bl_tr.png",    //10
-            "../../Assets/debug_tiles/3_bl_br_tr.png", //11
-            "../../Assets/debug_tiles/2_tl_tr.png",    //12
-            "../../Assets/debug_tiles/3_tl_br_tr.png", //13
-            "../../Assets/debug_tiles/3_tl_bl_tr.png", //14
-            "../../Assets/debug_tiles/4.png",          //15
-            "../../Assets/debug_tiles/Water.png",      //16
-            "../../Assets/debug_tiles/Water_R.png",    //17
-            "../../Assets/debug_tiles/Water_L.png"     //18
+            "../../Assets/minecraft_tiles/grass.png",  //0
+            "../../Assets/minecraft_tiles/sand.png",   //1
+            "../../Assets/minecraft_tiles/gravel.png", //2
+            "../../Assets/debug_tiles/Water.png",      //3
+            "../../Assets/debug_tiles/Water_R.png",    //4
+            "../../Assets/debug_tiles/Water_L.png"     //5
         );
         let (building_textures, building_texture_future) = create_texture!(
             graphics_queue.clone(),

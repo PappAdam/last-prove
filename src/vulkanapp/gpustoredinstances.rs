@@ -41,7 +41,13 @@ impl Map {
                             //     / (self.size * 2 + self.height as usize) as f32,
                             0.,
                         ],
-                        texture_layer: (tile.flags >> 4) as u32,
+                        texture_layer: if z < self.height / 2 - 2 {
+                            2
+                        } else if z > self.height / 2 + 2 {
+                            0
+                        } else {
+                            1
+                        },
                     };
                     vector_index += 1;
                 }
@@ -54,7 +60,7 @@ impl Map {
                                     tile.coordinates[1] as f32 - z as f32,
                                     0.,
                                 ],
-                                texture_layer: 17,
+                                texture_layer: 4,
                             };
                             vector_index += 1;
                         }
@@ -67,7 +73,7 @@ impl Map {
                                     tile.coordinates[1] as f32 - z as f32,
                                     0.,
                                 ],
-                                texture_layer: 18,
+                                texture_layer: 5,
                             };
                             vector_index += 1;
                         }
@@ -81,7 +87,7 @@ impl Map {
                             //     / (self.size * 2 + self.height as usize) as f32,
                             0.,
                         ],
-                        texture_layer: 16,
+                        texture_layer: 3,
                     };
                     vector_index += 1;
                 }
