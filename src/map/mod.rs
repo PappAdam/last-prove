@@ -18,7 +18,7 @@ use self::objects::GameObjectReference;
 pub struct Map {
     pub size: usize,
     pub height: u8,
-    pub tile_matr: Vec<Vec<Option<Tile>>>,
+    pub tile_matr: Vec<Vec<Tile>>,
     pub building_vector: ObjVec<Building>,
     pub troop_vector: ObjVec<Troop>,
     pub num_of_vulkan_instances: u32,
@@ -31,7 +31,10 @@ impl Map {
         Self {
             size,
             height,
-            tile_matr: vec::from_elem(vec::from_elem(None, size as usize), size as usize),
+            tile_matr: vec::from_elem(
+                vec::from_elem(Tile::default(), size as usize),
+                size as usize,
+            ),
             building_vector: ObjVec::with_capacity(10),
             troop_vector: ObjVec::with_capacity(10),
             num_of_vulkan_instances: 0,
@@ -77,7 +80,8 @@ impl Map {
         for z_up in 1..self.height + 1 {
             if let Some(checked_tile) = self.get_tile_from_matr(
                 (rounded_coordinates + Vector2::uniform(self.height as i16)
-                    - Vector2::uniform(z_up as i16)).convert(),
+                    - Vector2::uniform(z_up as i16))
+                .convert(),
             ) {
                 let object_on_top_index = checked_tile.object_on_top_index_in_vector;
                 if checked_tile.is_building_on_top() {
@@ -110,13 +114,19 @@ impl Map {
                     }
                 }
                 if checked_tile.max_z >= self.height - z_up {
-                    return (GameObjectReference::Tile(checked_tile), self.height - z_up + 1);
+                    return (
+                        GameObjectReference::Tile(checked_tile),
+                        self.height - z_up + 1,
+                    );
                 }
             }
         }
 
-        (self.get_tile_from_matr((rounded_coordinates - Vector2::uniform(1)).convert())
-            .into(), 0)
+        (
+            self.get_tile_from_matr((rounded_coordinates - Vector2::uniform(1)).convert())
+                .into(),
+            0,
+        )
     }
 
     pub fn get_mut_tile_from_matr(&mut self, coordinates: Vector2<u16>) -> Option<&mut Tile> {
@@ -125,7 +135,7 @@ impl Map {
             && coordinates.y >= 0
             && coordinates.y < self.size as u16
         {
-            return self.tile_matr[coordinates.y as usize][coordinates.x as usize].as_mut();
+            return Some(&mut self.tile_matr[coordinates.y as usize][coordinates.x as usize]);
         }
         None
     }
@@ -135,7 +145,7 @@ impl Map {
             && coordinates.y >= 0
             && coordinates.y < self.size as u16
         {
-            return self.tile_matr[coordinates.y as usize][coordinates.x as usize].as_ref();
+            return Some(&self.tile_matr[coordinates.y as usize][coordinates.x as usize]);
         }
         None
     }
@@ -145,7 +155,7 @@ impl Map {
             && coordinates.y >= 0
             && coordinates.y < self.size as u16
         {
-            return self.tile_matr[coordinates.y as usize][coordinates.x as usize].clone();
+            return Some(self.tile_matr[coordinates.y as usize][coordinates.x as usize]);
         }
         None
     }
@@ -157,11 +167,7 @@ impl Display for Map {
 
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
-                match self.tile_matr[y][x] {
-                    None => res = write!(f, "_ "),
-                    Some(tile) => res = write!(f, "{} ", tile.max_z),
-                }
-
+                res = write!(f, "{} ", self.tile_matr[y][x]);
                 if let Err(_) = res {
                     return res;
                 }

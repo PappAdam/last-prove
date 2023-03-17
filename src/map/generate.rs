@@ -12,9 +12,6 @@ impl Map {
             Some(i) => i,
         });
 
-        let center_on_row = (self.size / 2) as f32;
-        let map_center = Vector2::new(center_on_row, center_on_row);
-
         //The perlin noise value will be divided by this number
         //The result will be the height
         //The higher the self.height is, the lower this number gets, resulting in higher maps.
@@ -24,13 +21,13 @@ impl Map {
             for x in 0..self.size as usize {
                 let tile_position = Vector2::new(x, y);
 
-                let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.01, 1);
+                let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.05, 1);
 
                 let tile = Tile::new(
                     tile_position.into(),
                     (perlin_value / z_difference_for_height) as u8,
                 );
-                self.tile_matr[y][x] = Some(tile);
+                self.tile_matr[y][x] = tile;
                 //self.building_vector.push(Building { coordinates: tile_position.into(), texture_layer: 0 })
             }
         }
@@ -42,76 +39,76 @@ impl Map {
         // self.spawn_troop(Vector2::uniform_usize(self.size / 2));
     }
 
-    #[allow(unused)]
-    pub fn generate_automata(&mut self, density: f32, iterations: u8) {
-        let automata_matr = automata::generate(self.size, density, iterations);
-        for y in 0..self.size as usize {
-            for x in 0..self.size as usize {
-                if automata_matr[y][x] == 0 {
-                    self.tile_matr[y][x] = None;
-                } else {
-                    self.tile_matr[y][x] =
-                        Some(Tile::new([x as u16, y as u16], automata_matr[y][x] - 1));
-                }
-            }
-        }
-        self.set_tile_types();
-        //self.calculate_min_z();
-        self.calculate_vulkan_instances();
-        // self.build_building(Vector2::uniform_usize(self.size / 2), 0);
-    }
+    //#[allow(unused)]
+    // pub fn generate_automata(&mut self, density: f32, iterations: u8) {
+    //     let automata_matr = automata::generate(self.size, density, iterations);
+    //     for y in 0..self.size as usize {
+    //         for x in 0..self.size as usize {
+    //             if automata_matr[y][x] == 0 {
+    //                 self.tile_matr[y][x] = ;
+    //             } else {
+    //                 self.tile_matr[y][x] =
+    //                     Some(Tile::new([x as u16, y as u16], automata_matr[y][x] - 1));
+    //             }
+    //         }
+    //     }
+    //     self.set_tile_types();
+    //     //self.calculate_min_z();
+    //     self.calculate_vulkan_instances();
+    //     // self.build_building(Vector2::uniform_usize(self.size / 2), 0);
+    // }
 
-    #[allow(unused)]
-    pub fn from_txt(mut self, path: &str) -> Self {
-        let read = fs::read_to_string(&path).unwrap();
-        let rows = read.split("\r\n").collect::<Vec<&str>>();
-        for (rowindex, row) in rows.iter().enumerate() {
-            for (columnindex, column_value) in row.chars().enumerate() {
-                match column_value {
-                    '_' => self.tile_matr[rowindex][columnindex] = None,
-                    _ => {
-                        println!("{}", column_value);
-                        let tile = Some(Tile::new(
-                            [columnindex as u16, rowindex as u16],
-                            column_value.to_digit(10).unwrap() as u8,
-                        ));
-                        self.tile_matr[rowindex][columnindex] = tile;
-                    }
-                }
-            }
-        }
-        self
-    }
+    // #[allow(unused)]
+    // pub fn from_txt(mut self, path: &str) -> Self {
+    //     let read = fs::read_to_string(&path).unwrap();
+    //     let rows = read.split("\r\n").collect::<Vec<&str>>();
+    //     for (rowindex, row) in rows.iter().enumerate() {
+    //         for (columnindex, column_value) in row.chars().enumerate() {
+    //             match column_value {
+    //                 '_' => self.tile_matr[rowindex][columnindex] = None,
+    //                 _ => {
+    //                     println!("{}", column_value);
+    //                     let tile = Some(Tile::new(
+    //                         [columnindex as u16, rowindex as u16],
+    //                         column_value.to_digit(10).unwrap() as u8,
+    //                     ));
+    //                     self.tile_matr[rowindex][columnindex] = tile;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     self
+    // }
 
-    pub fn from_bmp(&mut self, path: &str) {
-        let bmp = bmp::open(path).expect("Bitmap file not found");
-        let bmp_width = bmp.get_width() as usize;
-        let bmp_height = bmp.get_height() as usize;
-        assert_eq!(bmp_width, bmp_height);
-        let pixel_per_tile = bmp_height as f32 / self.size as f32;
-        let value_per_height = 255 / (self.height + 1);
+    // pub fn from_bmp(&mut self, path: &str) {
+    //     let bmp = bmp::open(path).expect("Bitmap file not found");
+    //     let bmp_width = bmp.get_width() as usize;
+    //     let bmp_height = bmp.get_height() as usize;
+    //     assert_eq!(bmp_width, bmp_height);
+    //     let pixel_per_tile = bmp_height as f32 / self.size as f32;
+    //     let value_per_height = 255 / (self.height + 1);
 
-        for x in 0..self.size {
-            for y in 0..self.size {
-                let tile_height =
-                    bmp.get_pixel(
-                        (x as f32 * pixel_per_tile).floor() as u32,
-                        (y as f32 * pixel_per_tile).floor() as u32,
-                    )
-                    .r / value_per_height;
-                let tile;
-                if tile_height == 0 {
-                    tile = None;
-                } else {
-                    tile = Some(Tile::new([x as u16, y as u16], tile_height - 1));
-                }
-                self.tile_matr[y][x] = tile;
-            }
-        }
-        self.set_tile_types();
-        self.calculate_min_z();
-        self.calculate_vulkan_instances();
-    }
+    //     for x in 0..self.size {
+    //         for y in 0..self.size {
+    //             let tile_height =
+    //                 bmp.get_pixel(
+    //                     (x as f32 * pixel_per_tile).floor() as u32,
+    //                     (y as f32 * pixel_per_tile).floor() as u32,
+    //                 )
+    //                 .r / value_per_height;
+    //             let tile;
+    //             if tile_height == 0 {
+    //                 tile = None;
+    //             } else {
+    //                 tile = Some(Tile::new([x as u16, y as u16], tile_height - 1));
+    //             }
+    //             self.tile_matr[y][x] = tile;
+    //         }
+    //     }
+    //     self.set_tile_types();
+    //     self.calculate_min_z();
+    //     self.calculate_vulkan_instances();
+    // }
 
     fn calculate_min_z(&mut self) {
         for y in 0..self.size as usize {
@@ -187,7 +184,7 @@ impl Map {
                     //If only neighbors are blocking vision to a tile, and the tile is not directly behind to neighbors
                     //then the tile is still rendered. Very rare case but can happen
                     //(so yes, they are not neighbors but whatever)
-                    self.tile_matr[y][x] = Some(tile);
+                    self.tile_matr[y][x] = tile;
                 }
             }
         }
@@ -196,21 +193,19 @@ impl Map {
     fn calculate_vulkan_instances(&mut self) {
         self.num_of_vulkan_instances = 0;
         for y in &self.tile_matr {
-            for x in y {
-                if let Some(tile) = x {
-                    self.num_of_vulkan_instances += if tile.max_z + 1 > tile.min_z {
-                        (tile.max_z - tile.min_z) as u32 + 1
-                    } else {
-                        0u32
-                    };
-                    if tile.max_z < self.height / 2 {
-                        self.num_of_vulkan_instances += 1;
-                        if tile.coordinates[0] + 1 == self.size as u16 {
-                            self.num_of_vulkan_instances += (self.height / 2 - tile.max_z) as u32
-                        }
-                        if tile.coordinates[1] + 1 == self.size as u16 {
-                            self.num_of_vulkan_instances += (self.height / 2 - tile.max_z) as u32
-                        }
+            for tile in y {
+                self.num_of_vulkan_instances += if tile.max_z + 1 > tile.min_z {
+                    (tile.max_z - tile.min_z) as u32 + 1
+                } else {
+                    0u32
+                };
+                if tile.max_z < self.height / 2 {
+                    self.num_of_vulkan_instances += 1;
+                    if tile.coordinates[0] + 1 == self.size as u16 {
+                        self.num_of_vulkan_instances += (self.height / 2 - tile.max_z) as u32
+                    }
+                    if tile.coordinates[1] + 1 == self.size as u16 {
+                        self.num_of_vulkan_instances += (self.height / 2 - tile.max_z) as u32
                     }
                 }
             }
@@ -254,7 +249,7 @@ impl Map {
                         }
                     }
                     //println!("{:?}", tile);
-                    self.tile_matr[y][x] = Some(tile);
+                    self.tile_matr[y][x] = tile;
                 }
             }
         }

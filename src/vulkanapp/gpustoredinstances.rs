@@ -31,60 +31,58 @@ impl Map {
         );
         let mut vector_index = 0;
         for y in &self.tile_matr {
-            for x in y {
-                if let Some(tile) = x {
-                    for z in tile.min_z..tile.max_z + 1 {
-                        coordinate_vec[vector_index] = GpuStoredGameObject {
-                            coordinates: [
-                                tile.coordinates[0] as f32 - z as f32,
-                                tile.coordinates[1] as f32 - z as f32,
-                                // (tile.coordinates[0] + tile.coordinates[1] + z as u16 + 1) as f32
-                                //     / (self.size * 2 + self.height as usize) as f32,
-                                0.,
-                            ],
-                            texture_layer: (tile.flags >> 4) as u32,
-                        };
-                        vector_index += 1;
-                    }
-                    if tile.max_z < self.height / 2 {
-                        if tile.coordinates[0] + 1 == self.size as u16 {
-                            for z in tile.max_z + 1..(self.height / 2) + 1 {
-                                coordinate_vec[vector_index] = GpuStoredGameObject {
-                                    coordinates: [
-                                        tile.coordinates[0] as f32 - z as f32,
-                                        tile.coordinates[1] as f32 - z as f32,
-                                        0.
-                                    ],
-                                    texture_layer: 17,
-                                };
-                                vector_index += 1;
-                            }
+            for tile in y {
+                for z in tile.min_z..tile.max_z + 1 {
+                    coordinate_vec[vector_index] = GpuStoredGameObject {
+                        coordinates: [
+                            tile.coordinates[0] as f32 - z as f32,
+                            tile.coordinates[1] as f32 - z as f32,
+                            // (tile.coordinates[0] + tile.coordinates[1] + z as u16 + 1) as f32
+                            //     / (self.size * 2 + self.height as usize) as f32,
+                            0.,
+                        ],
+                        texture_layer: (tile.flags >> 4) as u32,
+                    };
+                    vector_index += 1;
+                }
+                if tile.max_z < self.height / 2 {
+                    if tile.coordinates[0] + 1 == self.size as u16 {
+                        for z in tile.max_z + 1..(self.height / 2) + 1 {
+                            coordinate_vec[vector_index] = GpuStoredGameObject {
+                                coordinates: [
+                                    tile.coordinates[0] as f32 - z as f32,
+                                    tile.coordinates[1] as f32 - z as f32,
+                                    0.,
+                                ],
+                                texture_layer: 17,
+                            };
+                            vector_index += 1;
                         }
-                        if tile.coordinates[1] + 1 == self.size as u16 {
-                            for z in tile.max_z + 1..(self.height / 2) + 1 {
-                                coordinate_vec[vector_index] = GpuStoredGameObject {
-                                    coordinates: [
-                                        tile.coordinates[0] as f32 - z as f32,
-                                        tile.coordinates[1] as f32 - z as f32,
-                                        0.
-                                    ],
-                                    texture_layer: 18,
-                                };
-                                vector_index += 1;
-                            }
-                        }
-                        coordinate_vec[vector_index] = GpuStoredGameObject {
-                            coordinates: [
-                                tile.coordinates[0] as f32 - self.height as f32 / 2.,
-                                tile.coordinates[1] as f32 - self.height as f32 / 2.,
-                                (tile.coordinates[0] + tile.coordinates[1] + self.height as u16 + 1)
-                                    as f32
-                                    / (self.size * 2 + self.height as usize) as f32,
-                            ],
-                            texture_layer: 16,
-                        };
-                        vector_index += 1;
                     }
+                    if tile.coordinates[1] + 1 == self.size as u16 {
+                        for z in tile.max_z + 1..(self.height / 2) + 1 {
+                            coordinate_vec[vector_index] = GpuStoredGameObject {
+                                coordinates: [
+                                    tile.coordinates[0] as f32 - z as f32,
+                                    tile.coordinates[1] as f32 - z as f32,
+                                    0.,
+                                ],
+                                texture_layer: 18,
+                            };
+                            vector_index += 1;
+                        }
+                    }
+                    coordinate_vec[vector_index] = GpuStoredGameObject {
+                        coordinates: [
+                            tile.coordinates[0] as f32 - self.height as f32 / 2.,
+                            tile.coordinates[1] as f32 - self.height as f32 / 2.,
+                            (tile.coordinates[0] + tile.coordinates[1] + self.height as u16 + 1)
+                                as f32
+                                / (self.size * 2 + self.height as usize) as f32,
+                        ],
+                        texture_layer: 16,
+                    };
+                    vector_index += 1;
                 }
             }
         }
