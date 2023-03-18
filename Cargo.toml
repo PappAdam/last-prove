@@ -1,17 +1,2 @@
-[package]
-name = "last-prove"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-winit = "0.27.5"
-vulkano = "0.31.0"
-vulkano-win = "0.31.0"
-vulkano-shaders = "0.31.0"
-bytemuck = "*"
-rand = "*"
-png = "0.17.7"
-bmp = "*"
-num = "*"
+[workspace]
+members = ["renderer", "application"]
