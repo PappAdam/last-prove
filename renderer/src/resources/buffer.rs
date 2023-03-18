@@ -1,4 +1,6 @@
-use ash::vk;
+use std::{ffi::c_void, ptr::copy_nonoverlapping};
+
+use ash::vk::{self};
 
 pub struct Buffer {
     pub mem: vk::DeviceMemory,
@@ -6,6 +8,58 @@ pub struct Buffer {
 }
 
 impl Buffer {
+    #[inline]
+    pub fn device_local(
+        device: &ash::Device,
+        data: *const c_void,
+        buffer_size: u64,
+        memory_props: vk::PhysicalDeviceMemoryProperties,
+        usage: vk::BufferUsageFlags,
+        queue: vk::Queue,
+        command_pool: vk::CommandPool,
+    ) -> Result<Self, String> {
+        let staging_buffer = Buffer::new(
+            device,
+            buffer_size,
+            vk::BufferUsageFlags::TRANSFER_SRC,
+            memory_props,
+            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+        )?;
+
+        unsafe {
+            let mapped_data = device
+                .map_memory(
+                    staging_buffer.mem,
+                    0,
+                    buffer_size,
+                    vk::MemoryMapFlags::empty(),
+                )
+                .map_err(|err| format!("{err}"))?;
+            copy_nonoverlapping(data, mapped_data, buffer_size as usize);
+            device.unmap_memory(staging_buffer.mem);
+        };
+
+        let device_local_buffer = Buffer::new(
+            device,
+            buffer_size,
+            vk::BufferUsageFlags::TRANSFER_DST | usage,
+            memory_props,
+            vk::MemoryPropertyFlags::DEVICE_LOCAL,
+        )?;
+
+        staging_buffer.copy(
+            device,
+            &device_local_buffer,
+            buffer_size,
+            queue,
+            command_pool,
+        )?;
+
+        staging_buffer.free(device);
+
+        Ok(device_local_buffer)
+    }
+
     #[inline]
     pub fn new(
         device: &ash::Device,
@@ -120,7 +174,7 @@ impl Buffer {
     }
 
     #[inline]
-    fn free(&self, device: &ash::Device) {
+    pub fn free(&self, device: &ash::Device) {
         unsafe {
             device.destroy_buffer(self.buf, None);
             device.free_memory(self.mem, None);

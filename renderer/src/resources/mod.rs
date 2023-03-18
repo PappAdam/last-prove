@@ -1,6 +1,10 @@
 pub mod buffer;
 
+use std::mem::size_of;
+
 use ash::vk;
+
+use crate::{offset_of, utils::buffer_data::Vertex};
 
 use super::utils::MAX_FRAME_DRAWS;
 
@@ -99,7 +103,7 @@ pub fn create_pipelines(
         .attachments(&attachments)
         .build();
 
-    // let states = [vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR];
+    let states = [vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR];
 
     let viewports = [vk::Viewport {
         ..Default::default()
@@ -118,9 +122,32 @@ pub fn create_pipelines(
 
     let stages = [vs_state, fs_state];
 
-    // let dynamic_state_info = vk::PipelineDynamicStateCreateInfo::builder().dynamic_states(&states);
+    let dynamic_state_info = vk::PipelineDynamicStateCreateInfo::builder().dynamic_states(&states);
 
-    let vert_inp_state = vk::PipelineVertexInputStateCreateInfo::builder().build();
+    let vertex_input_binding_descriptions = [vk::VertexInputBindingDescription {
+        binding: 0,
+        stride: size_of::<Vertex>() as u32,
+        input_rate: vk::VertexInputRate::VERTEX,
+    }];
+
+    let vertex_input_attribute_descriptions = [
+        vk::VertexInputAttributeDescription {
+            location: 0,
+            binding: 0,
+            format: vk::Format::R32G32_SFLOAT,
+            offset: offset_of!(Vertex, pos) as u32,
+        },
+        vk::VertexInputAttributeDescription {
+            location: 1,
+            binding: 0,
+            format: vk::Format::R32G32B32_SFLOAT,
+            offset: offset_of!(Vertex, color) as u32,
+        },
+    ];
+
+    let vert_inp_state = vk::PipelineVertexInputStateCreateInfo::builder()
+        .vertex_binding_descriptions(&vertex_input_binding_descriptions)
+        .vertex_attribute_descriptions(&vertex_input_attribute_descriptions);
 
     let solid_pipeline_create_info = vk::GraphicsPipelineCreateInfo::builder()
         .flags(vk::PipelineCreateFlags::ALLOW_DERIVATIVES)
@@ -130,7 +157,7 @@ pub fn create_pipelines(
         .color_blend_state(&col_blend_state)
         .viewport_state(&viewport_state)
         .layout(pipeline_layout)
-        // .dynamic_state(&dynamic_state_info)
+        .dynamic_state(&dynamic_state_info)
         .render_pass(render_pass)
         .subpass(0)
         .multisample_state(&multisample_state)
@@ -148,6 +175,11 @@ pub fn create_pipelines(
     };
 
     let pipeline = pipelines[0];
+
+    unsafe {
+        device.destroy_shader_module(vertex_shader_module, None);
+        device.destroy_shader_module(fragment_shader_module, None);
+    }
 
     Ok(pipeline)
 }

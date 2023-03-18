@@ -1,6 +1,7 @@
 mod base;
 mod data;
 mod draw_setup;
+mod engine;
 mod resources;
 mod utils;
 
@@ -46,11 +47,13 @@ impl Renderer {
         };
 
         self.wait_resource_available()?;
+        let current_command_buffer = self.data.command_buffers[self.current_frame_index];
+
         unsafe {
             self.base
                 .device
                 .reset_command_buffer(
-                    self.data.command_buffers[self.current_frame_index],
+                    current_command_buffer,
                     vk::CommandBufferResetFlags::default(),
                 )
                 .unwrap();
@@ -58,29 +61,50 @@ impl Renderer {
 
         self.begin_command_buffer();
         self.begin_render_pass();
-        self.set_viewport();
-        self.set_scissor();
 
         unsafe {
-            self.base.device.cmd_set_viewport(
-                self.data.command_buffers[self.current_frame_index],
-                0,
-                &[self.data.viewport],
-            );
-
-            self.base.device.cmd_set_scissor(
-                self.data.command_buffers[self.current_frame_index],
-                0,
-                &[self.data.scissor],
+            self.base.device.cmd_bind_pipeline(
+                current_command_buffer,
+                vk::PipelineBindPoint::GRAPHICS,
+                self.data.pipeline,
             );
 
             self.base
                 .device
-                .cmd_end_render_pass(self.data.command_buffers[self.current_frame_index]);
+                .cmd_set_viewport(current_command_buffer, 0, &[self.data.viewport]);
 
             self.base
                 .device
-                .end_command_buffer(self.data.command_buffers[self.current_frame_index])
+                .cmd_set_scissor(current_command_buffer, 0, &[self.data.scissor]);
+
+            self.base.device.cmd_bind_vertex_buffers(
+                current_command_buffer,
+                0,
+                &[self.data.vertex_buffer.buf],
+                &[0],
+            );
+
+            self.base.device.cmd_bind_index_buffer(
+                current_command_buffer,
+                self.data.index_buffer.buf,
+                0,
+                vk::IndexType::UINT16,
+            );
+
+            self.base.device.cmd_draw_indexed(
+                current_command_buffer,
+                self.data.index_count,
+                1000,
+                0,
+                0,
+                0,
+            );
+
+            self.base.device.cmd_end_render_pass(current_command_buffer);
+
+            self.base
+                .device
+                .end_command_buffer(current_command_buffer)
                 .map_err(|_| String::from("failed to end command buffer"))?
         }
         self.submit()?;

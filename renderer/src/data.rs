@@ -1,5 +1,7 @@
-use crate::create_shader;
-use ash::vk;
+use std::mem::size_of;
+
+use crate::{create_shader, resources::buffer::Buffer, utils::buffer_data::Vertex};
+use ash::{util, vk};
 
 use super::{
     base::RenderBase,
@@ -8,11 +10,6 @@ use super::{
 };
 
 pub struct RenderData {
-    pub vertex_shader_module: vk::ShaderModule,
-    pub fragment_shader_module: vk::ShaderModule,
-    // pub index_buffer: Buffer,
-    // pub index_count: u32,
-    // pub vertex_buffer: Buffer,
     pub pipeline_layout: vk::PipelineLayout,
     pub render_pass: vk::RenderPass,
     pub pipeline: vk::Pipeline,
@@ -24,12 +21,17 @@ pub struct RenderData {
     pub fences: Vec<vk::Fence>,
     pub command_pool: vk::CommandPool,
     pub command_buffers: Vec<vk::CommandBuffer>,
+    //Buffers
+    pub vertex_buffer: Buffer,
+    pub instance_count: u32,
+    pub index_buffer: Buffer,
+    pub index_count: u32,
 }
 
 impl RenderData {
     pub fn new(base: &mut RenderBase) -> Result<Self, String> {
-        let vertex_shader_module = create_shader!("../shaders/vert.spv", base.device);
-        let fragment_shader_module = create_shader!("../shaders/frag.spv", base.device);
+        let vertex_shader_module = create_shader!("../.compiled_shaders/vert.spv", base.device);
+        let fragment_shader_module = create_shader!("../.compiled_shaders/frag.spv", base.device);
 
         let pipeline_layout = resources::create_pipeline_layout(&base.device)?;
 
@@ -89,12 +91,30 @@ impl RenderData {
             }
         };
 
+        let vertecies = crate::utils::buffer_data::quad();
+        let indicies = [0u16, 1, 3, 3, 2, 0];
+
+        let vertex_buffer = Buffer::device_local(
+            &base.device,
+            vertecies.as_ptr() as *const _,
+            size_of::<Vertex>() as u64 * vertecies.len() as u64,
+            base.physical_device_memory_properties,
+            vk::BufferUsageFlags::VERTEX_BUFFER,
+            base.queue,
+            command_pool,
+        )?;
+
+        let index_buffer = Buffer::device_local(
+            &base.device,
+            indicies.as_ptr() as *const _,
+            size_of::<u16>() as u64 * 6,
+            base.physical_device_memory_properties,
+            vk::BufferUsageFlags::INDEX_BUFFER,
+            base.queue,
+            command_pool,
+        )?;
+
         Ok(Self {
-            vertex_shader_module,
-            fragment_shader_module,
-            // index_buffer: todo!(),
-            // index_count: todo!(),
-            // vertex_buffer: todo!(),
             pipeline_layout,
             render_pass,
             pipeline,
@@ -106,6 +126,12 @@ impl RenderData {
             fences,
             command_pool,
             command_buffers,
+
+            //Buffers
+            vertex_buffer,
+            index_buffer,
+            instance_count: vertecies.len() as u32,
+            index_count: indicies.len() as u32,
         })
     }
 
@@ -129,8 +155,8 @@ impl RenderData {
 
     pub fn clean_up(&self, device: &ash::Device) {
         unsafe {
-            device.destroy_shader_module(self.vertex_shader_module, None);
-            device.destroy_shader_module(self.fragment_shader_module, None);
+            self.vertex_buffer.free(device);
+            self.index_buffer.free(device);
 
             device.destroy_pipeline_layout(self.pipeline_layout, None);
 

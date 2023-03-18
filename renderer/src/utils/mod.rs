@@ -1,3 +1,5 @@
+pub mod buffer_data;
+
 use std::borrow::Cow;
 use std::ffi::CStr;
 

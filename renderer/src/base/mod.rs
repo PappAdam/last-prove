@@ -26,6 +26,7 @@ pub struct RenderBase {
     pub surface: vk::SurfaceKHR,
     pub physical_device: vk::PhysicalDevice,
     pub physical_device_properties: vk::PhysicalDeviceProperties,
+    pub physical_device_memory_properties: vk::PhysicalDeviceMemoryProperties,
     pub surface_format: vk::SurfaceFormatKHR,
     pub present_mode: vk::PresentModeKHR,
     pub queue_family: u32,
@@ -60,6 +61,7 @@ impl RenderBase {
             unsafe { instance.get_physical_device_properties(physical_device) };
         let surface_format = get_surface_format(physical_device, &surface_loader, surface)?;
         let present_mode = get_present_mode(physical_device, &surface_loader, surface)?;
+
         let queue_family = get_queue_family(&instance, physical_device, &surface_loader, surface)?;
 
         let device =
@@ -82,6 +84,9 @@ impl RenderBase {
             &vec![],
         )?;
 
+        let memory_props =
+            unsafe { instance.get_physical_device_memory_properties(physical_device) };
+
         Ok(RenderBase {
             entry,
             instance,
@@ -95,6 +100,7 @@ impl RenderBase {
 
             physical_device,
             physical_device_properties,
+            physical_device_memory_properties: memory_props,
             surface_format,
             present_mode,
             queue_family,

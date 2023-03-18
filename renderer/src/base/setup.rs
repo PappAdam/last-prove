@@ -1,7 +1,7 @@
 use std::ffi::{c_char, CStr};
 
 use ash::extensions::{ext, khr};
-use ash::vk::{self};
+use ash::vk::{self, PresentModeKHR};
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 
 use super::super::utils::vulkan_debug_callback;
@@ -147,27 +147,10 @@ pub fn get_present_mode(
         }
     };
 
-    if modes.is_empty() {
-        return Err(String::from(
-            "failed to get physical device surface present modes",
-        ));
-    }
-
-    if modes.contains(&vk::PresentModeKHR::MAILBOX) {
-        let present_mode = vk::PresentModeKHR::MAILBOX;
-
-        return Ok(present_mode);
-    }
-
-    if modes.contains(&vk::PresentModeKHR::IMMEDIATE) {
-        let present_mode = vk::PresentModeKHR::IMMEDIATE;
-
-        return Ok(present_mode);
-    }
-
-    let present_mode = vk::PresentModeKHR::FIFO;
-
-    Ok(present_mode)
+    Ok(modes
+        .into_iter()
+        .find(|mode| *mode == PresentModeKHR::MAILBOX)
+        .unwrap_or(PresentModeKHR::FIFO))
 }
 
 fn check_required_device_extensions(
@@ -425,34 +408,6 @@ pub fn create_logical_device<'a>(
 
     return Ok(device);
 }
-
-// pub fn create_allocator(
-//     instance: &ash::Instance,
-//     device: &ash::Device,
-//     physical_device: vk::PhysicalDevice,
-// ) -> Result<vulkan::Allocator, String> {
-//     let debug_settings = gpu_allocator::AllocatorDebugSettings {
-//         log_memory_information: true,
-//         log_leaks_on_shutdown: true,
-//         store_stack_traces: false,
-//         log_allocations: true,
-//         log_frees: true,
-//         log_stack_traces: false,
-//     };
-
-//     let create_info = &vulkan::AllocatorCreateDesc {
-//         instance: instance.clone(),
-//         device: device.clone(),
-//         physical_device,
-//         debug_settings,
-//         buffer_device_address: false,
-//     };
-
-//     let allocator = vulkan::Allocator::new(&create_info)
-//         .map_err(|_| String::from("failed to create allocator"))?;
-
-//     Ok(allocator)
-// }
 
 pub fn create_debug_call_back(
     debug_utils_loader: &ext::DebugUtils,
