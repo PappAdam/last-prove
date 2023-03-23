@@ -8,7 +8,18 @@ impl Renderer {
         let clear_color = vk::ClearColorValue {
             float32: [0.04f32, 0.01f32, 0.1f32, 1.0f32],
         };
-        let clear_values = vec![vk::ClearValue { color: clear_color }];
+
+        let depth_clear = vk::ClearDepthStencilValue {
+            depth: 1.,
+            stencil: 0,
+        };
+
+        let clear_values = vec![
+            vk::ClearValue { color: clear_color },
+            vk::ClearValue {
+                depth_stencil: depth_clear,
+            },
+        ];
 
         let render_pass_begin_info = vk::RenderPassBeginInfo::builder()
             .render_pass(self.data.render_pass)

@@ -3,6 +3,7 @@ mod data;
 mod draw_setup;
 mod engine;
 mod resources;
+mod setup;
 mod utils;
 
 use std::time::Duration;
@@ -94,7 +95,7 @@ impl Renderer {
             self.base.device.cmd_draw_indexed(
                 current_command_buffer,
                 self.data.index_count,
-                1000,
+                1,
                 0,
                 0,
                 0,

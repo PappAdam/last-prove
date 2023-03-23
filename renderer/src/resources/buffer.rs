@@ -1,13 +1,102 @@
-use std::{ffi::c_void, ptr::copy_nonoverlapping};
+use std::{ffi::c_void, mem::size_of, ptr::copy_nonoverlapping};
 
 use ash::vk::{self};
+
+use crate::parse_error;
 
 pub struct Buffer {
     pub mem: vk::DeviceMemory,
     pub buf: vk::Buffer,
 }
 
+pub struct UniformBuffer {
+    pub mem: vk::DeviceMemory,
+    pub buf: vk::Buffer,
+    pub data: *mut c_void,
+    pub size: u64,
+    pub binding: u8,
+}
+
+impl UniformBuffer {
+    pub fn free(&self, device: &ash::Device) {
+        unsafe {
+            device.destroy_buffer(self.buf, None);
+            device.unmap_memory(self.mem);
+            device.free_memory(self.mem, None);
+        }
+    }
+
+    #[inline]
+    pub fn update(
+        &self,
+        device: &ash::Device,
+        data: *const c_void,
+        descriptor_sets: &[vk::DescriptorSet],
+    ) {
+        unsafe {
+            copy_nonoverlapping(data, self.data, self.size as usize);
+            let buffer_info = vk::DescriptorBufferInfo {
+                buffer: self.buf,
+                range: self.size,
+                ..Default::default()
+            };
+
+            descriptor_sets.iter().for_each(|set| {
+                let descriptor_write = vk::WriteDescriptorSet {
+                    dst_set: *set,
+                    dst_binding: self.binding as u32,
+                    descriptor_count: 1,
+                    descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
+                    p_buffer_info: &buffer_info,
+                    ..Default::default()
+                };
+
+                device.update_descriptor_sets(&[descriptor_write], &[]);
+            });
+        }
+    }
+}
+
 impl Buffer {
+    #[inline]
+    pub fn uniform_buffer(
+        device: &ash::Device,
+        buffer_size: u64,
+        data: *const c_void,
+        memory_props: vk::PhysicalDeviceMemoryProperties,
+    ) -> Result<UniformBuffer, String> {
+        let uniform_buffer = Buffer::new(
+            device,
+            size_of::<UniformBuffer>() as u64,
+            vk::BufferUsageFlags::UNIFORM_BUFFER,
+            memory_props,
+            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+        )?;
+
+        let buffer_ptr = unsafe {
+            device
+                .map_memory(
+                    uniform_buffer.mem,
+                    0,
+                    size_of::<UniformBuffer>() as u64,
+                    vk::MemoryMapFlags::empty(),
+                )
+                .map_err(|err| format!("{err}"))?
+        };
+
+        unsafe {
+            copy_nonoverlapping(data, buffer_ptr, buffer_size as usize);
+        }
+
+        Ok(UniformBuffer {
+            mem: uniform_buffer.mem,
+            buf: uniform_buffer.buf,
+            data: buffer_ptr,
+            size: buffer_size,
+            binding: 0,
+        })
+    }
+
     #[inline]
     pub fn device_local(
         device: &ash::Device,
@@ -83,10 +172,7 @@ impl Buffer {
         let mem_req = unsafe { device.get_buffer_memory_requirements(buffer) };
 
         let mem_type_index =
-            match find_memory_type_index(memory_props, mem_req.memory_type_bits, buffer_props) {
-                Some(mem_type_ind) => mem_type_ind,
-                None => return Err(String::from("Couldn't find suitable memory type (you really should have found one, so most likely the problem is with you, or with the person who wrote the buffer creation, and in that case it is me. So basically fuck me)")),
-            };
+            find_memory_type_index(memory_props, mem_req.memory_type_bits, buffer_props)?;
 
         let alloc_info = vk::MemoryAllocateInfo::builder()
             .allocation_size(mem_req.size)
@@ -182,12 +268,12 @@ impl Buffer {
     }
 }
 
-fn find_memory_type_index(
+pub fn find_memory_type_index(
     memory_props: vk::PhysicalDeviceMemoryProperties,
     allowed_types: u32,
     props: vk::MemoryPropertyFlags,
-) -> Option<u32> {
-    memory_props
+) -> Result<u32, String> {
+    match memory_props
         .memory_types
         .iter()
         .enumerate()
@@ -195,4 +281,8 @@ fn find_memory_type_index(
             allowed_types & (1 << i) != 0 && mem_type.property_flags & props == props
         })
         .map(|(i, _)| i as u32)
+    {
+        Some(ind) => Ok(ind),
+        None => Err(parse_error!("Failed to suitable memory")),
+    }
 }

@@ -1,217 +1,23 @@
 pub mod buffer;
-
-use std::mem::size_of;
+pub mod desriptors;
+pub mod image;
+pub mod texture;
 
 use ash::vk;
 
-use crate::{offset_of, utils::buffer_data::Vertex};
-
 use super::utils::MAX_FRAME_DRAWS;
-
-pub fn create_render_pass(
-    device: &ash::Device,
-    surface_format: vk::Format,
-) -> Result<vk::RenderPass, String> {
-    let mut attachment_descriptions = Vec::new();
-
-    attachment_descriptions.push(
-        vk::AttachmentDescription::builder()
-            .format(surface_format)
-            .samples(vk::SampleCountFlags::TYPE_1)
-            .load_op(vk::AttachmentLoadOp::CLEAR)
-            .store_op(vk::AttachmentStoreOp::STORE)
-            .stencil_load_op(vk::AttachmentLoadOp::DONT_CARE)
-            .stencil_store_op(vk::AttachmentStoreOp::DONT_CARE)
-            .initial_layout(vk::ImageLayout::UNDEFINED)
-            .final_layout(vk::ImageLayout::PRESENT_SRC_KHR)
-            .build(),
-    );
-
-    let col_attachment_ref = vk::AttachmentReference::builder()
-        .attachment(0)
-        .layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
-        .build();
-
-    let references = [col_attachment_ref];
-
-    let mut subpass_descriptions = Vec::new();
-
-    subpass_descriptions.push(
-        vk::SubpassDescription::builder()
-            .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)
-            .color_attachments(&references)
-            .build(),
-    );
-
-    let create_info = vk::RenderPassCreateInfo::builder()
-        .attachments(&attachment_descriptions)
-        .subpasses(&subpass_descriptions);
-
-    let render_pass = unsafe {
-        device
-            .create_render_pass(&create_info, None)
-            .map_err(|_| String::from("failed to create render pass"))?
-    };
-
-    Ok(render_pass)
-}
-
-pub fn create_pipelines(
-    device: &ash::Device,
-    vertex_shader_module: vk::ShaderModule,
-    fragment_shader_module: vk::ShaderModule,
-    pipeline_layout: vk::PipelineLayout,
-    render_pass: vk::RenderPass,
-) -> Result<vk::Pipeline, String> {
-    let shader_entry_name = std::ffi::CString::new("main").unwrap();
-
-    let vs_state = vk::PipelineShaderStageCreateInfo::builder()
-        .stage(vk::ShaderStageFlags::VERTEX)
-        .module(vertex_shader_module)
-        .name(&shader_entry_name)
-        .build();
-
-    let fs_state = vk::PipelineShaderStageCreateInfo::builder()
-        .stage(vk::ShaderStageFlags::FRAGMENT)
-        .module(fragment_shader_module)
-        .name(&shader_entry_name)
-        .build();
-
-    let ia_state = vk::PipelineInputAssemblyStateCreateInfo::builder()
-        .topology(vk::PrimitiveTopology::TRIANGLE_LIST)
-        .build();
-
-    let raster_state = vk::PipelineRasterizationStateCreateInfo::builder()
-        .polygon_mode(vk::PolygonMode::FILL)
-        .cull_mode(vk::CullModeFlags::BACK)
-        .front_face(vk::FrontFace::CLOCKWISE)
-        .line_width(1.0f32)
-        .build();
-
-    let col_blend_attachment_state = vk::PipelineColorBlendAttachmentState::builder()
-        .blend_enable(false)
-        .color_write_mask(
-            vk::ColorComponentFlags::R
-                | vk::ColorComponentFlags::G
-                | vk::ColorComponentFlags::B
-                | vk::ColorComponentFlags::A,
-        )
-        .build();
-
-    let attachments = [col_blend_attachment_state];
-    let col_blend_state = vk::PipelineColorBlendStateCreateInfo::builder()
-        .attachments(&attachments)
-        .build();
-
-    let states = [vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR];
-
-    let viewports = [vk::Viewport {
-        ..Default::default()
-    }];
-    let scissors = [vk::Rect2D {
-        ..Default::default()
-    }];
-
-    let viewport_state = vk::PipelineViewportStateCreateInfo::builder()
-        .viewports(&viewports)
-        .scissors(&scissors)
-        .build();
-
-    let multisample_state = vk::PipelineMultisampleStateCreateInfo::builder()
-        .rasterization_samples(vk::SampleCountFlags::TYPE_1);
-
-    let stages = [vs_state, fs_state];
-
-    let dynamic_state_info = vk::PipelineDynamicStateCreateInfo::builder().dynamic_states(&states);
-
-    let vertex_input_binding_descriptions = [vk::VertexInputBindingDescription {
-        binding: 0,
-        stride: size_of::<Vertex>() as u32,
-        input_rate: vk::VertexInputRate::VERTEX,
-    }];
-
-    let vertex_input_attribute_descriptions = [
-        vk::VertexInputAttributeDescription {
-            location: 0,
-            binding: 0,
-            format: vk::Format::R32G32_SFLOAT,
-            offset: offset_of!(Vertex, pos) as u32,
-        },
-        vk::VertexInputAttributeDescription {
-            location: 1,
-            binding: 0,
-            format: vk::Format::R32G32B32_SFLOAT,
-            offset: offset_of!(Vertex, color) as u32,
-        },
-    ];
-
-    let vert_inp_state = vk::PipelineVertexInputStateCreateInfo::builder()
-        .vertex_binding_descriptions(&vertex_input_binding_descriptions)
-        .vertex_attribute_descriptions(&vertex_input_attribute_descriptions);
-
-    let solid_pipeline_create_info = vk::GraphicsPipelineCreateInfo::builder()
-        .flags(vk::PipelineCreateFlags::ALLOW_DERIVATIVES)
-        .stages(&stages)
-        .input_assembly_state(&ia_state)
-        .rasterization_state(&raster_state)
-        .color_blend_state(&col_blend_state)
-        .viewport_state(&viewport_state)
-        .layout(pipeline_layout)
-        .dynamic_state(&dynamic_state_info)
-        .render_pass(render_pass)
-        .subpass(0)
-        .multisample_state(&multisample_state)
-        .vertex_input_state(&vert_inp_state)
-        .build();
-
-    let pipelines = unsafe {
-        device
-            .create_graphics_pipelines(
-                vk::PipelineCache::null(),
-                &[solid_pipeline_create_info],
-                None,
-            )
-            .map_err(|_| String::from("failed to create pipelines"))?
-    };
-
-    let pipeline = pipelines[0];
-
-    unsafe {
-        device.destroy_shader_module(vertex_shader_module, None);
-        device.destroy_shader_module(fragment_shader_module, None);
-    }
-
-    Ok(pipeline)
-}
-
-pub fn create_pipeline_layout(
-    device: &ash::Device,
-    // descriptor_set_layout: vk::DescriptorSetLayout,
-) -> Result<vk::PipelineLayout, String> {
-    // let layouts = [descriptor_set_layout];
-    let create_info = vk::PipelineLayoutCreateInfo::builder()
-        // .set_layouts(&layouts)
-        .build();
-
-    let pipeline_layout = unsafe {
-        device
-            .create_pipeline_layout(&create_info, None)
-            .map_err(|_| String::from("failed to create pipeline layout"))?
-    };
-
-    Ok(pipeline_layout)
-}
 
 pub fn create_framebuffers(
     device: &ash::Device,
     swapchain_image_views: &Vec<vk::ImageView>,
     render_pass: vk::RenderPass,
     framebuffer_extent: vk::Extent2D,
+    depth_img_view: vk::ImageView,
 ) -> Result<Vec<vk::Framebuffer>, String> {
     let mut framebuffers = Vec::with_capacity(swapchain_image_views.len());
 
     for (i, &view) in swapchain_image_views.iter().enumerate() {
-        let attachments = [view];
+        let attachments = [view, depth_img_view];
 
         let create_info = vk::FramebufferCreateInfo::builder()
             .render_pass(render_pass)
@@ -281,19 +87,60 @@ pub fn create_fences(device: &ash::Device) -> Result<Vec<vk::Fence>, String> {
     Ok(fences)
 }
 
-pub fn create_command_pool(
+#[inline]
+pub fn end_and_submit_command_buffer(
     device: &ash::Device,
-    queue_family: u32,
-) -> Result<vk::CommandPool, String> {
-    let create_info = vk::CommandPoolCreateInfo::builder()
-        .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
-        .queue_family_index(queue_family);
+    command_pool: vk::CommandPool,
+    command_buffer: vk::CommandBuffer,
+    queue: vk::Queue,
+) -> Result<(), String> {
+    let submit_info = vk::SubmitInfo::builder()
+        .command_buffers(&[command_buffer])
+        .build();
 
-    let command_pool = unsafe {
+    unsafe {
         device
-            .create_command_pool(&create_info, None)
-            .expect("Failed to create command pool")
+            .end_command_buffer(command_buffer)
+            .map_err(|msg| format!("{}", msg))?;
+
+        device
+            .queue_submit(queue, &[submit_info], vk::Fence::null())
+            .map_err(|msg| format!("{}", msg))?;
+        device
+            .queue_wait_idle(queue)
+            .map_err(|msg| format!("{}", msg))?;
+        device.free_command_buffers(command_pool, &[command_buffer]);
+    }
+
+    Ok(())
+}
+
+#[inline]
+pub fn create_and_begin_command_buffer(
+    device: &ash::Device,
+    command_pool: vk::CommandPool,
+) -> Result<vk::CommandBuffer, String> {
+    let allocate_info = vk::CommandBufferAllocateInfo::builder()
+        .command_pool(command_pool)
+        .command_buffer_count(1)
+        .level(vk::CommandBufferLevel::PRIMARY)
+        .build();
+
+    let command_buffer = unsafe {
+        device
+            .allocate_command_buffers(&allocate_info)
+            .map_err(|msg| format!("{}", msg))?[0]
     };
 
-    Ok(command_pool)
+    let begin_info = vk::CommandBufferBeginInfo::builder()
+        .flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT)
+        .build();
+
+    unsafe {
+        device
+            .begin_command_buffer(command_buffer, &begin_info)
+            .map_err(|msg| format!("{}", msg))?;
+    }
+
+    Ok(command_buffer)
 }

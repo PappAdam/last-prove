@@ -130,6 +130,20 @@ impl<T: Num + AsPrimitive<U>, U: Num + Copy + 'static> Convert<Vector3<U>> for V
     }
 }
 
+impl<T: Num + Copy + 'static> Convert<Vector3<T>> for [T; 3] {
+    #[inline]
+    fn conv(&self) -> Vector3<T> {
+        unsafe { *(self.as_ptr() as *const Vector3<T>) }
+    }
+}
+
+impl<T: Num + Copy + 'static> Convert<[T; 3]> for Vector3<T> {
+    #[inline]
+    fn conv(&self) -> [T; 3] {
+        unsafe { *(&self as *const _ as *const [T; 3]) }
+    }
+}
+
 impl<T: Num> Add for Vector3<T> {
     type Output = Self;
     #[inline]

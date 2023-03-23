@@ -1,17 +1,12 @@
-mod setup;
-
 use ash::extensions::{ext, khr};
 use ash::vk;
 
-use super::base::setup::{
-    create_swapchain, create_swapchain_image_views, get_surface_capabilities, get_surface_extent,
-    get_swapchain_images,
-};
-
-use self::setup::{
+use crate::resources::image::Image;
+use crate::setup::{
     create_debug_call_back, create_instance, create_logical_device, create_surface,
-    get_physical_device, get_present_mode, get_queue_family, get_required_instance_extensions,
-    get_surface_format,
+    create_swapchain, get_depth_format, get_physical_device, get_present_mode, get_queue_family,
+    get_required_instance_extensions, get_surface_capabilities, get_surface_extent,
+    get_surface_format, get_swapchain_images,
 };
 
 pub struct RenderBase {
@@ -27,6 +22,7 @@ pub struct RenderBase {
     pub physical_device: vk::PhysicalDevice,
     pub physical_device_properties: vk::PhysicalDeviceProperties,
     pub physical_device_memory_properties: vk::PhysicalDeviceMemoryProperties,
+    pub depth_format: vk::Format,
     pub surface_format: vk::SurfaceFormatKHR,
     pub present_mode: vk::PresentModeKHR,
     pub queue_family: u32,
@@ -71,6 +67,8 @@ impl RenderBase {
 
         let swapchain_loader = khr::Swapchain::new(&instance, &device);
 
+        let depth_format = get_depth_format(&instance, physical_device)?;
+
         let resize_data = resize_internal(
             window,
             &device,
@@ -112,6 +110,7 @@ impl RenderBase {
             swapchain_image_views: resize_data.swapchain_image_views,
             swapchain_loader,
             device,
+            depth_format,
         })
     }
 
@@ -202,8 +201,18 @@ fn resize_internal(
         }
     }
 
-    let swapchain_image_views =
-        create_swapchain_image_views(device, &swapchain_images, surface_format)?;
+    let swapchain_image_views = swapchain_images
+        .iter()
+        .map(|img| {
+            Image::create_image_view(
+                &device,
+                *img,
+                surface_format.format,
+                vk::ImageAspectFlags::COLOR,
+            )
+            .unwrap()
+        })
+        .collect();
 
     Ok(ResizeResult {
         surface_capabilities,

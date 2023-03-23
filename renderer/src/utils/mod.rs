@@ -57,6 +57,13 @@ macro_rules! msg {
 }
 
 #[macro_export]
+macro_rules! parse_error {
+    ($msg:expr) => {{
+        format!("err: {}\tat{}:{}", $msg, file!(), line!())
+    }};
+}
+
+#[macro_export]
 macro_rules! create_shader {
     ($path:expr, $device:expr) => {{
         unsafe {

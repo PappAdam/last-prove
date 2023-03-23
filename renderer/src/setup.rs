@@ -1,10 +1,265 @@
 use std::ffi::{c_char, CStr};
+use std::mem::size_of;
 
 use ash::extensions::{ext, khr};
 use ash::vk::{self, PresentModeKHR};
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 
-use super::super::utils::vulkan_debug_callback;
+use crate::utils::buffer_data::Vertex;
+use crate::{offset_of, parse_error};
+
+use super::utils::vulkan_debug_callback;
+
+pub fn create_command_pool(
+    device: &ash::Device,
+    queue_family: u32,
+) -> Result<vk::CommandPool, String> {
+    let create_info = vk::CommandPoolCreateInfo::builder()
+        .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
+        .queue_family_index(queue_family);
+
+    let command_pool = unsafe {
+        device
+            .create_command_pool(&create_info, None)
+            .map_err(|err| parse_error!(err))?
+    };
+
+    Ok(command_pool)
+}
+
+pub fn create_pipelines(
+    device: &ash::Device,
+    vertex_shader_module: vk::ShaderModule,
+    fragment_shader_module: vk::ShaderModule,
+    pipeline_layout: vk::PipelineLayout,
+    render_pass: vk::RenderPass,
+) -> Result<vk::Pipeline, String> {
+    let shader_entry_name = std::ffi::CString::new("main").unwrap();
+
+    let vs_state = vk::PipelineShaderStageCreateInfo::builder()
+        .stage(vk::ShaderStageFlags::VERTEX)
+        .module(vertex_shader_module)
+        .name(&shader_entry_name)
+        .build();
+
+    let fs_state = vk::PipelineShaderStageCreateInfo::builder()
+        .stage(vk::ShaderStageFlags::FRAGMENT)
+        .module(fragment_shader_module)
+        .name(&shader_entry_name)
+        .build();
+
+    let ia_state = vk::PipelineInputAssemblyStateCreateInfo::builder()
+        .topology(vk::PrimitiveTopology::TRIANGLE_LIST)
+        .build();
+
+    let raster_state = vk::PipelineRasterizationStateCreateInfo::builder()
+        .polygon_mode(vk::PolygonMode::FILL)
+        .cull_mode(vk::CullModeFlags::BACK)
+        .front_face(vk::FrontFace::CLOCKWISE)
+        .line_width(1.0f32)
+        .build();
+
+    let col_blend_attachment_state = vk::PipelineColorBlendAttachmentState::builder()
+        .blend_enable(false)
+        .color_write_mask(
+            vk::ColorComponentFlags::R
+                | vk::ColorComponentFlags::G
+                | vk::ColorComponentFlags::B
+                | vk::ColorComponentFlags::A,
+        )
+        .build();
+
+    let depth_stencil_state = vk::PipelineDepthStencilStateCreateInfo::builder()
+        .depth_test_enable(true)
+        .depth_write_enable(true)
+        .depth_compare_op(vk::CompareOp::LESS)
+        .depth_bounds_test_enable(false)
+        .min_depth_bounds(0.)
+        .max_depth_bounds(1.)
+        .stencil_test_enable(false)
+        .build();
+
+    let attachments = [col_blend_attachment_state];
+    let col_blend_state = vk::PipelineColorBlendStateCreateInfo::builder()
+        .attachments(&attachments)
+        .build();
+
+    let states = [vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR];
+
+    let viewports = [vk::Viewport {
+        ..Default::default()
+    }];
+    let scissors = [vk::Rect2D {
+        ..Default::default()
+    }];
+
+    let viewport_state = vk::PipelineViewportStateCreateInfo::builder()
+        .viewports(&viewports)
+        .scissors(&scissors)
+        .build();
+
+    let multisample_state = vk::PipelineMultisampleStateCreateInfo::builder()
+        .rasterization_samples(vk::SampleCountFlags::TYPE_1);
+
+    let stages = [vs_state, fs_state];
+
+    let dynamic_state_info = vk::PipelineDynamicStateCreateInfo::builder().dynamic_states(&states);
+
+    let vertex_input_binding_descriptions = [vk::VertexInputBindingDescription {
+        binding: 0,
+        stride: size_of::<Vertex>() as u32,
+        input_rate: vk::VertexInputRate::VERTEX,
+    }];
+
+    let vertex_input_attribute_descriptions = [
+        vk::VertexInputAttributeDescription {
+            location: 0,
+            binding: 0,
+            format: vk::Format::R32G32B32_SFLOAT,
+            offset: offset_of!(Vertex, pos) as u32,
+        },
+        vk::VertexInputAttributeDescription {
+            location: 1,
+            binding: 0,
+            format: vk::Format::R32G32B32_SFLOAT,
+            offset: offset_of!(Vertex, color) as u32,
+        },
+    ];
+
+    let vert_inp_state = vk::PipelineVertexInputStateCreateInfo::builder()
+        .vertex_binding_descriptions(&vertex_input_binding_descriptions)
+        .vertex_attribute_descriptions(&vertex_input_attribute_descriptions);
+
+    let solid_pipeline_create_info = vk::GraphicsPipelineCreateInfo::builder()
+        .flags(vk::PipelineCreateFlags::ALLOW_DERIVATIVES)
+        .stages(&stages)
+        .input_assembly_state(&ia_state)
+        .rasterization_state(&raster_state)
+        .color_blend_state(&col_blend_state)
+        .viewport_state(&viewport_state)
+        .layout(pipeline_layout)
+        .dynamic_state(&dynamic_state_info)
+        .render_pass(render_pass)
+        .depth_stencil_state(&depth_stencil_state)
+        .subpass(0)
+        .multisample_state(&multisample_state)
+        .vertex_input_state(&vert_inp_state)
+        .build();
+
+    let pipelines = unsafe {
+        device
+            .create_graphics_pipelines(
+                vk::PipelineCache::null(),
+                &[solid_pipeline_create_info],
+                None,
+            )
+            .map_err(|_| String::from("failed to create pipelines"))?
+    };
+
+    let pipeline = pipelines[0];
+
+    unsafe {
+        device.destroy_shader_module(vertex_shader_module, None);
+        device.destroy_shader_module(fragment_shader_module, None);
+    }
+
+    Ok(pipeline)
+}
+
+pub fn create_pipeline_layout(
+    device: &ash::Device,
+    // descriptor_set_layout: vk::DescriptorSetLayout,
+) -> Result<vk::PipelineLayout, String> {
+    // let layouts = [descriptor_set_layout];
+    let create_info = vk::PipelineLayoutCreateInfo::builder()
+        // .set_layouts(&layouts)
+        .build();
+
+    let pipeline_layout = unsafe {
+        device
+            .create_pipeline_layout(&create_info, None)
+            .map_err(|_| String::from("failed to create pipeline layout"))?
+    };
+
+    Ok(pipeline_layout)
+}
+
+pub fn create_render_pass(
+    device: &ash::Device,
+    surface_format: vk::Format,
+    depth_format: vk::Format,
+) -> Result<vk::RenderPass, String> {
+    let attachment_descriptions = [
+        vk::AttachmentDescription {
+            format: surface_format,
+            samples: vk::SampleCountFlags::TYPE_1,
+            load_op: vk::AttachmentLoadOp::CLEAR,
+            store_op: vk::AttachmentStoreOp::STORE,
+            stencil_load_op: vk::AttachmentLoadOp::DONT_CARE,
+            stencil_store_op: vk::AttachmentStoreOp::DONT_CARE,
+            final_layout: vk::ImageLayout::PRESENT_SRC_KHR,
+            ..Default::default()
+        },
+        vk::AttachmentDescription {
+            format: depth_format,
+            samples: vk::SampleCountFlags::TYPE_1,
+            load_op: vk::AttachmentLoadOp::CLEAR,
+            store_op: vk::AttachmentStoreOp::STORE,
+            initial_layout: vk::ImageLayout::UNDEFINED,
+            final_layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            ..Default::default()
+        },
+    ];
+
+    let col_attachment_ref = vk::AttachmentReference::builder()
+        .attachment(0)
+        .layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
+        .build();
+
+    let depth_attachment_ref = vk::AttachmentReference::builder()
+        .attachment(1)
+        .layout(vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+        .build();
+
+    let subpass_descriptions = [vk::SubpassDescription::builder()
+        .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)
+        .color_attachments(&[col_attachment_ref])
+        .depth_stencil_attachment(&depth_attachment_ref)
+        .build()];
+
+    let dependencies = [
+        vk::SubpassDependency {
+            src_subpass: vk::SUBPASS_EXTERNAL,
+            src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+            dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_READ
+                | vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
+            dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+            ..Default::default()
+        },
+        vk::SubpassDependency {
+            src_subpass: vk::SUBPASS_EXTERNAL,
+            src_stage_mask: vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS
+                | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS,
+            dst_access_mask: vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE,
+            dst_stage_mask: vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS
+                | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS,
+            ..Default::default()
+        },
+    ];
+
+    let create_info = vk::RenderPassCreateInfo::builder()
+        .attachments(&attachment_descriptions)
+        .dependencies(&dependencies)
+        .subpasses(&subpass_descriptions);
+
+    let render_pass = unsafe {
+        device
+            .create_render_pass(&create_info, None)
+            .map_err(|_| String::from("failed to create render pass"))?
+    };
+
+    Ok(render_pass)
+}
 
 pub fn get_swapchain_images(
     swapchain_loader: &khr::Swapchain,
@@ -49,6 +304,30 @@ pub fn get_surface_format(
     }
 
     Ok(formats[0])
+}
+
+pub fn get_depth_format(
+    instance: &ash::Instance,
+    physical_device: vk::PhysicalDevice,
+) -> Result<vk::Format, String> {
+    let formats = [
+        vk::Format::D32_SFLOAT,
+        vk::Format::D32_SFLOAT_S8_UINT,
+        vk::Format::D24_UNORM_S8_UINT,
+    ];
+
+    let format = formats.into_iter().find(|&f| {
+        let format_props =
+            unsafe { instance.get_physical_device_format_properties(physical_device, f) };
+
+        format_props.optimal_tiling_features & vk::FormatFeatureFlags::DEPTH_STENCIL_ATTACHMENT
+            == vk::FormatFeatureFlags::DEPTH_STENCIL_ATTACHMENT
+    });
+
+    match format {
+        Some(f) => Ok(f),
+        None => Err(parse_error!("Failed to get proper depth format")),
+    }
 }
 
 pub fn get_surface_extent(
@@ -292,46 +571,6 @@ pub fn create_swapchain(
     }
 
     Ok(swapchain)
-}
-
-pub fn create_swapchain_image_views(
-    device: &ash::Device,
-    swapchain_images: &Vec<vk::Image>,
-    surface_format: &vk::SurfaceFormatKHR,
-) -> Result<Vec<vk::ImageView>, String> {
-    let mut swapchain_image_views = Vec::with_capacity(swapchain_images.len());
-
-    for (i, &image) in swapchain_images.iter().enumerate() {
-        let create_info = vk::ImageViewCreateInfo::builder()
-            .image(image)
-            .view_type(vk::ImageViewType::TYPE_2D)
-            .format(surface_format.format)
-            .components(vk::ComponentMapping {
-                r: vk::ComponentSwizzle::IDENTITY,
-                g: vk::ComponentSwizzle::IDENTITY,
-                b: vk::ComponentSwizzle::IDENTITY,
-                a: vk::ComponentSwizzle::IDENTITY,
-            })
-            .subresource_range(vk::ImageSubresourceRange {
-                aspect_mask: vk::ImageAspectFlags::COLOR,
-                base_mip_level: 0,
-                level_count: 1,
-                base_array_layer: 0,
-                layer_count: 1,
-            })
-            .build();
-
-        let view = unsafe {
-            device.create_image_view(&create_info, None).map_err(|_| {
-                clear_image_views(device, &swapchain_image_views);
-                format!("failed to create image view {}", i)
-            })?
-        };
-
-        swapchain_image_views.push(view);
-    }
-
-    Ok(swapchain_image_views)
 }
 
 fn clear_image_views(device: &ash::Device, image_views: &Vec<vk::ImageView>) {
