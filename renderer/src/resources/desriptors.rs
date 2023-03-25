@@ -13,14 +13,15 @@ pub fn create_descriptor_sets(
     device: &ash::Device,
     descriptor_pool: vk::DescriptorPool,
     layout: vk::DescriptorSetLayout,
-    texture: &Image,
-    sampler: vk::Sampler,
+    // texture: &Image,
+    // sampler: vk::Sampler,
     uniform_buffer: &UniformBuffer,
 ) -> Result<Vec<vk::DescriptorSet>, String> {
     let layouts = [layout; MAX_FRAME_DRAWS];
     let desc_alloc_info = vk::DescriptorSetAllocateInfo::builder()
         .descriptor_pool(descriptor_pool)
         .set_layouts(&layouts);
+
     let descriptor_sets = unsafe {
         device
             .allocate_descriptor_sets(&desc_alloc_info)
@@ -28,11 +29,11 @@ pub fn create_descriptor_sets(
     };
 
     descriptor_sets.iter().for_each(|set| {
-        let tex_descriptor = vk::DescriptorImageInfo {
-            image_layout: vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
-            image_view: texture.view,
-            sampler,
-        };
+        // let tex_descriptor = vk::DescriptorImageInfo {
+        //     image_layout: vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
+        //     image_view: texture.view,
+        //     sampler,
+        // };
 
         let uniform_buffer_descriptor = vk::DescriptorBufferInfo {
             buffer: uniform_buffer.buf,
@@ -49,14 +50,14 @@ pub fn create_descriptor_sets(
                 p_buffer_info: &uniform_buffer_descriptor,
                 ..Default::default()
             },
-            vk::WriteDescriptorSet {
-                dst_set: *set,
-                dst_binding: 1,
-                descriptor_count: 1,
-                descriptor_type: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
-                p_image_info: &tex_descriptor,
-                ..Default::default()
-            },
+            // vk::WriteDescriptorSet {
+            //     dst_set: *set,
+            //     dst_binding: 1,
+            //     descriptor_count: 1,
+            //     descriptor_type: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
+            //     p_image_info: &tex_descriptor,
+            //     ..Default::default()
+            // },
         ];
         unsafe { device.update_descriptor_sets(&write_desc_sets, &[]) };
     });
@@ -75,13 +76,13 @@ pub fn create_descriptor_set_layout(
             stage_flags: vk::ShaderStageFlags::VERTEX,
             ..Default::default()
         },
-        vk::DescriptorSetLayoutBinding {
-            binding: 1,
-            descriptor_type: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
-            descriptor_count: 1,
-            stage_flags: vk::ShaderStageFlags::FRAGMENT,
-            ..Default::default()
-        },
+        // vk::DescriptorSetLayoutBinding {
+        //     binding: 1,
+        //     descriptor_type: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
+        //     descriptor_count: 1,
+        //     stage_flags: vk::ShaderStageFlags::FRAGMENT,
+        //     ..Default::default()
+        // },
     ];
 
     let layout_create_info = vk::DescriptorSetLayoutCreateInfo::builder()
@@ -103,10 +104,10 @@ pub fn create_descriptor_pool(device: &ash::Device) -> Result<vk::DescriptorPool
             ty: vk::DescriptorType::UNIFORM_BUFFER,
             descriptor_count: MAX_FRAME_DRAWS as u32,
         },
-        vk::DescriptorPoolSize {
-            ty: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
-            descriptor_count: MAX_FRAME_DRAWS as u32,
-        },
+        // vk::DescriptorPoolSize {
+        //     ty: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
+        //     descriptor_count: MAX_FRAME_DRAWS as u32,
+        // },
     ];
 
     let create_info = vk::DescriptorPoolCreateInfo::builder()

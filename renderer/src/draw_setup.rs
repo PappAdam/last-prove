@@ -4,6 +4,65 @@ use crate::Renderer;
 
 impl Renderer {
     #[inline]
+    pub fn record_commands(&self) {
+        let current_command_buffer = self.data.command_buffers[self.current_frame_index];
+        unsafe {
+            self.base.device.cmd_bind_pipeline(
+                current_command_buffer,
+                vk::PipelineBindPoint::GRAPHICS,
+                self.data.pipeline,
+            );
+
+            self.base
+                .device
+                .cmd_set_viewport(current_command_buffer, 0, &[self.data.viewport]);
+
+            self.base
+                .device
+                .cmd_set_scissor(current_command_buffer, 0, &[self.data.scissor]);
+
+            self.base.device.cmd_bind_descriptor_sets(
+                current_command_buffer,
+                vk::PipelineBindPoint::GRAPHICS,
+                self.data.pipeline_layout,
+                0,
+                &[self.data.descriptor_sets[self.current_frame_index]],
+                &[],
+            );
+
+            self.base.device.cmd_bind_vertex_buffers(
+                current_command_buffer,
+                0,
+                &[self.data.vertex_buffer.buf],
+                &[0],
+            );
+
+            self.base.device.cmd_bind_index_buffer(
+                current_command_buffer,
+                self.data.index_buffer.buf,
+                0,
+                vk::IndexType::UINT16,
+            );
+
+            self.base.device.cmd_draw_indexed(
+                current_command_buffer,
+                self.data.index_count,
+                1,
+                0,
+                0,
+                0,
+            );
+
+            self.base.device.cmd_end_render_pass(current_command_buffer);
+
+            self.base
+                .device
+                .end_command_buffer(current_command_buffer)
+                .unwrap();
+        }
+    }
+
+    #[inline]
     pub fn begin_render_pass(&self) {
         let clear_color = vk::ClearColorValue {
             float32: [0.04f32, 0.01f32, 0.1f32, 1.0f32],

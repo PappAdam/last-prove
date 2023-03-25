@@ -1,7 +1,8 @@
-use std::time::Instant;
+use std::{f32::consts::PI, time::Instant};
 
+use nalgebra_glm::{rotate_normalized_axis, translate, vec3, TMat4};
 use winit::{
-    event::{Event, WindowEvent},
+    event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent},
     event_loop::ControlFlow,
 };
 
@@ -42,7 +43,7 @@ fn main() {
     };
 
     let mut start_time = Instant::now();
-    let mut visible = true;
+    let mut is_rotate = false;
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {
@@ -54,11 +55,6 @@ fn main() {
 
         Event::MainEventsCleared => {
             let delta_time = start_time.elapsed();
-
-            if !visible {
-                return;
-            }
-
             if renderer.rebuild_swapchain {
                 renderer.rebuild_swapchain = false;
                 if let Err(msg) = renderer.resize(&window) {
@@ -67,7 +63,14 @@ fn main() {
                 }
             }
 
-            if let Err(msg) = renderer.draw(&delta_time) {
+            if is_rotate {
+                let render_data = &mut renderer.data;
+                render_data.transform.rotation.z = (render_data.transform.rotation.z
+                    + delta_time.as_nanos() as f32 / 1_000_000_00. * PI)
+                    % (2. * PI);
+            };
+
+            if let Err(msg) = renderer.draw() {
                 msg!(error, msg);
                 *control_flow = ControlFlow::Exit;
                 return;
@@ -75,21 +78,22 @@ fn main() {
             start_time = Instant::now();
         }
 
-        Event::WindowEvent {
-            event: WindowEvent::Resized(physical_size),
-            ..
-        } => {
-            renderer.rebuild_swapchain = true;
-            if physical_size.width < 10 || physical_size.height < 10 {
-                visible = false;
-                msg!(
-                    info,
-                    "Window is currently not visible, will not render anything"
-                );
-            } else {
-                visible = true;
+        Event::WindowEvent { event, .. } => match event {
+            WindowEvent::Resized(..) => {
+                renderer.rebuild_swapchain = true;
             }
-        }
+            WindowEvent::KeyboardInput { input, .. } => match input {
+                KeyboardInput {
+                    virtual_keycode: Some(VirtualKeyCode::Space),
+                    state: winit::event::ElementState::Pressed,
+                    ..
+                } => {
+                    is_rotate = !is_rotate;
+                }
+                _ => {}
+            },
+            _ => {}
+        },
         _ => {}
     });
 }

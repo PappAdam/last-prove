@@ -2,7 +2,7 @@ use std::{ffi::c_void, mem::size_of, ptr::copy_nonoverlapping};
 
 use ash::vk::{self};
 
-use crate::parse_error;
+use crate::{parse_error, utils::buffer_data::Transform};
 
 pub struct Buffer {
     pub mem: vk::DeviceMemory,
@@ -59,15 +59,14 @@ impl UniformBuffer {
 
 impl Buffer {
     #[inline]
-    pub fn uniform_buffer(
+    pub fn uniform_buffer<T>(
         device: &ash::Device,
-        buffer_size: u64,
         data: *const c_void,
         memory_props: vk::PhysicalDeviceMemoryProperties,
     ) -> Result<UniformBuffer, String> {
         let uniform_buffer = Buffer::new(
             device,
-            size_of::<UniformBuffer>() as u64,
+            size_of::<T>() as u64,
             vk::BufferUsageFlags::UNIFORM_BUFFER,
             memory_props,
             vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
@@ -78,21 +77,21 @@ impl Buffer {
                 .map_memory(
                     uniform_buffer.mem,
                     0,
-                    size_of::<UniformBuffer>() as u64,
+                    size_of::<T>() as u64,
                     vk::MemoryMapFlags::empty(),
                 )
                 .map_err(|err| format!("{err}"))?
         };
 
         unsafe {
-            copy_nonoverlapping(data, buffer_ptr, buffer_size as usize);
+            copy_nonoverlapping(data, buffer_ptr, size_of::<T>());
         }
 
         Ok(UniformBuffer {
             mem: uniform_buffer.mem,
             buf: uniform_buffer.buf,
             data: buffer_ptr,
-            size: buffer_size,
+            size: size_of::<T>() as u64,
             binding: 0,
         })
     }

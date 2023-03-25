@@ -1,6 +1,25 @@
-use std::f64::consts;
+use std::ffi::c_void;
+
+use nalgebra_glm::TMat4;
 
 use crate::engine::lin_alg::{Convert, Vector2, Vector3};
+#[derive(Debug)]
+pub struct Transform {
+    pub rotation: Vector3<f32>,
+}
+
+impl Transform {
+    pub fn new() -> Self {
+        Self {
+            rotation: Vector3::default(),
+        }
+    }
+
+    #[inline]
+    pub fn as_void_ptr(&self) -> *const c_void {
+        self as *const _ as *const c_void
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vertex {

@@ -6,6 +6,7 @@ use ash::vk::{self, PresentModeKHR};
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 
 use crate::utils::buffer_data::Vertex;
+use crate::utils::MAX_FRAME_DRAWS;
 use crate::{offset_of, parse_error};
 
 use super::utils::vulkan_debug_callback;
@@ -55,7 +56,7 @@ pub fn create_pipelines(
     let raster_state = vk::PipelineRasterizationStateCreateInfo::builder()
         .polygon_mode(vk::PolygonMode::FILL)
         .cull_mode(vk::CullModeFlags::BACK)
-        .front_face(vk::FrontFace::CLOCKWISE)
+        .front_face(vk::FrontFace::COUNTER_CLOCKWISE)
         .line_width(1.0f32)
         .build();
 
@@ -168,11 +169,11 @@ pub fn create_pipelines(
 
 pub fn create_pipeline_layout(
     device: &ash::Device,
-    // descriptor_set_layout: vk::DescriptorSetLayout,
+    descriptor_set_layout: vk::DescriptorSetLayout,
 ) -> Result<vk::PipelineLayout, String> {
-    // let layouts = [descriptor_set_layout];
+    let layouts = [descriptor_set_layout];
     let create_info = vk::PipelineLayoutCreateInfo::builder()
-        // .set_layouts(&layouts)
+        .set_layouts(&layouts)
         .build();
 
     let pipeline_layout = unsafe {

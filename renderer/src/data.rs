@@ -3,9 +3,16 @@ use std::mem::size_of;
 use crate::{
     create_shader,
     engine::lin_alg::Convert,
-    resources::{self, buffer::Buffer, image::Image},
+    resources::{
+        self,
+        buffer::{Buffer, UniformBuffer},
+        desriptors::{
+            create_descriptor_pool, create_descriptor_set_layout, create_descriptor_sets,
+        },
+        image::Image,
+    },
     setup,
-    utils::buffer_data::Vertex,
+    utils::buffer_data::{Transform, Vertex},
 };
 use ash::vk;
 
@@ -23,13 +30,20 @@ pub struct RenderData {
     pub fences: Vec<vk::Fence>,
     pub command_pool: vk::CommandPool,
     pub command_buffers: Vec<vk::CommandBuffer>,
-
     pub depth_img: Image,
+    pub descriptor_pool: vk::DescriptorPool,
+    pub descriptor_sets: Vec<vk::DescriptorSet>,
+    pub descriptor_set_layout: vk::DescriptorSetLayout,
+
+    //Buffer content
+    pub transform: Transform,
+
     //Buffers
     pub vertex_buffer: Buffer,
     pub instance_count: u32,
     pub index_buffer: Buffer,
     pub index_count: u32,
+    pub uniform_buffer: UniformBuffer,
 }
 
 impl RenderData {
@@ -37,7 +51,8 @@ impl RenderData {
         let vertex_shader_module = create_shader!("../.compiled_shaders/vert.spv", base.device);
         let fragment_shader_module = create_shader!("../.compiled_shaders/frag.spv", base.device);
 
-        let pipeline_layout = setup::create_pipeline_layout(&base.device)?;
+        let descriptor_set_layout = create_descriptor_set_layout(&base.device)?;
+        let pipeline_layout = setup::create_pipeline_layout(&base.device, descriptor_set_layout)?;
 
         let render_pass =
             setup::create_render_pass(&base.device, base.surface_format.format, base.depth_format)?;
@@ -108,16 +123,37 @@ impl RenderData {
             }
         };
 
+        let descriptor_pool = create_descriptor_pool(&base.device)?;
+
+        let transform = Transform::new();
+        let uniform_buffer = Buffer::uniform_buffer::<Transform>(
+            &base.device,
+            transform.as_void_ptr(),
+            base.physical_device_memory_properties,
+        )?;
+
+        let descriptor_sets = create_descriptor_sets(
+            &base.device,
+            descriptor_pool,
+            descriptor_set_layout,
+            &uniform_buffer,
+        )?;
+
+        uniform_buffer.update(&base.device, transform.as_void_ptr(), &descriptor_sets);
+
         let vertecies = [
-            Vertex::new([-1., -0.4, 0.3].conv(), [0.3, 1., 1.].conv()),
-            Vertex::new([0.8, -0.6, 0.3].conv(), [0.4, 1., 0.5].conv()),
-            Vertex::new([0., 0.5, 0.2].conv(), [1., 0.2, 1.].conv()),
-            //
-            Vertex::from_pos([-0.5, 0.5, 0.3].conv()),
-            Vertex::from_pos([0., -0.5, 0.2].conv()),
-            Vertex::from_pos([0.5, 0.5, 0.3].conv()),
+            Vertex::new([0., -0.3, 0.5].conv(), [1., 1., 1.].conv()),
+            Vertex::new([0.5, 0.7, 0.7].conv(), [1., 0., 0.].conv()),
+            Vertex::new([0.5, 0.7, 0.3].conv(), [0., 1., 0.].conv()),
+            Vertex::new([-0.5, 0.7, 0.3].conv(), [0., 0., 1.].conv()),
         ];
-        let indicies = [0u16, 1, 2, 3, 4, 5];
+
+        let indicies = [
+            0u16, 3, 1, //
+            3, 2, 1, //
+            0, 2, 1, //
+            0, 2, 3, //
+        ];
 
         let vertex_buffer = Buffer::device_local(
             &base.device,
@@ -132,7 +168,7 @@ impl RenderData {
         let index_buffer = Buffer::device_local(
             &base.device,
             indicies.as_ptr() as *const _,
-            size_of::<u16>() as u64 * 6,
+            size_of::<u16>() as u64 * indicies.len() as u64,
             base.physical_device_memory_properties,
             vk::BufferUsageFlags::INDEX_BUFFER,
             base.queue,
@@ -151,14 +187,19 @@ impl RenderData {
             fences,
             command_pool,
             command_buffers,
-
             depth_img,
+            descriptor_pool,
+            descriptor_set_layout,
+            descriptor_sets,
+
+            transform,
 
             //Buffers
             vertex_buffer,
             index_buffer,
             instance_count: vertecies.len() as u32,
             index_count: indicies.len() as u32,
+            uniform_buffer,
         })
     }
 
@@ -171,6 +212,7 @@ impl RenderData {
         }
 
         self.depth_img.free(&base.device);
+
         self.depth_img = Image::new(
             &base.device,
             base.surface_extent.into(),
@@ -197,8 +239,12 @@ impl RenderData {
         unsafe {
             self.vertex_buffer.free(device);
             self.index_buffer.free(device);
+            self.uniform_buffer.free(device);
 
             self.depth_img.free(device);
+
+            device.destroy_descriptor_pool(self.descriptor_pool, None);
+            device.destroy_descriptor_set_layout(self.descriptor_set_layout, None);
 
             device.destroy_pipeline_layout(self.pipeline_layout, None);
 

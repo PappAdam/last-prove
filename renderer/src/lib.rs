@@ -6,9 +6,8 @@ mod resources;
 mod setup;
 mod utils;
 
-use std::time::Duration;
-
 use ash::vk;
+use nalgebra_glm::{translate, TMat4};
 use winit::window::Window;
 
 use crate::{base::RenderBase, data::RenderData, utils::MAX_FRAME_DRAWS};
@@ -20,6 +19,8 @@ pub struct Renderer {
     pub current_frame_index: usize,
     pub rebuild_swapchain: bool,
     pub image_index: usize,
+
+    pub rotation: f32,
 }
 
 impl Renderer {
@@ -33,12 +34,12 @@ impl Renderer {
             current_frame_index: 0,
             rebuild_swapchain: true,
             image_index: 0,
+            rotation: 0.,
         })
     }
 
-    #[allow(unused)]
     #[inline]
-    pub fn draw(&mut self, delta_time: &Duration) -> Result<(), String> {
+    pub fn draw(&mut self) -> Result<(), String> {
         self.image_index = match self.get_img_index()? {
             Some(index) => index as usize,
             None => {
@@ -48,7 +49,13 @@ impl Renderer {
         };
 
         self.wait_resource_available()?;
+
         let current_command_buffer = self.data.command_buffers[self.current_frame_index];
+        self.data.uniform_buffer.update(
+            &self.base.device,
+            self.data.transform.as_void_ptr(),
+            &[self.data.descriptor_sets[self.current_frame_index]],
+        );
 
         unsafe {
             self.base
@@ -62,52 +69,8 @@ impl Renderer {
 
         self.begin_command_buffer();
         self.begin_render_pass();
+        self.record_commands();
 
-        unsafe {
-            self.base.device.cmd_bind_pipeline(
-                current_command_buffer,
-                vk::PipelineBindPoint::GRAPHICS,
-                self.data.pipeline,
-            );
-
-            self.base
-                .device
-                .cmd_set_viewport(current_command_buffer, 0, &[self.data.viewport]);
-
-            self.base
-                .device
-                .cmd_set_scissor(current_command_buffer, 0, &[self.data.scissor]);
-
-            self.base.device.cmd_bind_vertex_buffers(
-                current_command_buffer,
-                0,
-                &[self.data.vertex_buffer.buf],
-                &[0],
-            );
-
-            self.base.device.cmd_bind_index_buffer(
-                current_command_buffer,
-                self.data.index_buffer.buf,
-                0,
-                vk::IndexType::UINT16,
-            );
-
-            self.base.device.cmd_draw_indexed(
-                current_command_buffer,
-                self.data.index_count,
-                1,
-                0,
-                0,
-                0,
-            );
-
-            self.base.device.cmd_end_render_pass(current_command_buffer);
-
-            self.base
-                .device
-                .end_command_buffer(current_command_buffer)
-                .map_err(|_| String::from("failed to end command buffer"))?
-        }
         self.submit()?;
 
         if !self.present()? {
@@ -125,6 +88,7 @@ impl Renderer {
         unsafe {
             let _ = self.base.device.device_wait_idle();
         }
+
         self.set_scissor();
         self.set_viewport();
         self.base.resize(window)?;

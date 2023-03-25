@@ -10,3 +10,4 @@ renderer = { path = "../renderer" }
 winit = "0.28.2"
 simplelog = "0.12.0"
 log = "0.4"
+nalgebra-glm = "0.18.0"
