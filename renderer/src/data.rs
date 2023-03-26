@@ -12,7 +12,7 @@ use crate::{
         image::Image,
     },
     setup,
-    utils::buffer_data::{Transform, Vertex},
+    utils::buffer_data::{BufferObject, Transform, Vertex},
 };
 use ash::vk;
 
@@ -130,6 +130,7 @@ impl RenderData {
             &base.device,
             transform.as_void_ptr(),
             base.physical_device_memory_properties,
+            0,
         )?;
 
         let descriptor_sets = create_descriptor_sets(
@@ -142,17 +143,53 @@ impl RenderData {
         uniform_buffer.update(&base.device, transform.as_void_ptr(), &descriptor_sets);
 
         let vertecies = [
-            Vertex::new([0., -0.3, 0.5].conv(), [1., 1., 1.].conv()),
-            Vertex::new([0.5, 0.7, 0.7].conv(), [1., 0., 0.].conv()),
-            Vertex::new([0.5, 0.7, 0.3].conv(), [0., 1., 0.].conv()),
-            Vertex::new([-0.5, 0.7, 0.3].conv(), [0., 0., 1.].conv()),
+            Vertex::new([0., -0.3, 0.3].conv(), [0., 0., 0.].conv()),
+            Vertex::new([0.5, 0.7, 0.9].conv(), [1., 0., 0.].conv()),
+            Vertex::new([0.5, 0.7, 0.0].conv(), [0., 1., 0.].conv()),
+            Vertex::new([-0.5, 0.7, 0.6].conv(), [0., 0., 1.].conv()),
+            Vertex::new(
+                [0., -0.3, 0.3].conv() + [0., 0., -1.].conv(),
+                [0., 0., 0.].conv(),
+            ),
+            Vertex::new(
+                [0.5, 0.7, 0.9].conv() + [0., 0., -1.].conv(),
+                [1., 0., 0.].conv(),
+            ),
+            Vertex::new(
+                [0.5, 0.7, 0.0].conv() + [0., 0., -1.].conv(),
+                [0., 1., 0.].conv(),
+            ),
+            Vertex::new(
+                [-0.5, 0.7, 0.6].conv() + [0., 0., -1.].conv(),
+                [0., 0., 1.].conv(),
+            ),
         ];
 
         let indicies = [
-            0u16, 3, 1, //
-            3, 2, 1, //
-            0, 2, 1, //
-            0, 2, 3, //
+            0u16,
+            1,
+            3, //
+            3,
+            1,
+            2, //
+            2,
+            1,
+            0, //
+            0,
+            3,
+            2, //
+            0 + 4,
+            1 + 4,
+            3 + 4, //
+            3 + 4,
+            1 + 4,
+            2 + 4, //
+            2 + 4,
+            1 + 4,
+            0 + 4, //
+            0 + 4,
+            3 + 4,
+            2 + 4, //
         ];
 
         let vertex_buffer = Buffer::device_local(

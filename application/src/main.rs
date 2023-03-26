@@ -1,13 +1,21 @@
 use std::{f32::consts::PI, time::Instant};
 
-use nalgebra_glm::{rotate_normalized_axis, translate, vec3, TMat4};
+use input::Input;
+use nalgebra_glm::{
+    look_at, look_at_lh, look_at_rh, rotate_normalized_axis, vec2, vec3, TVec2, Vec2,
+};
 use winit::{
-    event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event::{
+        ElementState, Event, KeyboardInput, ModifiersState, MouseButton, VirtualKeyCode,
+        WindowEvent,
+    },
     event_loop::ControlFlow,
 };
 
 use renderer::msg;
-use renderer::Renderer;
+use renderer::{engine::vector2::Vector2, Renderer};
+
+mod input;
 
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(
@@ -44,17 +52,25 @@ fn main() {
 
     let mut start_time = Instant::now();
     let mut is_rotate = false;
+    let mut rotation = vec2(0f32, 0.);
 
     event_loop.run(move |event, _, control_flow| match event {
-        Event::WindowEvent {
-            event: WindowEvent::CloseRequested,
-            ..
-        } => {
-            *control_flow = ControlFlow::Exit;
-        }
-
+        Event::WindowEvent { event, .. } => match event {
+            WindowEvent::CloseRequested => {
+                *control_flow = winit::event_loop::ControlFlow::Exit;
+            }
+            WindowEvent::Resized(..) => {
+                renderer.rebuild_swapchain = true;
+            }
+            WindowEvent::CursorMoved { position, .. } => {
+                rotation.y = position.y as f32 / window.inner_size().height as f32 * PI;
+                rotation.x = position.x as f32 / window.inner_size().width as f32 * PI;
+            }
+            _ => {}
+        },
         Event::MainEventsCleared => {
             let delta_time = start_time.elapsed();
+
             if renderer.rebuild_swapchain {
                 renderer.rebuild_swapchain = false;
                 if let Err(msg) = renderer.resize(&window) {
@@ -63,37 +79,24 @@ fn main() {
                 }
             }
 
-            if is_rotate {
-                let render_data = &mut renderer.data;
-                render_data.transform.rotation.z = (render_data.transform.rotation.z
-                    + delta_time.as_nanos() as f32 / 1_000_000_00. * PI)
-                    % (2. * PI);
-            };
+            renderer.data.transform.view = look_at_lh(
+                &vec3(
+                    rotation.x.sin(),
+                    rotation.y.cos(),
+                    rotation.x.cos() * rotation.y.sin(),
+                ),
+                &vec3(0., 0., 0.),
+                &vec3(0., 1., 0.),
+            );
 
             if let Err(msg) = renderer.draw() {
                 msg!(error, msg);
                 *control_flow = ControlFlow::Exit;
                 return;
             }
+
             start_time = Instant::now();
         }
-
-        Event::WindowEvent { event, .. } => match event {
-            WindowEvent::Resized(..) => {
-                renderer.rebuild_swapchain = true;
-            }
-            WindowEvent::KeyboardInput { input, .. } => match input {
-                KeyboardInput {
-                    virtual_keycode: Some(VirtualKeyCode::Space),
-                    state: winit::event::ElementState::Pressed,
-                    ..
-                } => {
-                    is_rotate = !is_rotate;
-                }
-                _ => {}
-            },
-            _ => {}
-        },
         _ => {}
     });
 }

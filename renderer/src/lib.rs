@@ -1,13 +1,13 @@
 mod base;
 mod data;
 mod draw_setup;
-mod engine;
+pub mod engine;
 mod resources;
 mod setup;
 mod utils;
 
 use ash::vk;
-use nalgebra_glm::{translate, TMat4};
+use utils::buffer_data::BufferObject;
 use winit::window::Window;
 
 use crate::{base::RenderBase, data::RenderData, utils::MAX_FRAME_DRAWS};

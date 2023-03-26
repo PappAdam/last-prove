@@ -9,12 +9,13 @@ pub struct Buffer {
     pub buf: vk::Buffer,
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct UniformBuffer {
     pub mem: vk::DeviceMemory,
     pub buf: vk::Buffer,
     pub data: *mut c_void,
     pub size: u64,
-    pub binding: u8,
+    pub binding: u32,
 }
 
 impl UniformBuffer {
@@ -63,6 +64,7 @@ impl Buffer {
         device: &ash::Device,
         data: *const c_void,
         memory_props: vk::PhysicalDeviceMemoryProperties,
+        binding: u32,
     ) -> Result<UniformBuffer, String> {
         let uniform_buffer = Buffer::new(
             device,
@@ -92,7 +94,7 @@ impl Buffer {
             buf: uniform_buffer.buf,
             data: buffer_ptr,
             size: size_of::<T>() as u64,
-            binding: 0,
+            binding,
         })
     }
 

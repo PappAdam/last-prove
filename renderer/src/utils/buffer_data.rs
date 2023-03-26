@@ -1,25 +1,29 @@
 use std::ffi::c_void;
 
-use nalgebra_glm::TMat4;
+use nalgebra_glm::{Mat3, Mat4};
 
 use crate::engine::lin_alg::{Convert, Vector2, Vector3};
+
+pub trait BufferObject {
+    fn as_void_ptr(&self) -> *const c_void {
+        self as *const _ as *const c_void
+    }
+}
+
 #[derive(Debug)]
 pub struct Transform {
-    pub rotation: Vector3<f32>,
+    pub view: Mat4,
 }
 
 impl Transform {
     pub fn new() -> Self {
         Self {
-            rotation: Vector3::default(),
+            view: Mat4::identity(),
         }
     }
-
-    #[inline]
-    pub fn as_void_ptr(&self) -> *const c_void {
-        self as *const _ as *const c_void
-    }
 }
+
+impl BufferObject for Transform {}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vertex {

@@ -1,4 +1,7 @@
-use std::ops::{Add, Sub};
+use std::{
+    ops::{Add, Sub},
+    process::Output,
+};
 
 use num::{traits::AsPrimitive, Num};
 

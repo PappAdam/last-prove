@@ -6,7 +6,6 @@ use ash::vk::{self, PresentModeKHR};
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 
 use crate::utils::buffer_data::Vertex;
-use crate::utils::MAX_FRAME_DRAWS;
 use crate::{offset_of, parse_error};
 
 use super::utils::vulkan_debug_callback;
@@ -312,9 +311,9 @@ pub fn get_depth_format(
     physical_device: vk::PhysicalDevice,
 ) -> Result<vk::Format, String> {
     let formats = [
+        vk::Format::D24_UNORM_S8_UINT,
         vk::Format::D32_SFLOAT,
         vk::Format::D32_SFLOAT_S8_UINT,
-        vk::Format::D24_UNORM_S8_UINT,
     ];
 
     let format = formats.into_iter().find(|&f| {
