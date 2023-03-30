@@ -143,7 +143,27 @@ impl RenderData {
 
         uniform_buffer.update(&base.device, transform.as_void_ptr(), &descriptor_sets);
 
-        let vertecies = create_cube(Side::CUBE, vec3(-0.5, -0.5, -0.5));
+        let mut vertecies = Vec::<Vertex>::new();
+        vertecies.append(&mut create_cube(
+            Side::LEFT | Side::FRONT | Side::TOP | Side::BOTTOM,
+            vec3(-1., -0.5, -1.),
+        ));
+        vertecies.append(&mut create_cube(
+            Side::RIGHT | Side::FRONT | Side::TOP | Side::BOTTOM,
+            vec3(0., -0.5, -1.),
+        ));
+        vertecies.append(&mut create_cube(
+            Side::LEFT | Side::BACK | Side::BOTTOM,
+            vec3(-1., -0.5, 0.),
+        ));
+        vertecies.append(&mut create_cube(
+            Side::LEFT | Side::BACK | Side::TOP | Side::FRONT | Side::RIGHT,
+            vec3(-1., -1.5, 0.),
+        ));
+        vertecies.append(&mut create_cube(
+            Side::RIGHT | Side::BACK | Side::TOP | Side::BOTTOM,
+            vec3(0., -0.5, 0.),
+        ));
 
         let vertex_buffer = Buffer::device_local(
             &base.device,

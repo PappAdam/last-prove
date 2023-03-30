@@ -61,7 +61,8 @@ fn main() {
                 renderer.rebuild_swapchain = true;
             }
             WindowEvent::CursorMoved { position, .. } => {
-                rotation.y = position.x as f32 / window.inner_size().width as f32 * 2. * PI;
+                rotation.y = position.x as f32 / window.inner_size().width as f32 * PI;
+                rotation.x = position.y as f32 / window.inner_size().height as f32 * PI;
             }
             WindowEvent::KeyboardInput { input, .. } => match input {
                 KeyboardInput {
@@ -87,7 +88,7 @@ fn main() {
             }
 
             renderer.data.transform.view = look_at_lh(
-                &vec3(rotation.y.sin(), 0., rotation.y.cos()),
+                &vec3(rotation.y.sin(), rotation.x.cos(), rotation.y.cos()),
                 &vec3(0., 0., 0.),
                 &vec3(0., 1., 0.),
             );
