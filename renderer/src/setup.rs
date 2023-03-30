@@ -124,6 +124,12 @@ pub fn create_pipelines(
             format: vk::Format::R32G32B32_SFLOAT,
             offset: offset_of!(Vertex, color) as u32,
         },
+        vk::VertexInputAttributeDescription {
+            location: 2,
+            binding: 0,
+            format: vk::Format::R32G32B32_SFLOAT,
+            offset: offset_of!(Vertex, normal) as u32,
+        },
     ];
 
     let vert_inp_state = vk::PipelineVertexInputStateCreateInfo::builder()

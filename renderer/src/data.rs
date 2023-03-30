@@ -2,7 +2,6 @@ use std::mem::size_of;
 
 use crate::{
     create_shader,
-    engine::lin_alg::Convert,
     resources::{
         self,
         buffer::{Buffer, UniformBuffer},
@@ -12,9 +11,11 @@ use crate::{
         image::Image,
     },
     setup,
-    utils::buffer_data::{BufferObject, Transform, Vertex},
+    utils::buffer_data::{create_cube, BufferObject, Side, Transform, Vertex},
 };
 use ash::vk;
+
+use nalgebra_glm::vec3;
 
 use super::{base::RenderBase, utils::MAX_FRAME_DRAWS};
 
@@ -41,8 +42,8 @@ pub struct RenderData {
     //Buffers
     pub vertex_buffer: Buffer,
     pub instance_count: u32,
-    pub index_buffer: Buffer,
-    pub index_count: u32,
+    // pub index_buffer: Buffer,
+    // pub index_count: u32,
     pub uniform_buffer: UniformBuffer,
 }
 
@@ -142,55 +143,7 @@ impl RenderData {
 
         uniform_buffer.update(&base.device, transform.as_void_ptr(), &descriptor_sets);
 
-        let vertecies = [
-            Vertex::new([0., -0.3, 0.3].conv(), [0., 0., 0.].conv()),
-            Vertex::new([0.5, 0.7, 0.9].conv(), [1., 0., 0.].conv()),
-            Vertex::new([0.5, 0.7, 0.0].conv(), [0., 1., 0.].conv()),
-            Vertex::new([-0.5, 0.7, 0.6].conv(), [0., 0., 1.].conv()),
-            Vertex::new(
-                [0., -0.3, 0.3].conv() + [0., 0., -1.].conv(),
-                [0., 0., 0.].conv(),
-            ),
-            Vertex::new(
-                [0.5, 0.7, 0.9].conv() + [0., 0., -1.].conv(),
-                [1., 0., 0.].conv(),
-            ),
-            Vertex::new(
-                [0.5, 0.7, 0.0].conv() + [0., 0., -1.].conv(),
-                [0., 1., 0.].conv(),
-            ),
-            Vertex::new(
-                [-0.5, 0.7, 0.6].conv() + [0., 0., -1.].conv(),
-                [0., 0., 1.].conv(),
-            ),
-        ];
-
-        let indicies = [
-            0u16,
-            1,
-            3, //
-            3,
-            1,
-            2, //
-            2,
-            1,
-            0, //
-            0,
-            3,
-            2, //
-            0 + 4,
-            1 + 4,
-            3 + 4, //
-            3 + 4,
-            1 + 4,
-            2 + 4, //
-            2 + 4,
-            1 + 4,
-            0 + 4, //
-            0 + 4,
-            3 + 4,
-            2 + 4, //
-        ];
+        let vertecies = create_cube(Side::CUBE, vec3(-0.5, -0.5, -0.5));
 
         let vertex_buffer = Buffer::device_local(
             &base.device,
@@ -202,15 +155,15 @@ impl RenderData {
             command_pool,
         )?;
 
-        let index_buffer = Buffer::device_local(
-            &base.device,
-            indicies.as_ptr() as *const _,
-            size_of::<u16>() as u64 * indicies.len() as u64,
-            base.physical_device_memory_properties,
-            vk::BufferUsageFlags::INDEX_BUFFER,
-            base.queue,
-            command_pool,
-        )?;
+        // let index_buffer = Buffer::device_local(
+        //     &base.device,
+        //     indicies.as_ptr() as *const _,
+        //     size_of::<u16>() as u64 * indicies.len() as u64,
+        //     base.physical_device_memory_properties,
+        //     vk::BufferUsageFlags::INDEX_BUFFER,
+        //     base.queue,
+        //     command_pool,
+        // )?;
 
         Ok(Self {
             pipeline_layout,
@@ -233,9 +186,9 @@ impl RenderData {
 
             //Buffers
             vertex_buffer,
-            index_buffer,
+            // index_buffer,
             instance_count: vertecies.len() as u32,
-            index_count: indicies.len() as u32,
+            // index_count: indicies.len() as u32,
             uniform_buffer,
         })
     }
@@ -275,7 +228,7 @@ impl RenderData {
     pub fn clean_up(&self, device: &ash::Device) {
         unsafe {
             self.vertex_buffer.free(device);
-            self.index_buffer.free(device);
+            // self.index_buffer.free(device);
             self.uniform_buffer.free(device);
 
             self.depth_img.free(device);

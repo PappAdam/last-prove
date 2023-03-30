@@ -1,6 +1,3 @@
-pub mod lin_alg;
-pub mod vector2;
-
 #[macro_export]
 macro_rules! offset_of {
     ($type:ty, $field:ident) => {{
