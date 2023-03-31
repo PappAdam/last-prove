@@ -22,13 +22,26 @@ impl Map {
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
                 let tile_position =
-                    Vec3::new(x as f32, 0., y as f32) / 16. - Vec3::new(1., 0.5, 1.);
+                    Vec3::new(x as f32, 0., y as f32) / 32. - Vec3::new(1.5, 0., 1.5);
 
                 let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.05, 1);
 
                 if perlin_value > 0.6 {
-                    self.vertecies
-                        .append(&mut create_cube(Side::CUBE, tile_position, 1. / 16.));
+                    self.vertecies.append(&mut create_cube(
+                        Side::CUBE,
+                        tile_position,
+                        1. / 32.,
+                        1.,
+                        Vec3::new(1., 1., 1.),
+                    ));
+                } else {
+                    self.vertecies.append(&mut create_cube(
+                        Side::CUBE,
+                        tile_position,
+                        1. / 32.,
+                        0.6,
+                        Vec3::new(0.01, 0.02, 0.4),
+                    ));
                 }
             }
         }

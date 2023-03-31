@@ -68,8 +68,6 @@ fn main() {
         &vec3(0., 1., 0.),
     );
 
-    renderer.resize(&window).unwrap();
-
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent { event, .. } => match event {
             WindowEvent::CloseRequested => {
@@ -79,8 +77,9 @@ fn main() {
                 renderer.rebuild_swapchain = true;
             }
             WindowEvent::CursorMoved { position, .. } => {
-                rotation.y = position.x as f32 / window.inner_size().width as f32 * PI;
-                rotation.x = position.y as f32 / window.inner_size().height as f32 * PI;
+                rotation.y = position.x as f32 / window.inner_size().width as f32 * 2. * PI;
+                rotation.x =
+                    position.y as f32 / window.inner_size().height as f32 * PI / 2. + PI / 2.;
             }
             WindowEvent::KeyboardInput { input, .. } => match input {
                 KeyboardInput {

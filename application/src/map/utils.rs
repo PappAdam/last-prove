@@ -57,16 +57,26 @@ fn get_face_indicies_from_side(side: Side) -> ([u16; 6], Vec3) {
     }
 }
 
-pub fn create_cube(sides: Side, position: Vec3, size: f32) -> Vec<Vertex> {
+pub fn create_cube(
+    sides: Side,
+    position: Vec3,
+    size: f32,
+    height: f32,
+    color: Vec3,
+) -> Vec<Vertex> {
     let mut vertecies = [Vertex::default(); 8];
     for z in 0..2 {
         for y in 0..2 {
             for x in 0..2 {
-                vertecies[z * 4 + y * 2 + x] = Vertex::from_pos(Vec3::new(
-                    x as f32 * size + position.x,
-                    y as f32 * size + position.y,
-                    z as f32 * size + position.z,
-                ));
+                vertecies[z * 4 + y * 2 + x] = Vertex::new(
+                    Vec3::new(
+                        x as f32 * size + position.x,
+                        y as f32 * size * height + position.y - size * height,
+                        z as f32 * size + position.z,
+                    ),
+                    color,
+                    Default::default(),
+                );
             }
         }
     }

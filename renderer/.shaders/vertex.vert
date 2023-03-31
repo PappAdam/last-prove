@@ -20,7 +20,7 @@ layout(location = 0) out vec3 fragColor;
 
 void main()
 {   
-    vec3 light_source = (vec4(normalize(vec3(2, 3, 1)), 1.) * view.view).xyz;
+    vec3 light_source = normalize(vec3(2, 3, 1));
 
     vec4 new_pos = view.view * view.rotation *  vec4(pos.x, pos.yz, 1.0);
 
