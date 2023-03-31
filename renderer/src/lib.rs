@@ -4,10 +4,13 @@ mod draw_setup;
 pub mod engine;
 mod resources;
 mod setup;
-mod utils;
+pub mod utils;
+
+use std::mem::size_of;
 
 use ash::vk;
-use utils::buffer_data::BufferObject;
+use resources::buffer::Buffer;
+use utils::buffer_data::{BufferObject, Vertex};
 use winit::window::Window;
 
 use crate::{base::RenderBase, data::RenderData, utils::MAX_FRAME_DRAWS};
@@ -21,12 +24,24 @@ pub struct Renderer {
     pub image_index: usize,
 
     pub rotation: f32,
+    pub vertex_buffer: Buffer,
+    pub vertex_count: u32,
 }
 
 impl Renderer {
-    pub fn new(window: &Window) -> Result<Self, String> {
+    pub fn new(window: &Window, vertecies: &[Vertex]) -> Result<Self, String> {
         let mut base = RenderBase::new(window)?;
         let data = RenderData::new(&mut base)?;
+
+        let vertex_buffer = Buffer::device_local(
+            &base.device,
+            vertecies.as_ptr() as *const _,
+            vertecies.len() as u64 * size_of::<Vertex>() as u64,
+            base.physical_device_memory_properties,
+            vk::BufferUsageFlags::VERTEX_BUFFER,
+            base.queue,
+            data.command_pool,
+        )?;
 
         Ok(Self {
             base,
@@ -35,6 +50,8 @@ impl Renderer {
             rebuild_swapchain: true,
             image_index: 0,
             rotation: 0.,
+            vertex_count: vertecies.len() as u32,
+            vertex_buffer,
         })
     }
 
@@ -102,6 +119,7 @@ impl Drop for Renderer {
     fn drop(&mut self) {
         unsafe {
             let _ = self.base.device.device_wait_idle();
+            self.vertex_buffer.free(&self.base.device);
             self.data.clean_up(&self.base.device);
             self.base.clean_up();
         }

@@ -11,7 +11,7 @@ use crate::{
         image::Image,
     },
     setup,
-    utils::buffer_data::{create_cube, BufferObject, Side, Transform, Vertex},
+    utils::buffer_data::{BufferObject, Transform, Vertex},
 };
 use ash::vk;
 
@@ -40,10 +40,6 @@ pub struct RenderData {
     pub transform: Transform,
 
     //Buffers
-    pub vertex_buffer: Buffer,
-    pub instance_count: u32,
-    // pub index_buffer: Buffer,
-    // pub index_count: u32,
     pub uniform_buffer: UniformBuffer,
 }
 
@@ -143,48 +139,6 @@ impl RenderData {
 
         uniform_buffer.update(&base.device, transform.as_void_ptr(), &descriptor_sets);
 
-        let mut vertecies = Vec::<Vertex>::new();
-        vertecies.append(&mut create_cube(
-            Side::LEFT | Side::FRONT | Side::TOP | Side::BOTTOM,
-            vec3(-1., -0.5, -1.),
-        ));
-        vertecies.append(&mut create_cube(
-            Side::RIGHT | Side::FRONT | Side::TOP | Side::BOTTOM,
-            vec3(0., -0.5, -1.),
-        ));
-        vertecies.append(&mut create_cube(
-            Side::LEFT | Side::BACK | Side::BOTTOM,
-            vec3(-1., -0.5, 0.),
-        ));
-        vertecies.append(&mut create_cube(
-            Side::LEFT | Side::BACK | Side::TOP | Side::FRONT | Side::RIGHT,
-            vec3(-1., -1.5, 0.),
-        ));
-        vertecies.append(&mut create_cube(
-            Side::RIGHT | Side::BACK | Side::TOP | Side::BOTTOM,
-            vec3(0., -0.5, 0.),
-        ));
-
-        let vertex_buffer = Buffer::device_local(
-            &base.device,
-            vertecies.as_ptr() as *const _,
-            size_of::<Vertex>() as u64 * vertecies.len() as u64,
-            base.physical_device_memory_properties,
-            vk::BufferUsageFlags::VERTEX_BUFFER,
-            base.queue,
-            command_pool,
-        )?;
-
-        // let index_buffer = Buffer::device_local(
-        //     &base.device,
-        //     indicies.as_ptr() as *const _,
-        //     size_of::<u16>() as u64 * indicies.len() as u64,
-        //     base.physical_device_memory_properties,
-        //     vk::BufferUsageFlags::INDEX_BUFFER,
-        //     base.queue,
-        //     command_pool,
-        // )?;
-
         Ok(Self {
             pipeline_layout,
             render_pass,
@@ -205,10 +159,6 @@ impl RenderData {
             transform,
 
             //Buffers
-            vertex_buffer,
-            // index_buffer,
-            instance_count: vertecies.len() as u32,
-            // index_count: indicies.len() as u32,
             uniform_buffer,
         })
     }
@@ -247,8 +197,6 @@ impl RenderData {
 
     pub fn clean_up(&self, device: &ash::Device) {
         unsafe {
-            self.vertex_buffer.free(device);
-            // self.index_buffer.free(device);
             self.uniform_buffer.free(device);
 
             self.depth_img.free(device);

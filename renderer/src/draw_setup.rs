@@ -1,3 +1,5 @@
+use std::mem::size_of;
+
 use ash::vk;
 
 use crate::Renderer;
@@ -21,6 +23,22 @@ impl Renderer {
                 .device
                 .cmd_set_scissor(current_command_buffer, 0, &[self.data.scissor]);
 
+            self.base.device.cmd_push_constants(
+                current_command_buffer,
+                self.data.pipeline_layout,
+                vk::ShaderStageFlags::VERTEX,
+                0,
+                std::slice::from_raw_parts(
+                    &[
+                        self.base.surface_extent.height as f32
+                            / self.base.surface_extent.width as f32,
+                        100.,
+                        -100.,
+                    ] as *const _ as *const u8,
+                    size_of::<f32>() * 3,
+                ),
+            );
+
             self.base.device.cmd_bind_descriptor_sets(
                 current_command_buffer,
                 vk::PipelineBindPoint::GRAPHICS,
@@ -33,20 +51,13 @@ impl Renderer {
             self.base.device.cmd_bind_vertex_buffers(
                 current_command_buffer,
                 0,
-                &[self.data.vertex_buffer.buf],
+                &[self.vertex_buffer.buf],
                 &[0],
             );
 
-            // self.base.device.cmd_bind_index_buffer(
-            //     current_command_buffer,
-            //     self.data.index_buffer.buf,
-            //     0,
-            //     vk::IndexType::UINT16,
-            // );
-
             self.base
                 .device
-                .cmd_draw(current_command_buffer, self.data.instance_count, 1, 0, 0);
+                .cmd_draw(current_command_buffer, self.vertex_count, 1, 0, 0);
 
             self.base.device.cmd_end_render_pass(current_command_buffer);
 

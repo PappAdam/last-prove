@@ -1,15 +1,20 @@
+mod map;
+
 use std::{f32::consts::PI, time::Instant};
 
+use map::Map;
 use nalgebra_glm::{
     look_at, look_at_lh, look_at_rh, rotate_normalized_axis, vec2, vec3, TVec2, Vec2,
 };
 use winit::{
-    dpi::Position,
+    dpi::{LogicalSize, PhysicalSize, Position},
     event::{
         ElementState, Event, KeyboardInput, ModifiersState, MouseButton, VirtualKeyCode,
         WindowEvent,
     },
     event_loop::ControlFlow,
+    monitor::VideoMode,
+    window::Fullscreen,
 };
 
 use renderer::msg;
@@ -36,11 +41,16 @@ fn main() {
     let event_loop = winit::event_loop::EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_title("HAHA")
-        .with_inner_size(winit::dpi::LogicalSize::new(800.0, 600.0))
+        .with_inner_size(PhysicalSize::new(1920, 1080))
+        .with_fullscreen(Some(Fullscreen::Borderless(None)))
+        .with_resizable(false)
         .build(&event_loop)
         .unwrap();
 
-    let mut renderer = match Renderer::new(&window) {
+    let mut map = Map::new(100, 0);
+    map.generate(None);
+
+    let mut renderer = match Renderer::new(&window, &map.vertecies) {
         Ok(base) => base,
         Err(err) => {
             msg!(error, err);
@@ -51,6 +61,14 @@ fn main() {
     let mut start_time = Instant::now();
     let mut rotation = vec2(0f32, 0.);
     let mut is_rotate = false;
+
+    renderer.data.transform.rotation = rotate_normalized_axis(
+        &renderer.data.transform.rotation,
+        -PI / 4.,
+        &vec3(0., 1., 0.),
+    );
+
+    renderer.resize(&window).unwrap();
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent { event, .. } => match event {

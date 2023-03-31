@@ -179,6 +179,11 @@ pub fn create_pipeline_layout(
     let layouts = [descriptor_set_layout];
     let create_info = vk::PipelineLayoutCreateInfo::builder()
         .set_layouts(&layouts)
+        .push_constant_ranges(&[vk::PushConstantRange {
+            stage_flags: vk::ShaderStageFlags::VERTEX,
+            offset: 0,
+            size: size_of::<f32>() as u32 * 3,
+        }])
         .build();
 
     let pipeline_layout = unsafe {
