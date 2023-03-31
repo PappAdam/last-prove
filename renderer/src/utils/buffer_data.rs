@@ -33,6 +33,7 @@ pub struct Vertex {
     pub pos: Vec3,
     pub color: Vec3,
     pub normal: Vec3,
+    pub wave_multip: f32,
 }
 
 impl Vertex {
@@ -43,8 +44,13 @@ impl Vertex {
         }
     }
 
-    pub fn new(pos: TVec3<f32>, color: TVec3<f32>, normal: Vec3) -> Self {
-        Self { pos, color, normal }
+    pub fn new(pos: TVec3<f32>, color: TVec3<f32>, normal: Vec3, wave_multip: f32) -> Self {
+        Self {
+            pos,
+            color,
+            normal,
+            wave_multip,
+        }
     }
 }
 
@@ -54,6 +60,7 @@ impl Default for Vertex {
             pos: Vec3::default(),
             color: Vec3::new(1., 1., 0.3),
             normal: Vec3::new(1., 1., 1.),
+            wave_multip: 0f32,
         }
     }
 }

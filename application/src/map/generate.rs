@@ -31,16 +31,18 @@ impl Map {
                         Side::CUBE,
                         tile_position,
                         1. / 32.,
-                        1.,
-                        Vec3::new(1., 1., 1.),
+                        perlin_value * 15.,
+                        Vec3::new(0.03, 0.3, 0.08),
+                        0.,
                     ));
                 } else {
                     self.vertecies.append(&mut create_cube(
                         Side::CUBE,
                         tile_position,
                         1. / 32.,
-                        0.6,
+                        perlin_value * 10. / 2. + 6.,
                         Vec3::new(0.01, 0.02, 0.4),
+                        0.2,
                     ));
                 }
             }

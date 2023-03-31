@@ -63,6 +63,7 @@ pub fn create_cube(
     size: f32,
     height: f32,
     color: Vec3,
+    wave_multip: f32,
 ) -> Vec<Vertex> {
     let mut vertecies = [Vertex::default(); 8];
     for z in 0..2 {
@@ -76,6 +77,7 @@ pub fn create_cube(
                     ),
                     color,
                     Default::default(),
+                    wave_multip,
                 );
             }
         }

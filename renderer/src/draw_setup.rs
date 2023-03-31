@@ -6,7 +6,7 @@ use crate::Renderer;
 
 impl Renderer {
     #[inline]
-    pub fn record_commands(&self) {
+    pub fn record_commands(&self, wave: f32) {
         let current_command_buffer = self.data.command_buffers[self.current_frame_index];
         unsafe {
             self.base.device.cmd_bind_pipeline(
@@ -34,8 +34,9 @@ impl Renderer {
                             / self.base.surface_extent.width as f32,
                         100.,
                         -100.,
+                        wave,
                     ] as *const _ as *const u8,
-                    size_of::<f32>() * 3,
+                    size_of::<f32>() * 4,
                 ),
             );
 

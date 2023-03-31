@@ -56,7 +56,7 @@ impl Renderer {
     }
 
     #[inline]
-    pub fn draw(&mut self) -> Result<(), String> {
+    pub fn draw(&mut self, wave: f32) -> Result<(), String> {
         self.image_index = match self.get_img_index()? {
             Some(index) => index as usize,
             None => {
@@ -86,7 +86,8 @@ impl Renderer {
 
         self.begin_command_buffer();
         self.begin_render_pass();
-        self.record_commands();
+        self.record_commands(wave);
+        dbg!(wave);
 
         self.submit()?;
 
