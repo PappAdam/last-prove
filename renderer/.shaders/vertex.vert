@@ -4,13 +4,11 @@ layout(push_constant) uniform _push_const {
     float wh_ratio;
     float max_z;
     float min_z;
-    float delta_time;
 } push_const;
 
 layout(location = 0) in vec3 pos;
 layout(location = 1) in vec3 color;
 layout(location = 2) in vec3 normal;
-layout(location = 3) in float wave_multip;
 layout(binding = 0) uniform _view {
     mat4 view;
     mat4 rotation;
@@ -28,9 +26,7 @@ void main()
 
     float depth_z = (new_pos.z - push_const.min_z) / (push_const.max_z - push_const.min_z);
 
-    float wave = sin(gl_VertexIndex / 36 * wave_multip * push_const.delta_time) / 10;
-
-    gl_Position = vec4(new_pos.x * push_const.wh_ratio, new_pos.y + wave, depth_z, 1.);
+    gl_Position = vec4(new_pos.x * push_const.wh_ratio, new_pos.y, depth_z, 1.);
 
     fragColor = vec3(color * dot((view.rotation * vec4(normal, 1.)).xyz, light_source) + color) / 2;
 }

@@ -60,7 +60,6 @@ fn main() {
 
     let mut start_time = Instant::now();
     let mut rotation = vec2(0f32, 0.);
-    let mut wave = 0.;
     let mut is_rotate = false;
 
     renderer.data.transform.rotation = rotate_normalized_axis(
@@ -119,8 +118,7 @@ fn main() {
                 );
             }
 
-            wave = (wave + delta_time.as_secs_f32()) % (2. * PI);
-            if let Err(msg) = renderer.draw(wave) {
+            if let Err(msg) = renderer.draw() {
                 msg!(error, msg);
                 *control_flow = ControlFlow::Exit;
                 return;

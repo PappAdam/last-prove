@@ -130,12 +130,6 @@ pub fn create_pipelines(
             format: vk::Format::R32G32B32_SFLOAT,
             offset: offset_of!(Vertex, normal) as u32,
         },
-        vk::VertexInputAttributeDescription {
-            location: 3,
-            binding: 0,
-            format: vk::Format::R32_SFLOAT,
-            offset: offset_of!(Vertex, wave_multip) as u32,
-        },
     ];
 
     let vert_inp_state = vk::PipelineVertexInputStateCreateInfo::builder()
@@ -188,7 +182,7 @@ pub fn create_pipeline_layout(
         .push_constant_ranges(&[vk::PushConstantRange {
             stage_flags: vk::ShaderStageFlags::VERTEX,
             offset: 0,
-            size: size_of::<f32>() as u32 * 4,
+            size: size_of::<f32>() as u32 * 3,
         }])
         .build();
 
