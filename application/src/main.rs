@@ -47,7 +47,7 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let mut map = Map::new(100, 0);
+    let mut map = Map::new(500, 0);
     map.generate(None);
 
     let mut renderer = match Renderer::new(&window, &map.vertecies) {

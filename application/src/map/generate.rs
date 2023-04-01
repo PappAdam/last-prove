@@ -14,33 +14,31 @@ impl Map {
             Some(i) => i,
         });
 
-        //The perlin noise value will be divided by this number
-        //The result will be the height
-        //The higher the self.height is, the lower this number gets, resulting in higher maps.
-        let z_difference_for_height = 1.0 / self.height as f32;
-
         for y in 0..self.size as usize {
             for x in 0..self.size as usize {
-                let tile_position =
-                    Vec3::new(x as f32, 0., y as f32) / 32. - Vec3::new(1.5, 0., 1.5);
+                let tile_position = Vec3::new(x as f32, 0., y as f32) / 32. - Vec3::new(6., 0., 6.);
 
-                let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.05, 1);
+                let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.03, 2);
 
-                if perlin_value > 0.6 {
+                if perlin_value > 0.5 {
                     self.vertecies.append(&mut create_cube(
                         Side::CUBE,
                         tile_position,
                         1. / 32.,
-                        perlin_value * 15.,
-                        Vec3::new(0.03, 0.3, 0.08),
+                        perlin_value * self.size as f32 / 10. - self.size as f32 / 50. - 2.,
+                        Vec3::new(
+                            0.09 - perlin_value / 5.,
+                            0.3 - perlin_value / 4. + 0.1,
+                            0.04 - perlin_value / 5.,
+                        ),
                     ));
                 } else {
                     self.vertecies.append(&mut create_cube(
                         Side::CUBE,
                         tile_position,
                         1. / 32.,
-                        perlin_value * 2. + 7.5,
-                        Vec3::new(0.01, 0.02, 0.4),
+                        perlin_value * self.size as f32 / 80. + self.size as f32 / 42. - 2.,
+                        Vec3::new(0.01, 0.1, 0.4),
                     ));
                 }
             }

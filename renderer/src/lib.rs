@@ -6,7 +6,7 @@ mod resources;
 mod setup;
 pub mod utils;
 
-use std::mem::size_of;
+use std::{mem::size_of, time::Instant};
 
 use ash::vk;
 use resources::buffer::Buffer;
@@ -26,6 +26,8 @@ pub struct Renderer {
     pub rotation: f32,
     pub vertex_buffer: Buffer,
     pub vertex_count: u32,
+
+    pub start_time: Instant,
 }
 
 impl Renderer {
@@ -52,6 +54,7 @@ impl Renderer {
             rotation: 0.,
             vertex_count: vertecies.len() as u32,
             vertex_buffer,
+            start_time: Instant::now(),
         })
     }
 

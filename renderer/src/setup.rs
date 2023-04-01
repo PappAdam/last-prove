@@ -182,7 +182,7 @@ pub fn create_pipeline_layout(
         .push_constant_ranges(&[vk::PushConstantRange {
             stage_flags: vk::ShaderStageFlags::VERTEX,
             offset: 0,
-            size: size_of::<f32>() as u32 * 3,
+            size: size_of::<f32>() as u32 * 4,
         }])
         .build();
 

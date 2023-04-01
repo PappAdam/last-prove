@@ -1,4 +1,4 @@
-use std::mem::size_of;
+use std::{f32::consts::PI, mem::size_of, time::Instant};
 
 use ash::vk;
 
@@ -32,10 +32,11 @@ impl Renderer {
                     &[
                         self.base.surface_extent.height as f32
                             / self.base.surface_extent.width as f32,
-                        100.,
+                        200.,
                         -100.,
+                        self.start_time.elapsed().as_secs_f32(),
                     ] as *const _ as *const u8,
-                    size_of::<f32>() * 3,
+                    size_of::<f32>() * 4,
                 ),
             );
 
