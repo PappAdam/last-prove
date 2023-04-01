@@ -1,11 +1,11 @@
-mod map;
+mod utils;
 
 use std::{f32::consts::PI, time::Instant};
 
-use map::Map;
 use nalgebra_glm::{
     look_at, look_at_lh, look_at_rh, rotate_normalized_axis, vec2, vec3, TVec2, Vec2,
 };
+use utils::{create_cube, Side};
 use winit::{
     dpi::{LogicalSize, PhysicalSize, Position},
     event::{
@@ -17,8 +17,8 @@ use winit::{
     window::Fullscreen,
 };
 
-use renderer::msg;
 use renderer::Renderer;
+use renderer::{msg, utils::buffer_data::Vertex};
 
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(
@@ -47,10 +47,23 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let mut map = Map::new(500, 0);
-    map.generate(None);
+    let mut vertecies = Vec::<Vertex>::new();
+    vertecies.append(&mut create_cube(
+        Side::CUBE,
+        vec3(0., 0., 0.),
+        vec3(2., 1., 2.),
+        vec3(1., 1., 1.),
+        0.5,
+    ));
+    vertecies.append(&mut create_cube(
+        Side::CUBE & !Side::BOTTOM,
+        vec3(0., -1., 0.),
+        vec3(1., 1., 1.),
+        vec3(1., 1., 1.),
+        0.5,
+    ));
 
-    let mut renderer = match Renderer::new(&window, &map.vertecies) {
+    let mut renderer = match Renderer::new(&window, &vertecies) {
         Ok(base) => base,
         Err(err) => {
             msg!(error, err);

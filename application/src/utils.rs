@@ -1,6 +1,6 @@
-use std::ops::{BitAnd, BitOr};
+use std::ops::{BitAnd, BitOr, Not};
 
-use nalgebra_glm::Vec3;
+use nalgebra_glm::{vec3, Vec3};
 use renderer::utils::buffer_data::Vertex;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -37,6 +37,14 @@ impl BitOr for Side {
     }
 }
 
+impl Not for Side {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
+}
+
 impl BitAnd for Side {
     type Output = Self;
 
@@ -60,9 +68,9 @@ fn get_face_indicies_from_side(side: Side) -> ([u16; 6], Vec3) {
 pub fn create_cube(
     sides: Side,
     position: Vec3,
-    size: f32,
-    height: f32,
+    dimensions: Vec3,
     color: Vec3,
+    size_multip: f32,
 ) -> Vec<Vertex> {
     let mut vertecies = [Vertex::default(); 8];
     for z in 0..2 {
@@ -70,10 +78,11 @@ pub fn create_cube(
             for x in 0..2 {
                 vertecies[z * 4 + y * 2 + x] = Vertex::new(
                     Vec3::new(
-                        x as f32 * size + position.x,
-                        y as f32 * size * height + position.y - size * height,
-                        z as f32 * size + position.z,
-                    ),
+                        x as f32 * dimensions.x + position.x - dimensions.x,
+                        y as f32 * dimensions.y + position.y - dimensions.y,
+                        z as f32 * dimensions.z + position.z - dimensions.z,
+                    ) * size_multip
+                        + vec3(size_multip, size_multip, size_multip),
                     color,
                     Default::default(),
                 );

@@ -34,9 +34,8 @@ impl Renderer {
                             / self.base.surface_extent.width as f32,
                         200.,
                         -100.,
-                        self.start_time.elapsed().as_secs_f32(),
                     ] as *const _ as *const u8,
-                    size_of::<f32>() * 4,
+                    size_of::<f32>() * 3,
                 ),
             );
 
