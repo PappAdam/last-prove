@@ -1,6 +1,6 @@
 use std::ops::{BitAnd, BitOr, Not};
 
-use nalgebra_glm::{vec3, Vec3};
+use nalgebra::Vector3;
 use renderer::utils::buffer_data::Vertex;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -53,23 +53,23 @@ impl BitAnd for Side {
     }
 }
 
-fn get_face_indicies_from_side(side: Side) -> ([u16; 6], Vec3) {
+fn get_face_indicies_from_side(side: Side) -> ([u16; 6], Vector3<f32>) {
     match side {
-        Side::FRONT => ([0, 2, 1, 1, 2, 3], Vec3::new(0., 0., 1.)),
-        Side::BACK => ([5, 7, 4, 4, 7, 6], Vec3::new(0., 0., -1.)),
-        Side::TOP => ([4, 0, 5, 5, 0, 1], Vec3::new(0., 1., 0.)),
-        Side::BOTTOM => ([2, 6, 3, 3, 6, 7], Vec3::new(0., -1., 0.)),
-        Side::LEFT => ([4, 6, 0, 0, 6, 2], Vec3::new(-1., 0., 0.)),
-        Side::RIGHT => ([1, 3, 5, 5, 3, 7], Vec3::new(1., 0., 0.)),
-        _ => ([0; 6], Vec3::zeros()),
+        Side::FRONT => ([0, 2, 1, 1, 2, 3], Vector3::new(0., 0., 1.)),
+        Side::BACK => ([5, 7, 4, 4, 7, 6], Vector3::new(0., 0., -1.)),
+        Side::TOP => ([4, 0, 5, 5, 0, 1], Vector3::new(0., 1., 0.)),
+        Side::BOTTOM => ([2, 6, 3, 3, 6, 7], Vector3::new(0., -1., 0.)),
+        Side::LEFT => ([4, 6, 0, 0, 6, 2], Vector3::new(-1., 0., 0.)),
+        Side::RIGHT => ([1, 3, 5, 5, 3, 7], Vector3::new(1., 0., 0.)),
+        _ => ([0; 6], Vector3::zeros()),
     }
 }
 
 pub fn create_cube(
     sides: Side,
-    position: Vec3,
-    dimensions: Vec3,
-    color: Vec3,
+    position: Vector3<f32>,
+    dimensions: Vector3<f32>,
+    color: Vector3<f32>,
     size_multip: f32,
 ) -> Vec<Vertex> {
     let mut vertecies = [Vertex::default(); 8];
@@ -77,12 +77,12 @@ pub fn create_cube(
         for y in 0..2 {
             for x in 0..2 {
                 vertecies[z * 4 + y * 2 + x] = Vertex::new(
-                    Vec3::new(
+                    Vector3::new(
                         x as f32 * dimensions.x + position.x - dimensions.x,
                         y as f32 * dimensions.y + position.y - dimensions.y,
                         z as f32 * dimensions.z + position.z - dimensions.z,
                     ) * size_multip
-                        + vec3(size_multip, size_multip, size_multip),
+                        + Vector3::new(size_multip, size_multip, size_multip),
                     color,
                     Default::default(),
                 );
