@@ -1,2 +1,2 @@
 [workspace]
-members = ["renderer", "application"]
+members = ["renderer", "application", "eventhandler"]

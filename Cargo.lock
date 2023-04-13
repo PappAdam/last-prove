@@ -52,6 +52,8 @@ checksum = "fc7eb209b1518d6bb87b283c20095f5228ecda460da70b44f0802523dea6da04"
 name = "application"
 version = "0.1.0"
 dependencies = [
+ "eventhandler",
+ "lazy_static",
  "log",
  "nalgebra",
  "rand",
@@ -358,6 +360,13 @@ name = "either"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fcaabb2fef8c910e7f4c7ce9f67a1283a1715879a7c230ca9d6d1ae31f16d91"
+
+[[package]]
+name = "eventhandler"
+version = "0.1.0"
+dependencies = [
+ "winit",
+]
 
 [[package]]
 name = "exr"

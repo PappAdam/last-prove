@@ -8,16 +8,12 @@ use nalgebra::{Point, Point3, Vector2, Vector3, Vector4, Vector6};
 use utils::{create_cube, Side};
 use winit::{
     dpi::{LogicalSize, PhysicalSize, Position},
-    event::{
-        ElementState, Event, KeyboardInput, ModifiersState, MouseButton, VirtualKeyCode,
-        WindowEvent,
-    },
+    event::{Event, KeyboardInput, WindowEvent},
     event_loop::ControlFlow,
-    monitor::VideoMode,
     window::Fullscreen,
 };
 
-use renderer::{engine::Convert, Renderer};
+use renderer::Renderer;
 use renderer::{msg, utils::buffer_data::Vertex};
 
 fn main() {
@@ -27,7 +23,6 @@ fn main() {
         simplelog::TerminalMode::Mixed,
         simplelog::ColorChoice::Auto,
     )];
-
     if let Ok(file) = std::fs::File::create("log.txt") {
         loggers.push(simplelog::WriteLogger::new(
             simplelog::LevelFilter::Info,
@@ -88,12 +83,17 @@ fn main() {
             WindowEvent::CursorMoved { position, .. } => {
                 input.mouse.set_pos(position.x, position.y);
             }
-            WindowEvent::KeyboardInput { input: _input, .. } => match _input {
+            WindowEvent::KeyboardInput {
+                input: keyboard_input,
+                ..
+            } => match keyboard_input {
                 KeyboardInput {
                     state,
                     virtual_keycode,
                     ..
-                } => input.handle_key_press(virtual_keycode, state),
+                } => {
+                    input.handle_key_press(virtual_keycode, state);
+                }
             },
             WindowEvent::ModifiersChanged(modifier) => input.set_modif(modifier),
             _ => {}
