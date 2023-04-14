@@ -15,8 +15,6 @@ use crate::{
 };
 use ash::vk;
 
-use nalgebra_glm::vec3;
-
 use super::{base::RenderBase, utils::MAX_FRAME_DRAWS};
 
 pub struct RenderData {

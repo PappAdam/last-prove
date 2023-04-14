@@ -3,7 +3,7 @@ use std::{
     ops::{BitAnd, BitOr},
 };
 
-use nalgebra_glm::{Mat4, TVec3, Vec3};
+use nalgebra::{Matrix4, Vector3};
 
 pub trait BufferObject {
     fn as_void_ptr(&self) -> *const c_void {
@@ -13,15 +13,15 @@ pub trait BufferObject {
 
 #[derive(Debug)]
 pub struct Transform {
-    pub view: Mat4,
-    pub rotation: Mat4,
+    pub view: Matrix4<f32>,
+    pub rotation: Matrix4<f32>,
 }
 
 impl Transform {
     pub fn new() -> Self {
         Self {
-            view: Mat4::identity(),
-            rotation: Mat4::identity(),
+            view: Matrix4::identity(),
+            rotation: Matrix4::identity(),
         }
     }
 }
@@ -30,20 +30,20 @@ impl BufferObject for Transform {}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vertex {
-    pub pos: Vec3,
-    pub color: Vec3,
-    pub normal: Vec3,
+    pub pos: Vector3<f32>,
+    pub color: Vector3<f32>,
+    pub normal: Vector3<f32>,
 }
 
 impl Vertex {
-    pub fn from_pos(pos: TVec3<f32>) -> Self {
+    pub fn from_pos(pos: Vector3<f32>) -> Self {
         Self {
             pos,
             ..Default::default()
         }
     }
 
-    pub fn new(pos: TVec3<f32>, color: TVec3<f32>, normal: Vec3) -> Self {
+    pub fn new(pos: Vector3<f32>, color: Vector3<f32>, normal: Vector3<f32>) -> Self {
         Self { pos, color, normal }
     }
 }
@@ -51,9 +51,9 @@ impl Vertex {
 impl Default for Vertex {
     fn default() -> Self {
         Self {
-            pos: Vec3::default(),
-            color: Vec3::new(1., 1., 0.3),
-            normal: Vec3::new(1., 1., 1.),
+            pos: Vector3::default(),
+            color: Vector3::new(1., 1., 0.3),
+            normal: Vector3::new(1., 1., 1.),
         }
     }
 }

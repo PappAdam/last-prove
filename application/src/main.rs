@@ -1,19 +1,15 @@
+mod events;
 mod utils;
 
 use std::{f32::consts::PI, time::Instant};
 
-use nalgebra_glm::{
-    look_at, look_at_lh, look_at_rh, rotate_normalized_axis, vec2, vec3, TVec2, Vec2,
-};
+use events::input::Input;
+use nalgebra::{Point, Point3, Vector2, Vector3, Vector4, Vector6};
 use utils::{create_cube, Side};
 use winit::{
     dpi::{LogicalSize, PhysicalSize, Position},
-    event::{
-        ElementState, Event, KeyboardInput, ModifiersState, MouseButton, VirtualKeyCode,
-        WindowEvent,
-    },
+    event::{Event, KeyboardInput, WindowEvent},
     event_loop::ControlFlow,
-    monitor::VideoMode,
     window::Fullscreen,
 };
 
@@ -27,7 +23,6 @@ fn main() {
         simplelog::TerminalMode::Mixed,
         simplelog::ColorChoice::Auto,
     )];
-
     if let Ok(file) = std::fs::File::create("log.txt") {
         loggers.push(simplelog::WriteLogger::new(
             simplelog::LevelFilter::Info,
@@ -50,16 +45,16 @@ fn main() {
     let mut vertecies = Vec::<Vertex>::new();
     vertecies.append(&mut create_cube(
         Side::CUBE,
-        vec3(0., 0., 0.),
-        vec3(2., 1., 2.),
-        vec3(1., 1., 1.),
+        Vector3::new(0., 0., 0.),
+        Vector3::new(2., 1., 2.),
+        Vector3::new(1., 1., 1.),
         0.5,
     ));
     vertecies.append(&mut create_cube(
         Side::CUBE & !Side::BOTTOM,
-        vec3(0., -1., 0.),
-        vec3(1., 1., 1.),
-        vec3(1., 1., 1.),
+        Vector3::new(0., -1., 0.),
+        Vector3::new(1., 1., 1.),
+        Vector3::new(1., 1., 1.),
         0.5,
     ));
 
@@ -72,14 +67,10 @@ fn main() {
     };
 
     let mut start_time = Instant::now();
-    let mut rotation = vec2(0f32, 0.);
+    let mut rotation = Vector2::new(2f32, 1.);
     let mut is_rotate = false;
 
-    renderer.data.transform.rotation = rotate_normalized_axis(
-        &renderer.data.transform.rotation,
-        -PI / 4.,
-        &vec3(0., 1., 0.),
-    );
+    let mut input = Input::init();
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent { event, .. } => match event {
@@ -90,20 +81,21 @@ fn main() {
                 renderer.rebuild_swapchain = true;
             }
             WindowEvent::CursorMoved { position, .. } => {
-                rotation.y = position.x as f32 / window.inner_size().width as f32 * 2. * PI;
-                rotation.x =
-                    position.y as f32 / window.inner_size().height as f32 * PI / 2. + PI / 2.;
+                input.mouse.set_pos(position.x, position.y);
             }
-            WindowEvent::KeyboardInput { input, .. } => match input {
+            WindowEvent::KeyboardInput {
+                input: keyboard_input,
+                ..
+            } => match keyboard_input {
                 KeyboardInput {
                     state,
                     virtual_keycode,
                     ..
-                } => match virtual_keycode {
-                    Some(VirtualKeyCode::Space) => is_rotate = state == ElementState::Pressed,
-                    _ => {}
-                },
+                } => {
+                    input.handle_key_press(virtual_keycode, state);
+                }
             },
+            WindowEvent::ModifiersChanged(modifier) => input.set_modif(modifier),
             _ => {}
         },
         Event::MainEventsCleared => {
@@ -117,19 +109,11 @@ fn main() {
                 }
             }
 
-            renderer.data.transform.view = look_at_lh(
-                &vec3(rotation.y.sin(), rotation.x.cos(), rotation.y.cos()),
-                &vec3(0., 0., 0.),
-                &vec3(0., 1., 0.),
-            );
-
-            if is_rotate {
-                renderer.data.transform.rotation = rotate_normalized_axis(
-                    &renderer.data.transform.rotation,
-                    delta_time.as_secs_f32() * PI * 10.,
-                    &vec3(1., 0., 0.),
-                );
-            }
+            // renderer.data.transform.view = nalgebra::Matrix::look_at_lh(
+            //     &Point3::new(rotation.y.sin(), rotation.x.cos(), rotation.y.cos()),
+            //     &Point3::new(0., 0., 0.),
+            //     &Vector3::y_axis(),
+            // );
 
             if let Err(msg) = renderer.draw() {
                 msg!(error, msg);
@@ -137,6 +121,7 @@ fn main() {
                 return;
             }
 
+            input.refresh();
             start_time = Instant::now();
         }
         _ => {}
