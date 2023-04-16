@@ -1,7 +1,7 @@
 use std::ops::{BitAnd, BitOr, Not};
 
 use nalgebra::Vector3;
-use renderer::utils::buffer_data::Vertex;
+use objects::mesh::Vertex;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]

@@ -10,6 +10,7 @@ log = "0.4"
 nalgebra = "*"
 rand = "*"
 renderer = {path = "../renderer"}
+objects = {path = "../objects"}
 simplelog = "0.12.0"
 winit = "0.28.2"
 lazy_static = "1.4.0"

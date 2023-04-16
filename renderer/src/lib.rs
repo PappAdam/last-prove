@@ -9,8 +9,9 @@ pub mod utils;
 use std::{mem::size_of, time::Instant};
 
 use ash::vk;
+use objects::mesh::Vertex;
 use resources::buffer::Buffer;
-use utils::buffer_data::{BufferObject, Vertex};
+use utils::buffer_data::{BufferObject};
 use winit::window::Window;
 
 use crate::{base::RenderBase, data::RenderData, utils::MAX_FRAME_DRAWS};

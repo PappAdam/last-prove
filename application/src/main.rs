@@ -5,6 +5,7 @@ use std::{f32::consts::PI, time::Instant};
 
 use events::input::Input;
 use nalgebra::{Point, Point3, Vector2, Vector3, Vector4, Vector6};
+use objects::mesh::Vertex;
 use utils::{create_cube, Side};
 use winit::{
     dpi::{LogicalSize, PhysicalSize, Position},
@@ -13,8 +14,8 @@ use winit::{
     window::Fullscreen,
 };
 
+use renderer::msg;
 use renderer::Renderer;
-use renderer::{msg, utils::buffer_data::Vertex};
 
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(

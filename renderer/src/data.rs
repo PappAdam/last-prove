@@ -11,7 +11,7 @@ use crate::{
         image::Image,
     },
     setup,
-    utils::buffer_data::{BufferObject, Transform, Vertex},
+    utils::buffer_data::{BufferObject, Transform},
 };
 use ash::vk;
 

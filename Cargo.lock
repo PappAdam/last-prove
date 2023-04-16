@@ -55,6 +55,7 @@ dependencies = [
  "lazy_static",
  "log",
  "nalgebra",
+ "objects",
  "rand",
  "renderer",
  "simplelog",
@@ -937,6 +938,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "objects"
+version = "0.1.0"
+dependencies = [
+ "nalgebra",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1151,6 +1159,7 @@ dependencies = [
  "log",
  "nalgebra",
  "num",
+ "objects",
  "raw-window-handle",
  "simplelog",
  "winit",
