@@ -3,7 +3,7 @@ use std::mem::size_of;
 
 use ash::extensions::{ext, khr};
 use ash::vk::{self, PresentModeKHR};
-use objects::mesh::Vertex;
+use objects::mesh::vertex::Vertex;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 
 use crate::{offset_of, parse_error};

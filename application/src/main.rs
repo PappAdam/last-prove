@@ -5,7 +5,10 @@ use std::{f32::consts::PI, time::Instant};
 
 use events::input::Input;
 use nalgebra::{Point, Point3, Vector2, Vector3, Vector4, Vector6};
-use objects::mesh::Vertex;
+use objects::{
+    mesh::{vertex::Vertex, Mesh},
+    GameObject,
+};
 use utils::{create_cube, Side};
 use winit::{
     dpi::{LogicalSize, PhysicalSize, Position},
@@ -32,6 +35,26 @@ fn main() {
         ));
     }
 
+    let sample_object = GameObject::new(
+        Vector3::new(-1., -1., 0.),
+        Mesh::new(vec![Vertex::new(
+            Vector3::new(0., 0., 0.),
+            Vector3::new(1., 1., 1.),
+            Vector3::default(),
+        ),
+        Vertex::new(
+            Vector3::new(1., 1., 1.),
+            Vector3::new(1., 1., 1.),
+            Vector3::default(),
+        ),
+        Vertex::new(
+            Vector3::new(1., 0., 1.),
+            Vector3::new(1., 1., 1.),
+            Vector3::default(),
+        ),
+        ]),
+    );
+
     simplelog::CombinedLogger::init(loggers).unwrap();
 
     let event_loop = winit::event_loop::EventLoop::new();
@@ -43,23 +66,7 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let mut vertecies = Vec::<Vertex>::new();
-    vertecies.append(&mut create_cube(
-        Side::CUBE,
-        Vector3::new(0., 0., 0.),
-        Vector3::new(2., 1., 2.),
-        Vector3::new(1., 1., 1.),
-        0.5,
-    ));
-    vertecies.append(&mut create_cube(
-        Side::CUBE & !Side::BOTTOM,
-        Vector3::new(0., -1., 0.),
-        Vector3::new(1., 1., 1.),
-        Vector3::new(1., 1., 1.),
-        0.5,
-    ));
-
-    let mut renderer = match Renderer::new(&window, &vertecies) {
+    let mut renderer = match Renderer::new(&window, &sample_object.get_vertices()) {
         Ok(base) => base,
         Err(err) => {
             msg!(error, err);

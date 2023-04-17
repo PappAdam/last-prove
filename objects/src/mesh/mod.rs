@@ -1,37 +1,45 @@
-use nalgebra::Vector3;
+pub mod vertex;
 
+use std::ops::{Add, AddAssign};
+
+use self::vertex::Vertex;
+
+#[derive(Default)]
 pub struct Mesh {
-    vertices: Vec<Vertex>,
+    pub vertices: Vec<Vertex>,
     vertices_count: u16,
-    triangles_count: u16
+    triangles_count: u16,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct Vertex {
-    pub pos: Vector3<f32>,
-    pub color: Vector3<f32>,
-    pub normal: Vector3<f32>,
-}
-
-impl Vertex {
-    pub fn from_pos(pos: Vector3<f32>) -> Self {
+impl Mesh {
+    pub fn new(vertices: Vec<Vertex>) -> Self {
+        assert_eq!(vertices.len() % 3, 0);
         Self {
-            pos,
-            ..Default::default()
+            vertices_count: vertices.len() as u16,
+            triangles_count: (vertices.len() / 3) as u16,
+            vertices,
         }
     }
-
-    pub fn new(pos: Vector3<f32>, color: Vector3<f32>, normal: Vector3<f32>) -> Self {
-        Self { pos, color, normal }
+    pub fn add_vertex(&mut self, mut vertex: Vec<Vertex>) {
+        assert_eq!(vertex.len() % 3, 0);
+        self.vertices.append(&mut vertex);
+        self.vertices_count += vertex.len() as u16;
+        self.triangles_count += (vertex.len() / 3) as u16;
     }
 }
 
-impl Default for Vertex {
-    fn default() -> Self {
-        Self {
-            pos: Vector3::default(),
-            color: Vector3::new(1., 1., 0.3),
-            normal: Vector3::new(1., 1., 1.),
-        }
+impl AddAssign for Mesh {
+    fn add_assign(&mut self, mut rhs: Self) {
+        self.vertices.append(&mut rhs.vertices);
+        self.vertices_count += rhs.vertices_count;
+        self.triangles_count += rhs.triangles_count;
+    }
+}
+impl Add for Mesh {
+    type Output = Mesh;
+
+    fn add(mut self, rhs: Self) -> Self::Output {
+        self += rhs;
+        self
     }
 }

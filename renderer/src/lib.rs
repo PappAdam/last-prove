@@ -9,7 +9,7 @@ pub mod utils;
 use std::{mem::size_of, time::Instant};
 
 use ash::vk;
-use objects::mesh::Vertex;
+use objects::mesh::vertex::Vertex;
 use resources::buffer::Buffer;
 use utils::buffer_data::{BufferObject};
 use winit::window::Window;
