@@ -1,5 +1,5 @@
-use mesh::{Mesh, vertex::Vertex};
-use nalgebra::{Matrix4, Translation3, Vector3, Vector4};
+use mesh::{vertex::Vertex, Mesh};
+use nalgebra::{Matrix4, Translation3, Vector3};
 
 pub mod mesh;
 
@@ -15,12 +15,20 @@ impl GameObject {
             mesh,
         }
     }
+    pub fn get_mesh(&self) -> &Mesh {
+        &self.mesh
+    }
+    pub fn scale(&mut self, amount: f32) {
+        let scale_matrix = nalgebra::Matrix4::new(
+            amount, 0.0, 0.0, 0.0, 0.0, amount, 0.0, 0.0, 0.0, 0.0, amount, 0.0, 0.0, 0.0, 0.0, 1.0
+        );
+        self.transform *= scale_matrix;
+    }
     pub fn get_vertices(&self) -> Vec<Vertex> {
         let mut vertices = self.mesh.vertices.clone();
         for vertex in &mut vertices {
             let new_point = self.transform.transform_point(&vertex.pos.into());
             vertex.pos = Vector3::new(new_point.x, new_point.y, new_point.z);
-            println!("{}", new_point.z);
         }
         vertices
     }

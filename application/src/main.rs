@@ -34,26 +34,10 @@ fn main() {
             file,
         ));
     }
+    let cube_mesh = Mesh::from_gltf();
 
-    let sample_object = GameObject::new(
-        Vector3::new(-1., -1., 0.),
-        Mesh::new(vec![Vertex::new(
-            Vector3::new(0., 0., 0.),
-            Vector3::new(1., 1., 1.),
-            Vector3::default(),
-        ),
-        Vertex::new(
-            Vector3::new(1., 1., 1.),
-            Vector3::new(1., 1., 1.),
-            Vector3::default(),
-        ),
-        Vertex::new(
-            Vector3::new(1., 0., 1.),
-            Vector3::new(1., 1., 1.),
-            Vector3::default(),
-        ),
-        ]),
-    );
+    let mut sample_object = GameObject::new(Vector3::new(1., -1., 0.), cube_mesh);
+    sample_object.scale(0.7);
 
     simplelog::CombinedLogger::init(loggers).unwrap();
 
@@ -65,8 +49,7 @@ fn main() {
         .with_resizable(false)
         .build(&event_loop)
         .unwrap();
-
-    let mut renderer = match Renderer::new(&window, &sample_object.get_vertices()) {
+    let mut renderer = match Renderer::new(&window, &sample_object.get_vertices(), &sample_object.get_mesh().get_indicies()) {
         Ok(base) => base,
         Err(err) => {
             msg!(error, err);
@@ -76,7 +59,7 @@ fn main() {
 
     let mut start_time = Instant::now();
     let mut rotation = Vector2::new(2f32, 1.);
-    let mut is_rotate = false;
+    let mut is_rotate = true;
 
     let mut input = Input::init();
 
@@ -116,12 +99,13 @@ fn main() {
                     return;
                 }
             }
+            rotation.y += 0.005;
 
-            // renderer.data.transform.view = nalgebra::Matrix::look_at_lh(
-            //     &Point3::new(rotation.y.sin(), rotation.x.cos(), rotation.y.cos()),
-            //     &Point3::new(0., 0., 0.),
-            //     &Vector3::y_axis(),
-            // );
+            renderer.data.transform.view = nalgebra::Matrix::look_at_lh(
+                &Point3::new(rotation.y.sin(), rotation.x.cos(), rotation.y.cos()),
+                &Point3::new(0., 0., 0.),
+                &Vector3::y_axis(),
+            );
 
             if let Err(msg) = renderer.draw() {
                 msg!(error, msg);

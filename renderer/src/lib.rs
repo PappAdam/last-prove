@@ -11,7 +11,7 @@ use std::{mem::size_of, time::Instant};
 use ash::vk;
 use objects::mesh::vertex::Vertex;
 use resources::buffer::Buffer;
-use utils::buffer_data::{BufferObject};
+use utils::buffer_data::BufferObject;
 use winit::window::Window;
 
 use crate::{base::RenderBase, data::RenderData, utils::MAX_FRAME_DRAWS};
@@ -27,12 +27,14 @@ pub struct Renderer {
     pub rotation: f32,
     pub vertex_buffer: Buffer,
     pub vertex_count: u32,
+    pub index_buffer: Buffer,
+    pub index_count: u32,
 
     pub start_time: Instant,
 }
 
 impl Renderer {
-    pub fn new(window: &Window, vertecies: &[Vertex]) -> Result<Self, String> {
+    pub fn new(window: &Window, vertecies: &[Vertex], indicies: &[u16]) -> Result<Self, String> {
         let mut base = RenderBase::new(window)?;
         let data = RenderData::new(&mut base)?;
 
@@ -46,6 +48,16 @@ impl Renderer {
             data.command_pool,
         )?;
 
+        let index_buffer = Buffer::device_local(
+            &base.device,
+            indicies.as_ptr() as *const _,
+            indicies.len() as u64 * size_of::<u16>() as u64,
+            base.physical_device_memory_properties,
+            vk::BufferUsageFlags::INDEX_BUFFER,
+            base.queue,
+            data.command_pool,
+        )?;
+
         Ok(Self {
             base,
             data,
@@ -55,6 +67,8 @@ impl Renderer {
             rotation: 0.,
             vertex_count: vertecies.len() as u32,
             vertex_buffer,
+            index_buffer,
+            index_count: indicies.len() as u32,
             start_time: Instant::now(),
         })
     }

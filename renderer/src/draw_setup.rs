@@ -55,9 +55,16 @@ impl Renderer {
                 &[0],
             );
 
+            self.base.device.cmd_bind_index_buffer(
+                current_command_buffer,
+                self.index_buffer.buf,
+                0,
+                vk::IndexType::UINT16,
+            );
+
             self.base
                 .device
-                .cmd_draw(current_command_buffer, self.vertex_count, 1, 0, 0);
+                .cmd_draw_indexed(current_command_buffer, self.index_count, 1, 0, 0, 0);
 
             self.base.device.cmd_end_render_pass(current_command_buffer);
 
