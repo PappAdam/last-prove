@@ -59,7 +59,7 @@ impl Renderer {
                 current_command_buffer,
                 self.index_buffer.buf,
                 0,
-                vk::IndexType::UINT16,
+                vk::IndexType::UINT32,
             );
 
             self.base

@@ -34,10 +34,10 @@ fn main() {
             file,
         ));
     }
-    let cube_mesh = Mesh::from_gltf();
+    let cube_mesh = Mesh::from_obj();
 
-    let mut sample_object = GameObject::new(Vector3::new(1., -1., 0.), cube_mesh);
-    sample_object.scale(0.7);
+    let mut sample_object = GameObject::new(Vector3::new(0., 0., 0.), cube_mesh);
+    sample_object.scale(6.);
 
     simplelog::CombinedLogger::init(loggers).unwrap();
 

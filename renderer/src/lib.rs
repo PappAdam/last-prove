@@ -34,7 +34,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new(window: &Window, vertecies: &[Vertex], indicies: &[u16]) -> Result<Self, String> {
+    pub fn new(window: &Window, vertecies: &[Vertex], indicies: &[u32]) -> Result<Self, String> {
         let mut base = RenderBase::new(window)?;
         let data = RenderData::new(&mut base)?;
 
@@ -51,7 +51,7 @@ impl Renderer {
         let index_buffer = Buffer::device_local(
             &base.device,
             indicies.as_ptr() as *const _,
-            indicies.len() as u64 * size_of::<u16>() as u64,
+            indicies.len() as u64 * size_of::<u32>() as u64,
             base.physical_device_memory_properties,
             vk::BufferUsageFlags::INDEX_BUFFER,
             base.queue,

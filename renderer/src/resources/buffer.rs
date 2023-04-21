@@ -284,6 +284,6 @@ pub fn find_memory_type_index(
         .map(|(i, _)| i as u32)
     {
         Some(ind) => Ok(ind),
-        None => Err(parse_error!("Failed to suitable memory")),
+        None => Err(parse_error!("Failed to find suitable memory")),
     }
 }
