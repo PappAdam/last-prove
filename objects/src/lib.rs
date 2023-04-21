@@ -12,6 +12,20 @@ pub enum GameObjectType {
     Building(usize), //MESH INDEX
 }
 
+pub struct GameObjectHandler {
+    pub gameobjects: Vec<GameObject>,
+}
+impl GameObjectHandler {
+    pub fn new() -> Self {
+        Self {
+            gameobjects: Vec::new(),
+        }
+    }
+    pub fn add_object(&mut self, gameobject: GameObject) {
+        self.gameobjects.push(gameobject)
+    }
+}
+
 pub struct GameObject {
     transform: Matrix4<f32>,
     ty: GameObjectType,

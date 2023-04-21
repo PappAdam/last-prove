@@ -7,7 +7,7 @@ use events::input::Input;
 use nalgebra::{Point, Point3, Vector2, Vector3, Vector4, Vector6};
 use objects::{
     mesh::{vertex::Vertex, Mesh},
-    GameObject,
+    GameObject, GameObjectHandler,
 };
 use utils::{create_cube, Side};
 use winit::{
@@ -36,14 +36,18 @@ fn main() {
     }
 
     let mesh_templates = objects::mesh::templates::create_templates();
+    let mut gameobject_handler = GameObjectHandler::new();
 
-    let mut sample_object = GameObject::new(
+    gameobject_handler.add_object(GameObject::new(
         Vector3::new(0., 0., 0.),
-        objects::GameObjectType::Terrain(Mesh::from_obj()),
-    );
-    sample_object.scale(0.1, 0.1, 0.1);
-    sample_object.rotate(0., 0., 0.);
-
+        objects::GameObjectType::Terrain(Mesh::from_obj("resources/models/Container.obj")),
+    ));
+    gameobject_handler.add_object(GameObject::new(
+        Vector3::new(0., 0., 0.),
+        objects::GameObjectType::Terrain(Mesh::from_obj("resources/models/rat_obj.obj")),
+    ));
+    gameobject_handler.gameobjects[1].scale(0.5, 0.1, 0.2);
+    
     let mut camera = GameObject::new(Vector3::new(5., -5., 5.), objects::GameObjectType::Camera);
 
     simplelog::CombinedLogger::init(loggers).unwrap();
@@ -58,8 +62,8 @@ fn main() {
         .unwrap();
     let mut renderer = match Renderer::new(
         &window,
-        &sample_object.get_vertices(&mesh_templates),
-        &sample_object.get_mesh(&mesh_templates).get_indicies(),
+        &gameobject_handler.gameobjects[1].get_vertices(&mesh_templates),
+        &gameobject_handler.gameobjects[1].get_mesh(&mesh_templates).get_indicies(),
     ) {
         Ok(base) => base,
         Err(err) => {
@@ -101,6 +105,7 @@ fn main() {
         },
         Event::MainEventsCleared => {
             let delta_time = start_time.elapsed();
+            start_time = Instant::now();
 
             if renderer.rebuild_swapchain {
                 renderer.rebuild_swapchain = false;
@@ -110,8 +115,7 @@ fn main() {
                 }
             }
 
-
-            camera.orbit(0.05, 0.05, 0., Vector3::zeros());
+            camera.orbit(0., 3.14 * delta_time.as_secs_f32(), 0., Vector3::zeros());
             renderer.data.transform.view = nalgebra::Matrix::look_at_lh(
                 &Point3::from(camera.get_position()),
                 &Point3::new(0., 0., 0.),
@@ -125,7 +129,6 @@ fn main() {
             }
 
             input.refresh();
-            start_time = Instant::now();
         }
         _ => {}
     });

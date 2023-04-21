@@ -30,8 +30,8 @@ impl Mesh {
             indicies,
         }
     }
-    pub fn from_obj() -> Mesh {
-        let input = BufReader::new(File::open("resources/models/Container.obj").unwrap());
+    pub fn from_obj(path: &str) -> Mesh {
+        let input = BufReader::new(File::open(path).unwrap());
         let obj: Obj<obj::Vertex, u16> = load_obj(input).unwrap();
 
         let mut vertex_buffer = Vec::new();
@@ -63,18 +63,18 @@ impl Mesh {
     }
 }
 
-impl AddAssign for Mesh {
-    fn add_assign(&mut self, mut rhs: Self) {
-        self.vertices.append(&mut rhs.vertices);
-        self.vertices_count += rhs.vertices_count;
-        self.triangles_count += rhs.triangles_count;
-    }
-}
-impl Add for Mesh {
-    type Output = Mesh;
+// impl AddAssign for Mesh {
+//     fn add_assign(&mut self, mut rhs: Self) {
+//         self.vertices.append(&mut rhs.vertices);
+//         self.vertices_count += rhs.vertices_count;
+//         self.triangles_count += rhs.triangles_count;
+//     }
+// }
+// impl Add for Mesh {
+//     type Output = Mesh;
 
-    fn add(mut self, rhs: Self) -> Self::Output {
-        self += rhs;
-        self
-    }
-}
+//     fn add(mut self, rhs: Self) -> Self::Output {
+//         self += rhs;
+//         self
+//     }
+// }
