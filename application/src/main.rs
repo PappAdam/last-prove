@@ -34,10 +34,17 @@ fn main() {
             file,
         ));
     }
-    let cube_mesh = Mesh::from_obj();
 
-    let mut sample_object = GameObject::new(Vector3::new(0., 0., 0.), cube_mesh);
-    sample_object.scale(6.);
+    let mesh_templates = objects::mesh::templates::create_templates();
+
+    let mut sample_object = GameObject::new(
+        Vector3::new(0., 0., 0.),
+        objects::GameObjectType::Terrain(Mesh::from_obj()),
+    );
+    sample_object.scale(0.1, 0.1, 0.1);
+    sample_object.rotate(0., 0., 0.);
+
+    let mut camera = GameObject::new(Vector3::new(5., -5., 5.), objects::GameObjectType::Camera);
 
     simplelog::CombinedLogger::init(loggers).unwrap();
 
@@ -49,7 +56,11 @@ fn main() {
         .with_resizable(false)
         .build(&event_loop)
         .unwrap();
-    let mut renderer = match Renderer::new(&window, &sample_object.get_vertices(), &sample_object.get_mesh().get_indicies()) {
+    let mut renderer = match Renderer::new(
+        &window,
+        &sample_object.get_vertices(&mesh_templates),
+        &sample_object.get_mesh(&mesh_templates).get_indicies(),
+    ) {
         Ok(base) => base,
         Err(err) => {
             msg!(error, err);
@@ -58,8 +69,7 @@ fn main() {
     };
 
     let mut start_time = Instant::now();
-    let mut rotation = Vector2::new(2f32, 1.);
-    let mut is_rotate = true;
+    let mut rotation = Vector3::new(2f32, 1., 0.);
 
     let mut input = Input::init();
 
@@ -99,10 +109,11 @@ fn main() {
                     return;
                 }
             }
-            rotation.y += 0.005;
 
+
+            camera.orbit(0.05, 0.05, 0., Vector3::zeros());
             renderer.data.transform.view = nalgebra::Matrix::look_at_lh(
-                &Point3::new(rotation.y.sin(), rotation.x.cos(), rotation.y.cos()),
+                &Point3::from(camera.get_position()),
                 &Point3::new(0., 0., 0.),
                 &Vector3::y_axis(),
             );

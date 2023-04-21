@@ -1,5 +1,5 @@
 pub mod vertex;
-mod obj_triangulator;
+pub mod templates;
 
 use std::{
     fs::File,
@@ -12,16 +12,16 @@ use obj::{load_obj, Obj};
 
 use self::vertex::Vertex;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vertex>,
-    indicies: Vec<u32>,
+    indicies: Vec<u16>,
     vertices_count: u16,
     triangles_count: u16,
 }
 
 impl Mesh {
-    pub fn new(vertices: Vec<Vertex>, indicies: Vec<u32>) -> Self {
+    pub fn new(vertices: Vec<Vertex>, indicies: Vec<u16>) -> Self {
         assert_eq!(indicies.len() % 3, 0);
         Self {
             vertices_count: vertices.len() as u16,
@@ -31,8 +31,8 @@ impl Mesh {
         }
     }
     pub fn from_obj() -> Mesh {
-        let input = BufReader::new(File::open("resources/models/TyrionLikenessSculpt.obj").unwrap());
-        let obj: Obj<obj::Vertex, u32> = load_obj(input).unwrap();
+        let input = BufReader::new(File::open("resources/models/Container.obj").unwrap());
+        let obj: Obj<obj::Vertex, u16> = load_obj(input).unwrap();
 
         let mut vertex_buffer = Vec::new();
         for vertex in obj.vertices {
@@ -47,12 +47,12 @@ impl Mesh {
         }
         let mut index_buffer = Vec::new();
         for index in obj.indices {
-            index_buffer.push(index as u32);
+            index_buffer.push(index);
         }
 
         Mesh::new(vertex_buffer, index_buffer)
     }
-    pub fn get_indicies(&self) -> &Vec<u32> {
+    pub fn get_indicies(&self) -> &Vec<u16> {
         return &self.indicies;
     }
     pub fn add_vertex(&mut self, mut vertex: Vec<Vertex>) {
