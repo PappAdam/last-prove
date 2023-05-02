@@ -1,4 +1,4 @@
-use nalgebra::{Matrix4, Rotation3, Scale3, Translation3, Vector3, OPoint};
+use nalgebra::{Matrix4, Rotation3, Scale3, Translation3, Vector3, OPoint, Point3};
 
 use crate::GameObject;
 
@@ -44,6 +44,14 @@ impl GameObject {
         self.rotate(rotation_x, rotation_y, rotation_z);
         //Translating object back. Because we rotated the object, tranforming backwards
         self.transform *= Matrix4::from(Translation3::from(-relative_orbit_center));
+    }
+    pub fn look_at(&mut self, target: Vector3<f32>) {
+        self.transform = nalgebra::Matrix::look_at_rh(
+            &Point3::from(self.get_position()),
+            &Point3::from(target),
+            &Vector3::y_axis(),
+        );
+
     }
 
     pub fn get_transform(&self) -> Matrix4<f32> {

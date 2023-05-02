@@ -47,8 +47,9 @@ fn main() {
         objects::GameObjectType::Terrain(Mesh::from_obj("resources/models/rat_obj.obj")),
     ));
     gameobject_handler.gameobjects[1].scale(0.5, 0.1, 0.2);
-    
+
     let mut camera = GameObject::new(Vector3::new(5., -5., 5.), objects::GameObjectType::Camera);
+    camera.look_at(Vector3::new(0., 0., 0.));
 
     simplelog::CombinedLogger::init(loggers).unwrap();
 
@@ -63,7 +64,9 @@ fn main() {
     let mut renderer = match Renderer::new(
         &window,
         &gameobject_handler.gameobjects[1].get_vertices(&mesh_templates),
-        &gameobject_handler.gameobjects[1].get_mesh(&mesh_templates).get_indicies(),
+        &gameobject_handler.gameobjects[1]
+            .get_mesh(&mesh_templates)
+            .get_indicies(),
     ) {
         Ok(base) => base,
         Err(err) => {
@@ -114,13 +117,23 @@ fn main() {
                     return;
                 }
             }
+            //Idk where we should handle inputs, it is gonna be here for now.
+            if input.get_key_down(winit::event::VirtualKeyCode::Q) {
+                camera.orbit(0., 3.14 * delta_time.as_secs_f32() / 2., 0., Vector3::new(0., 0., 0.));
+                camera.look_at(Vector3::new(0., 0., 0.))
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::E) {
+                // camera.orbit(0., -3.14 * delta_time.as_secs_f32() / 2., 0., Vector3::new(0., 0., 0.));
+                camera.rotate(0., -3.14 * delta_time.as_secs_f32() / 2., 0.);
+            }
+            // camera.orbit(0., 3.14 * delta_time.as_secs_f32(), 0., Vector3::zeros());
+            // renderer.data.transform.view = nalgebra::Matrix::look_at_lh(
+            //     &Point3::from(camera.get_position()),
+            //     &Point3::new(0., 0., 0.),
+            //     &Vector3::y_axis(),
+            // );
 
-            camera.orbit(0., 3.14 * delta_time.as_secs_f32(), 0., Vector3::zeros());
-            renderer.data.transform.view = nalgebra::Matrix::look_at_lh(
-                &Point3::from(camera.get_position()),
-                &Point3::new(0., 0., 0.),
-                &Vector3::y_axis(),
-            );
+            renderer.data.transform.view = camera.get_transform();
 
             if let Err(msg) = renderer.draw() {
                 msg!(error, msg);

@@ -14,14 +14,12 @@ pub trait BufferObject {
 #[derive(Debug)]
 pub struct Transform {
     pub view: Matrix4<f32>,
-    pub rotation: Matrix4<f32>,
 }
 
 impl Transform {
     pub fn new() -> Self {
         Self {
             view: Matrix4::identity(),
-            rotation: Matrix4::identity(),
         }
     }
 }
