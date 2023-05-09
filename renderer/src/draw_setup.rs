@@ -6,7 +6,7 @@ use crate::Renderer;
 
 impl Renderer {
     #[inline]
-    pub fn record_commands(&self) {
+    pub fn start_record(&self) {
         let current_command_buffer = self.data.command_buffers[self.current_frame_index];
         unsafe {
             self.base.device.cmd_bind_pipeline(
@@ -38,34 +38,13 @@ impl Renderer {
                     size_of::<f32>() * 3,
                 ),
             );
+        }
+    }
 
-            self.base.device.cmd_bind_descriptor_sets(
-                current_command_buffer,
-                vk::PipelineBindPoint::GRAPHICS,
-                self.data.pipeline_layout,
-                0,
-                &[self.data.descriptor_sets[self.current_frame_index]],
-                &[],
-            );
-
-            self.base.device.cmd_bind_vertex_buffers(
-                current_command_buffer,
-                0,
-                &[self.vertex_buffer.buf],
-                &[0],
-            );
-
-            self.base.device.cmd_bind_index_buffer(
-                current_command_buffer,
-                self.index_buffer.buf,
-                0,
-                vk::IndexType::UINT16,
-            );
-
-            self.base
-                .device
-                .cmd_draw_indexed(current_command_buffer, self.index_count, 1, 0, 0, 0);
-
+    #[inline]
+    pub fn end_record(&self) {
+        let current_command_buffer = self.data.command_buffers[self.current_frame_index];
+        unsafe {
             self.base.device.cmd_end_render_pass(current_command_buffer);
 
             self.base

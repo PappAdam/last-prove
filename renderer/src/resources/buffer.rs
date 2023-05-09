@@ -2,8 +2,9 @@ use std::{ffi::c_void, mem::size_of, ptr::copy_nonoverlapping};
 
 use ash::vk::{self};
 
-use crate::{parse_error, utils::buffer_data::Transform};
+use crate::parse_error;
 
+// #[derive(Copy, Clone, Debug)]
 pub struct Buffer {
     pub mem: vk::DeviceMemory,
     pub buf: vk::Buffer,
@@ -13,9 +14,19 @@ pub struct Buffer {
 pub struct UniformBuffer {
     pub mem: vk::DeviceMemory,
     pub buf: vk::Buffer,
-    pub data: *mut c_void,
+    pub buffer_pointer: *mut c_void,
     pub size: u64,
     pub binding: u32,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct DynamicUniformBuffer {
+    pub mem: vk::DeviceMemory,
+    pub buf: vk::Buffer,
+    pub buffer_pointer: *mut c_void,
+    pub size: u64,
+    pub binding: u32,
+    pub alignment: usize,
 }
 
 impl UniformBuffer {
@@ -35,7 +46,7 @@ impl UniformBuffer {
         descriptor_sets: &[vk::DescriptorSet],
     ) {
         unsafe {
-            copy_nonoverlapping(data, self.data, self.size as usize);
+            copy_nonoverlapping(data, self.buffer_pointer, self.size as usize);
             let buffer_info = vk::DescriptorBufferInfo {
                 buffer: self.buf,
                 range: self.size,
@@ -48,6 +59,48 @@ impl UniformBuffer {
                     dst_binding: self.binding as u32,
                     descriptor_count: 1,
                     descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
+                    p_buffer_info: &buffer_info,
+                    ..Default::default()
+                };
+
+                device.update_descriptor_sets(&[descriptor_write], &[]);
+            });
+        }
+    }
+}
+
+impl DynamicUniformBuffer {
+    pub fn free(&self, device: &ash::Device) {
+        unsafe {
+            device.destroy_buffer(self.buf, None);
+            device.free_memory(self.mem, None);
+            device.unmap_memory(self.mem);
+        }
+    }
+
+    #[inline]
+    pub fn update(&self, device: &ash::Device, descriptor_sets: &[vk::DescriptorSet]) {
+        unsafe {
+            let mem_range = vk::MappedMemoryRange::builder()
+                .memory(self.mem)
+                .offset(0)
+                .size(self.size * self.alignment as u64)
+                .build();
+
+            let _ = device.flush_mapped_memory_ranges(&[mem_range]);
+
+            let buffer_info = vk::DescriptorBufferInfo {
+                buffer: self.buf,
+                range: self.size,
+                ..Default::default()
+            };
+
+            descriptor_sets.iter().for_each(|set| {
+                let descriptor_write = vk::WriteDescriptorSet {
+                    dst_set: *set,
+                    dst_binding: self.binding as u32,
+                    descriptor_count: 1,
+                    descriptor_type: vk::DescriptorType::UNIFORM_BUFFER_DYNAMIC,
                     p_buffer_info: &buffer_info,
                     ..Default::default()
                 };
@@ -74,7 +127,7 @@ impl Buffer {
             vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
         )?;
 
-        let buffer_ptr = unsafe {
+        let buffer_pointer = unsafe {
             device
                 .map_memory(
                     uniform_buffer.mem,
@@ -86,15 +139,58 @@ impl Buffer {
         };
 
         unsafe {
-            copy_nonoverlapping(data, buffer_ptr, size_of::<T>());
+            copy_nonoverlapping(data, buffer_pointer, size_of::<T>());
         }
 
         Ok(UniformBuffer {
             mem: uniform_buffer.mem,
             buf: uniform_buffer.buf,
-            data: buffer_ptr,
+            buffer_pointer,
             size: size_of::<T>() as u64,
             binding,
+        })
+    }
+
+    pub fn dynamic_uniform_buffer<T>(
+        device: &ash::Device,
+        memory_props: vk::PhysicalDeviceMemoryProperties,
+        device_props: vk::PhysicalDeviceProperties,
+        size: usize,
+        binding: u32,
+    ) -> Result<DynamicUniformBuffer, String> {
+        let min_buffer_alignment = device_props.limits.min_uniform_buffer_offset_alignment as usize;
+        let mut dynamic_alignment = size_of::<T>();
+        if min_buffer_alignment > 0 {
+            dynamic_alignment =
+                (dynamic_alignment + min_buffer_alignment - 1) & !(min_buffer_alignment - 1);
+        }
+
+        let uniform_buffer = Buffer::new(
+            device,
+            dynamic_alignment as u64 * size as u64,
+            vk::BufferUsageFlags::UNIFORM_BUFFER,
+            memory_props,
+            vk::MemoryPropertyFlags::HOST_VISIBLE,
+        )?;
+
+        let buffer_pointer = unsafe {
+            device
+                .map_memory(
+                    uniform_buffer.mem,
+                    0,
+                    dynamic_alignment as u64 * size as u64,
+                    vk::MemoryMapFlags::empty(),
+                )
+                .map_err(|err| format!("{err}"))?
+        };
+
+        Ok(DynamicUniformBuffer {
+            mem: uniform_buffer.mem,
+            buf: uniform_buffer.buf,
+            size: size as u64,
+            buffer_pointer,
+            binding,
+            alignment: dynamic_alignment,
         })
     }
 

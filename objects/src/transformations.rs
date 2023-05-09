@@ -1,4 +1,4 @@
-use nalgebra::{Matrix4, Rotation3, Scale3, Translation3, Vector3, OPoint};
+use nalgebra::{Matrix4, OPoint, Rotation3, Scale3, Translation3, Vector3};
 
 use crate::GameObject;
 
@@ -25,10 +25,8 @@ impl GameObject {
     }
     pub fn rotate(&mut self, rotation_x: f32, rotation_y: f32, rotation_z: f32) {
         //Amount is in radians
-        let rotation_matrix = Matrix4::from(Rotation3::new(Vector3::new(
-            rotation_x, rotation_y, rotation_z,
-        )));
-        self.transform *= rotation_matrix
+        let rotation_matrix = Matrix4::from_euler_angles(rotation_x, rotation_y, rotation_z);
+        self.transform = self.transform * rotation_matrix;
     }
     pub fn orbit(
         &mut self,

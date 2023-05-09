@@ -23,4 +23,11 @@ impl Mouse {
         self.pos.x = x as f32;
         self.pos.y = y as f32;
     }
+
+    #[inline]
+    pub fn set_button(&mut self, button: MouseButton, state: ElementState) {
+        unsafe {
+            self.buttons[*(&button as *const _ as *const u8) as usize] = state;
+        }
+    }
 }
