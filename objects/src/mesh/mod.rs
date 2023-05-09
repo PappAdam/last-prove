@@ -36,8 +36,7 @@ impl Mesh {
 
         let mut vertex_buffer = Vec::new();
         for vertex in obj.vertices {
-            let mut position = vertex.position;
-            position[1] *= -1.;
+            let position = vertex.position;
             let new_vertex = Vertex::new(
                 position.into(),
                 Vector3::new(1., 1., 1.),

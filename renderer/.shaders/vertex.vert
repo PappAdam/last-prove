@@ -22,7 +22,7 @@ void main()
     float light_strenght = 0.7;
     vec3 light_color = vec3(1., 1., 1.);
 
-    vec4 new_pos = view.view * view.rotation *  vec4(pos.x, pos.yz, 1.0);
+    vec4 new_pos = view.view *  vec4(pos.x, pos.yz, 1.0);
 
     float depth_z = (new_pos.z - push_const.min_z) / (push_const.max_z - push_const.min_z);
 
