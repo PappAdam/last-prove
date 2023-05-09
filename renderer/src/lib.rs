@@ -2,14 +2,13 @@ mod base;
 mod data;
 mod draw_setup;
 pub mod engine;
-mod resources;
+pub mod resources;
 mod setup;
 pub mod utils;
 
 use std::{mem::size_of, time::Instant};
 
 use ash::vk;
-use objects::mesh::vertex::Vertex;
 use resources::buffer::Buffer;
 use utils::buffer_data::BufferObject;
 use winit::window::Window;
@@ -23,40 +22,15 @@ pub struct Renderer {
     pub current_frame_index: usize,
     pub rebuild_swapchain: bool,
     pub image_index: usize,
-
     pub rotation: f32,
-    pub vertex_buffer: Buffer,
-    pub vertex_count: u32,
-    pub index_buffer: Buffer,
-    pub index_count: u32,
 
     pub start_time: Instant,
 }
 
 impl Renderer {
-    pub fn new(window: &Window, vertecies: &[Vertex], indicies: &[u16]) -> Result<Self, String> {
+    pub fn new(window: &Window) -> Result<Self, String> {
         let mut base = RenderBase::new(window)?;
         let data = RenderData::new(&mut base)?;
-
-        let vertex_buffer = Buffer::device_local(
-            &base.device,
-            vertecies.as_ptr() as *const _,
-            vertecies.len() as u64 * size_of::<Vertex>() as u64,
-            base.physical_device_memory_properties,
-            vk::BufferUsageFlags::VERTEX_BUFFER,
-            base.queue,
-            data.command_pool,
-        )?;
-
-        let index_buffer = Buffer::device_local(
-            &base.device,
-            indicies.as_ptr() as *const _,
-            indicies.len() as u64 * size_of::<u16>() as u64,
-            base.physical_device_memory_properties,
-            vk::BufferUsageFlags::INDEX_BUFFER,
-            base.queue,
-            data.command_pool,
-        )?;
 
         Ok(Self {
             base,
@@ -65,16 +39,44 @@ impl Renderer {
             rebuild_swapchain: true,
             image_index: 0,
             rotation: 0.,
-            vertex_count: vertecies.len() as u32,
-            vertex_buffer,
-            index_buffer,
-            index_count: indicies.len() as u32,
             start_time: Instant::now(),
         })
     }
 
+    pub fn stage_mesh(&mut self, mesh: (&Buffer, &Buffer, u32, usize)) {
+        let current_command_buffer = self.data.command_buffers[self.current_frame_index];
+        unsafe {
+            self.base.device.cmd_bind_descriptor_sets(
+                current_command_buffer,
+                vk::PipelineBindPoint::GRAPHICS,
+                self.data.pipeline_layout,
+                0,
+                &[self.data.descriptor_sets[self.current_frame_index]],
+                &[mesh.3 as u32 * self.data.dynamic_uniform_buffer.alignment as u32],
+            );
+
+            self.base.device.cmd_bind_vertex_buffers(
+                current_command_buffer,
+                0,
+                &[mesh.0.buf],
+                &[0],
+            );
+
+            self.base.device.cmd_bind_index_buffer(
+                current_command_buffer,
+                mesh.1.buf,
+                0,
+                vk::IndexType::UINT16,
+            );
+
+            self.base
+                .device
+                .cmd_draw_indexed(current_command_buffer, mesh.2, 1, 0, 0, 0);
+        }
+    }
+
     #[inline]
-    pub fn draw(&mut self) -> Result<(), String> {
+    pub fn prepare_renderer(&mut self) -> Result<(), String> {
         self.image_index = match self.get_img_index()? {
             Some(index) => index as usize,
             None => {
@@ -88,7 +90,7 @@ impl Renderer {
         let current_command_buffer = self.data.command_buffers[self.current_frame_index];
         self.data.uniform_buffer.update(
             &self.base.device,
-            self.data.transform.as_void_ptr(),
+            self.data.world_view.as_void_ptr(),
             &[self.data.descriptor_sets[self.current_frame_index]],
         );
 
@@ -104,8 +106,13 @@ impl Renderer {
 
         self.begin_command_buffer();
         self.begin_render_pass();
-        self.record_commands();
+        self.start_record();
+        Ok(())
+    }
 
+    #[inline]
+    pub fn flush(&mut self) -> Result<(), String> {
+        self.end_record();
         self.submit()?;
 
         if !self.present()? {
@@ -137,7 +144,6 @@ impl Drop for Renderer {
     fn drop(&mut self) {
         unsafe {
             let _ = self.base.device.device_wait_idle();
-            self.vertex_buffer.free(&self.base.device);
             self.data.clean_up(&self.base.device);
             self.base.clean_up();
         }

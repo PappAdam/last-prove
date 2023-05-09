@@ -1,5 +1,6 @@
-use mesh::{vertex::Vertex, Mesh};
+use mesh::Mesh;
 use nalgebra::{Matrix4, Translation3, Vector3};
+use renderer::utils::vertex::Vertex;
 
 pub mod mesh;
 pub mod transformations;
@@ -29,7 +30,7 @@ impl GameObjectHandler {
 
 pub struct GameObject {
     transform: Matrix4<f32>,
-    ty: GameObjectType,
+    pub ty: GameObjectType,
 }
 
 impl GameObject {
@@ -38,24 +39,5 @@ impl GameObject {
             transform: Translation3::from(position).to_homogeneous(),
             ty,
         }
-    }
-
-    pub fn get_mesh(&self, mesh_templates: &Vec<Mesh>) -> Mesh {
-        match &self.ty {
-            GameObjectType::Terrain(mesh) => mesh.clone(),
-            GameObjectType::Building(index) | GameObjectType::Troop(index) => {
-                mesh_templates[*index].clone()
-            }
-            _ => Mesh::default(),
-        }
-    }
-
-    pub fn get_vertices(&self, mesh_templates: &Vec<Mesh>) -> Vec<Vertex> {
-        let mut vertices = self.get_mesh(mesh_templates).vertices.clone();
-        for vertex in &mut vertices {
-            let new_point = self.transform.transform_point(&vertex.pos.into());
-            vertex.pos = Vector3::new(new_point.x, new_point.y, new_point.z);
-        }
-        vertices
     }
 }

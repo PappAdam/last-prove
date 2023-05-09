@@ -3,9 +3,9 @@ use std::mem::size_of;
 
 use ash::extensions::{ext, khr};
 use ash::vk::{self, PresentModeKHR};
-use objects::mesh::vertex::Vertex;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 
+use crate::utils::vertex::Vertex;
 use crate::{offset_of, parse_error};
 
 use super::utils::vulkan_debug_callback;

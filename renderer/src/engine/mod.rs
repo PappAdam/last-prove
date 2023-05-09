@@ -1,3 +1,5 @@
+pub mod aligned_array;
+
 use std::{mem::size_of, ptr::copy_nonoverlapping};
 
 use nalgebra::SVector;

@@ -1,4 +1,5 @@
 pub mod buffer_data;
+pub mod vertex;
 
 use std::borrow::Cow;
 use std::ffi::CStr;
@@ -6,6 +7,8 @@ use std::ffi::CStr;
 use ash::vk::{self, DebugUtilsMessageSeverityFlagsEXT};
 
 pub const MAX_FRAME_DRAWS: usize = 2;
+
+pub const MAX_WORLD_OBJECTS: usize = 125;
 
 pub unsafe extern "system" fn vulkan_debug_callback(
     message_severity: vk::DebugUtilsMessageSeverityFlagsEXT,
@@ -59,7 +62,7 @@ macro_rules! msg {
 #[macro_export]
 macro_rules! parse_error {
     ($msg:expr) => {{
-        format!("err: {}\tat{}:{}", $msg, file!(), line!())
+        format!("err: {}\tat {}:{}", $msg, file!(), line!())
     }};
 }
 

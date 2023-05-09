@@ -9,3 +9,5 @@ edition = "2021"
 nalgebra = "*"
 obj-rs = "*"
 byteorder = "*"
+renderer = { path = "../renderer" }
+ash = { version = "0.37.2", features = ["linked"] }

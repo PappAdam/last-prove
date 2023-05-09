@@ -951,9 +951,11 @@ dependencies = [
 name = "objects"
 version = "0.1.0"
 dependencies = [
+ "ash",
  "byteorder",
  "nalgebra",
  "obj-rs",
+ "renderer",
 ]
 
 [[package]]
@@ -1171,7 +1173,6 @@ dependencies = [
  "log",
  "nalgebra",
  "num",
- "objects",
  "raw-window-handle",
  "simplelog",
  "winit",

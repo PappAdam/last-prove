@@ -1,17 +1,22 @@
 use std::mem::size_of;
 
+use nalgebra::Matrix4;
+
 use crate::{
     create_shader,
     resources::{
         self,
-        buffer::{Buffer, UniformBuffer},
+        buffer::{Buffer, DynamicUniformBuffer, UniformBuffer},
         desriptors::{
             create_descriptor_pool, create_descriptor_set_layout, create_descriptor_sets,
         },
         image::Image,
     },
     setup,
-    utils::buffer_data::{BufferObject, Transform},
+    utils::{
+        buffer_data::{BufferObject, WorldView},
+        MAX_WORLD_OBJECTS,
+    },
 };
 use ash::vk;
 
@@ -35,10 +40,11 @@ pub struct RenderData {
     pub descriptor_set_layout: vk::DescriptorSetLayout,
 
     //Buffer content
-    pub transform: Transform,
+    pub world_view: WorldView,
 
     //Buffers
     pub uniform_buffer: UniformBuffer,
+    pub dynamic_uniform_buffer: DynamicUniformBuffer,
 }
 
 impl RenderData {
@@ -120,22 +126,31 @@ impl RenderData {
 
         let descriptor_pool = create_descriptor_pool(&base.device)?;
 
-        let transform = Transform::new();
-        let uniform_buffer = Buffer::uniform_buffer::<Transform>(
+        let world_view = WorldView::new();
+        let uniform_buffer = Buffer::uniform_buffer::<WorldView>(
             &base.device,
-            transform.as_void_ptr(),
+            world_view.as_void_ptr(),
             base.physical_device_memory_properties,
             0,
+        )?;
+
+        let dynamic_uniform_buffer = Buffer::dynamic_uniform_buffer::<Matrix4<f32>>(
+            &base.device,
+            base.physical_device_memory_properties,
+            base.physical_device_properties,
+            MAX_WORLD_OBJECTS,
+            1,
         )?;
 
         let descriptor_sets = create_descriptor_sets(
             &base.device,
             descriptor_pool,
             descriptor_set_layout,
+            &dynamic_uniform_buffer,
             &uniform_buffer,
         )?;
 
-        uniform_buffer.update(&base.device, transform.as_void_ptr(), &descriptor_sets);
+        uniform_buffer.update(&base.device, world_view.as_void_ptr(), &descriptor_sets);
 
         Ok(Self {
             pipeline_layout,
@@ -154,10 +169,11 @@ impl RenderData {
             descriptor_set_layout,
             descriptor_sets,
 
-            transform,
+            world_view,
 
             //Buffers
             uniform_buffer,
+            dynamic_uniform_buffer,
         })
     }
 

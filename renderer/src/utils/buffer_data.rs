@@ -12,12 +12,12 @@ pub trait BufferObject {
 }
 
 #[derive(Debug)]
-pub struct Transform {
+pub struct WorldView {
     pub view: Matrix4<f32>,
     pub rotation: Matrix4<f32>,
 }
 
-impl Transform {
+impl WorldView {
     pub fn new() -> Self {
         Self {
             view: Matrix4::identity(),
@@ -26,4 +26,4 @@ impl Transform {
     }
 }
 
-impl BufferObject for Transform {}
+impl BufferObject for WorldView {}
