@@ -74,7 +74,7 @@ fn main() {
 
     let mut start_time = Instant::now();
     let mut input = Input::init();
-
+    camera.rotate(0., PI, 0.);
     renderer.data.world_view.view = camera.get_transform();
 
     event_loop.run(move |event, _, control_flow| match event {
@@ -122,12 +122,15 @@ fn main() {
                     return;
                 }
             }
-
+            if input.on_key_down(winit::event::VirtualKeyCode::A) {
+                camera.rotate(0., delta_time.as_secs_f32(), 0.);
+                renderer.data.world_view.view = camera.get_transform();
+            }
             aligned_array[0] = gameobject_handler.gameobjects[0].get_transform();
 
             let _ = renderer.prepare_renderer();
 
-            gameobject_handler.gameobjects[0].rotate(delta_time.as_secs_f32(), 0., 0.);
+            gameobject_handler.gameobjects[0].rotate(0., 0., delta_time.as_secs_f32());
 
             renderer.data.dynamic_uniform_buffer.update(
                 &renderer.base.device,
