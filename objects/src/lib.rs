@@ -3,6 +3,7 @@ use nalgebra::{Matrix4, Translation3, Vector3};
 
 pub mod mesh;
 pub mod transformations;
+pub mod getters;
 
 pub enum GameObjectType {
     Empty,

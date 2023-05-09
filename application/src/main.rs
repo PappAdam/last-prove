@@ -43,13 +43,15 @@ fn main() {
         objects::GameObjectType::Terrain(Mesh::from_obj("resources/models/Container.obj")),
     ));
     gameobject_handler.add_object(GameObject::new(
-        Vector3::new(0., 0., 0.),
-        objects::GameObjectType::Terrain(Mesh::from_obj("resources/models/rat_obj.obj")),
+        Vector3::new(0., 0.5, 0.),
+        objects::GameObjectType::Terrain(Mesh::from_obj("resources/models/Basic_house.obj")),
     ));
-    gameobject_handler.gameobjects[1].scale(0.5, 0.1, 0.2);
 
-    let mut camera = GameObject::new(Vector3::new(5., -5., 5.), objects::GameObjectType::Camera);
-    camera.look_at(Vector3::new(0., 0., 0.));
+    let mut camera = GameObject::new(Vector3::new(0., 0., 0.), objects::GameObjectType::Camera);
+    // camera.look_at(Vector3::new(0., 0., 0.));
+    // camera.rotate_local(0., PI / 6., 0.);
+    // camera.rotate_local(PI / 6., 0., 0.);
+    dbg!(camera.get_transform());
 
     simplelog::CombinedLogger::init(loggers).unwrap();
 
@@ -76,8 +78,6 @@ fn main() {
     };
 
     let mut start_time = Instant::now();
-    let mut rotation = Vector3::new(2f32, 1., 0.);
-
     let mut input = Input::init();
 
     event_loop.run(move |event, _, control_flow| match event {
@@ -119,12 +119,51 @@ fn main() {
             }
             //Idk where we should handle inputs, it is gonna be here for now.
             if input.get_key_down(winit::event::VirtualKeyCode::Q) {
-                camera.orbit(0., 3.14 * delta_time.as_secs_f32() / 2., 0., Vector3::new(0., 0., 0.));
-                camera.look_at(Vector3::new(0., 0., 0.))
+                camera.orbit(
+                    0.,
+                    (PI / 2.) * delta_time.as_secs_f32(),
+                    0.,
+                    Vector3::new(0., 0., 0.),
+                );
             }
             if input.get_key_down(winit::event::VirtualKeyCode::E) {
-                // camera.orbit(0., -3.14 * delta_time.as_secs_f32() / 2., 0., Vector3::new(0., 0., 0.));
-                camera.rotate(0., -3.14 * delta_time.as_secs_f32() / 2., 0.);
+                camera.orbit(
+                    0.,
+                    -(PI / 2.) * delta_time.as_secs_f32(),
+                    0.,
+                    Vector3::new(0., 0., 0.),
+                );
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::R) {
+                camera.orbit_local(
+                    (PI / 2.) * delta_time.as_secs_f32(),
+                    0.,
+                    0.,
+                    Vector3::new(0., 0., 0.),
+                );
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::F) {
+                camera.orbit_local(
+                    -(PI / 2.) * delta_time.as_secs_f32(),
+                    0.,
+                    0.,
+                    Vector3::new(0., 0., 0.),
+                );
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::W) {
+                let mut direction = camera.z_axis();
+                direction.y = 0.;
+                direction.normalize_mut();
+                camera.traslate_local(direction.x * delta_time.as_secs_f32(), 0., direction.z * delta_time.as_secs_f32());
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::S) {
+                camera.traslate_local(0., 0., -1. * delta_time.as_secs_f32());
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::A) {
+                camera.traslate_local(1. * delta_time.as_secs_f32(), 0., 0.);
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::D) {
+                camera.traslate_local(-1. * delta_time.as_secs_f32(), 0., 0.);
             }
             // camera.orbit(0., 3.14 * delta_time.as_secs_f32(), 0., Vector3::zeros());
             // renderer.data.transform.view = nalgebra::Matrix::look_at_lh(
