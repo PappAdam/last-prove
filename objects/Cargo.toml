@@ -11,3 +11,4 @@ obj-rs = "*"
 byteorder = "*"
 renderer = { path = "../renderer" }
 ash = { version = "0.37.2", features = ["linked"] }
+log = "0.4"
