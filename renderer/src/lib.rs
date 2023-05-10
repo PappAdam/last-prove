@@ -138,14 +138,20 @@ impl Renderer {
 
         Ok(())
     }
+
+    // #[inline]
+    // pub fn free(&self) {
+    //     self.data.clean_up(&self.base.device);
+    //     self.base.clean_up();
+    // }
 }
 
 impl Drop for Renderer {
     fn drop(&mut self) {
         unsafe {
-            let _ = self.base.device.device_wait_idle();
-            self.data.clean_up(&self.base.device);
-            self.base.clean_up();
+            self.base.device.device_wait_idle().unwrap();
         }
+        self.data.clean_up(&self.base.device);
+        self.base.clean_up();
     }
 }

@@ -211,8 +211,8 @@ impl RenderData {
 
     pub fn clean_up(&self, device: &ash::Device) {
         unsafe {
+            self.dynamic_uniform_buffer.free(device);
             self.uniform_buffer.free(device);
-
             self.depth_img.free(device);
 
             device.destroy_descriptor_pool(self.descriptor_pool, None);

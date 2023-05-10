@@ -2,7 +2,7 @@ use nalgebra::{Matrix4, OPoint, Point3, Rotation3, Scale3, Translation3, Vector3
 
 use crate::GameObject;
 
-impl GameObject {
+impl<'a> GameObject<'a> {
     pub fn global_to_local_coordinate(&self, global_coordinate: Vector3<f32>) -> Vector3<f32> {
         let inverse_transform = self
             .transform
@@ -17,7 +17,7 @@ impl GameObject {
             translation_y,
             translation_z,
         )));
-        self.transform *= translation_matrix
+        *self.transform *= translation_matrix
     }
     pub fn traslate_local(&mut self, translation_x: f32, translation_y: f32, translation_z: f32) {
         let translation_vector = Vector3::new(translation_x, translation_y, translation_z);
@@ -39,12 +39,12 @@ impl GameObject {
     }
     pub fn scale(&mut self, scale_x: f32, scale_y: f32, scale_z: f32) {
         let scale_matrix = Matrix4::from(Scale3::from(Vector3::new(scale_x, scale_y, scale_z)));
-        self.transform *= scale_matrix
+        *self.transform *= scale_matrix
     }
     pub fn rotate(&mut self, rotation_x: f32, rotation_y: f32, rotation_z: f32) {
         //Amount is in radians
         let rotation_matrix = Matrix4::from_euler_angles(rotation_x, rotation_y, rotation_z);
-        self.transform = self.transform * rotation_matrix;
+        *self.transform = *self.transform * rotation_matrix;
     }
     pub fn rotate_local(&mut self, rotation_x: f32, rotation_y: f32, rotation_z: f32) {
         //Amount is in radians
@@ -62,11 +62,11 @@ impl GameObject {
     ) {
         let relative_orbit_center = self.global_to_local_coordinate(orbit_center);
         //Translating object to 0,0,0
-        self.transform *= Matrix4::from(Translation3::from(relative_orbit_center));
+        *self.transform *= Matrix4::from(Translation3::from(relative_orbit_center));
         //Rotating by amount
         self.rotate(rotation_x, rotation_y, rotation_z);
         //Translating object back. Because we rotated the object, tranforming backwards
-        self.transform *= Matrix4::from(Translation3::from(-relative_orbit_center));
+        *self.transform *= Matrix4::from(Translation3::from(-relative_orbit_center));
     }
     pub fn orbit_local(
         &mut self,
@@ -82,6 +82,10 @@ impl GameObject {
         self.rotate_local(rotation_x, rotation_y, rotation_z);
         //Translating object back. Because we rotated the object, tranforming backwards
         self.transform *= Matrix4::from(Translation3::from(-relative_orbit_center));
+    }
+
+    pub fn get_transform(&self) -> Matrix4<f32> {
+        *self.transform
     }
     pub fn look_at(&mut self, target: Vector3<f32>) {
         dbg!(self.get_position());

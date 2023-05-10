@@ -73,8 +73,8 @@ impl DynamicUniformBuffer {
     pub fn free(&self, device: &ash::Device) {
         unsafe {
             device.destroy_buffer(self.buf, None);
-            device.free_memory(self.mem, None);
             device.unmap_memory(self.mem);
+            device.free_memory(self.mem, None);
         }
     }
 
@@ -85,6 +85,43 @@ impl DynamicUniformBuffer {
                 .memory(self.mem)
                 .offset(0)
                 .size(self.size * self.alignment as u64)
+                .build();
+
+            let _ = device.flush_mapped_memory_ranges(&[mem_range]);
+
+            let buffer_info = vk::DescriptorBufferInfo {
+                buffer: self.buf,
+                range: self.size,
+                ..Default::default()
+            };
+
+            descriptor_sets.iter().for_each(|set| {
+                let descriptor_write = vk::WriteDescriptorSet {
+                    dst_set: *set,
+                    dst_binding: self.binding as u32,
+                    descriptor_count: 1,
+                    descriptor_type: vk::DescriptorType::UNIFORM_BUFFER_DYNAMIC,
+                    p_buffer_info: &buffer_info,
+                    ..Default::default()
+                };
+
+                device.update_descriptor_sets(&[descriptor_write], &[]);
+            });
+        }
+    }
+
+    #[inline]
+    pub fn update_mesh(
+        &self,
+        device: &ash::Device,
+        descriptor_sets: &[vk::DescriptorSet],
+        mesh_index: usize,
+    ) {
+        unsafe {
+            let mem_range = vk::MappedMemoryRange::builder()
+                .memory(self.mem)
+                .offset(mesh_index as u64 * self.alignment as u64)
+                .size(self.alignment as u64)
                 .build();
 
             let _ = device.flush_mapped_memory_ranges(&[mem_range]);

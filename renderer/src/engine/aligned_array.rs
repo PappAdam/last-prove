@@ -1,19 +1,26 @@
 use std::{
     alloc::{alloc, dealloc, Layout},
+    fmt::{Debug, Display},
     mem::size_of,
     ops::{Index, IndexMut},
+    ptr::write_bytes,
 };
 
 use crate::resources::buffer::DynamicUniformBuffer;
+
+pub trait AlignedValue {
+    fn is_none(&self) -> bool;
+}
 
 pub struct AlignedArray<T> {
     length: usize,
     data: *mut T,
     layout: Option<Layout>,
     aligned_data_size: usize,
+    first_none_index: Option<usize>,
 }
 
-impl<T> AlignedArray<T> {
+impl<T: AlignedValue + Display> AlignedArray<T> {
     pub fn from_alignment(alignment: usize, size: usize) -> Result<Self, String> {
         let allocation_layout = Layout::from_size_align(size * size_of::<T>(), alignment)
             .expect("Failed create layout");
@@ -31,15 +38,25 @@ impl<T> AlignedArray<T> {
             data: data as *mut _,
             layout: Some(allocation_layout),
             aligned_data_size,
+            first_none_index: Some(0),
         })
     }
 
     pub fn from_dynamic_ub_data(dynamic_ub: &DynamicUniformBuffer) -> Self {
+        unsafe {
+            write_bytes(
+                dynamic_ub.buffer_pointer,
+                0u8,
+                dynamic_ub.size as usize * dynamic_ub.alignment,
+            );
+        }
+
         Self {
             length: dynamic_ub.size as _,
             data: dynamic_ub.buffer_pointer as _,
             layout: None,
             aligned_data_size: dynamic_ub.alignment,
+            first_none_index: Some(0),
         }
     }
 
@@ -48,14 +65,32 @@ impl<T> AlignedArray<T> {
     }
 
     /// Insert value to the first possible index
-    /// -!!!!!!!!!!!!! NEEDS TO BE IMPLEMENTED, IM LAZY AF
     /// - Returns the index, the data was pushed into
-    pub fn push(&mut self, value: T) -> usize {
-        todo!()
+    pub fn push(&mut self, value: T) -> Result<usize, ()> {
+        let index = match self.first_none_index {
+            Some(index) => {
+                self[index] = value;
+                index
+            }
+            None => return Err(()),
+        };
+
+        let mut i = index;
+        while i < self.length && !(self[i].is_none()) {
+            i += 1;
+        }
+
+        self.first_none_index = if i < self.length { Some(i) } else { None };
+
+        return Ok(index);
     }
 
     pub fn length(&self) -> usize {
         self.length
+    }
+
+    pub fn get_data_pointer(&self, index: usize) -> *mut T {
+        (self.data as usize + self.aligned_data_size * index) as *mut T
     }
 }
 

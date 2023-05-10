@@ -1,4 +1,5 @@
 pub mod aligned_array;
+pub mod aligned_array_implementations;
 
 use std::{mem::size_of, ptr::copy_nonoverlapping};
 

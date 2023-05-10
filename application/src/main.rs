@@ -4,11 +4,12 @@ use std::{f32::consts::PI, time::Instant};
 
 use events::input::Input;
 use nalgebra::{Matrix4, Point, Point3, Vector2, Vector3, Vector4, Vector6};
-use objects::{mesh::Mesh, GameObject, GameObjectHandler, GameObjectType};
+use objects::{mesh::Mesh, GameObject, ObjectType};
 use winit::{
     dpi::{LogicalSize, PhysicalSize, Position},
-    event::{Event, KeyboardInput, MouseButton, WindowEvent},
+    event::{Event, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent},
     event_loop::ControlFlow,
+    platform::run_return::EventLoopExtRunReturn,
     window::Fullscreen,
 };
 
@@ -31,14 +32,10 @@ fn main() {
             file,
         ));
     }
-    // let mesh_templates = objects::mesh::templates::create_templates();
-    let mut gameobject_handler = GameObjectHandler::new();
-
-    let mut camera = GameObject::new(Vector3::new(0., 0., 0.), objects::GameObjectType::Camera);
 
     simplelog::CombinedLogger::init(loggers).unwrap();
 
-    let event_loop = winit::event_loop::EventLoop::new();
+    let mut event_loop = winit::event_loop::EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_title("HAHA")
         .with_inner_size(PhysicalSize::new(1920, 1080))
@@ -54,49 +51,27 @@ fn main() {
             panic!("{}", err);
         }
     };
-
-    gameobject_handler.add_object(GameObject::new(
-        Vector3::new(0., 0., 0.),
-        objects::GameObjectType::Terrain(Mesh::from_obj(
-            &renderer,
-            "resources/models/Basic_house.obj",
-            0,
-        )),
-    ));
-    gameobject_handler.add_object(GameObject::new(
-        Vector3::new(1., 0., 0.),
-        objects::GameObjectType::Terrain(Mesh::from_obj(
-            &renderer,
-            "resources/models/Basic_house.obj",
-            1,
-        )),
-    ));
-
-    let mut aligned_array =
+  
+    let mut transform_array =
         AlignedArray::<Matrix4<f32>>::from_dynamic_ub_data(&renderer.data.dynamic_uniform_buffer);
 
-    aligned_array[0] = gameobject_handler.gameobjects[0].get_transform();
-    aligned_array[1] = gameobject_handler.gameobjects[1].get_transform();
+    let meshes = [
+        Mesh::from_obj(&renderer, "resources/models/rat_obj.obj"),
+        Mesh::from_obj(&renderer, "resources/models/ez.obj"),
+    ];
 
-    renderer
-        .data
-        .dynamic_uniform_buffer
-        .update(&renderer.base.device, &renderer.data.descriptor_sets);
+    let mut ez_go =
+        GameObject::object(&mut transform_array, &meshes[0], ObjectType::SomeObject).unwrap();
+    let mut az_go =
+        GameObject::object(&mut transform_array, &meshes[1], ObjectType::SomeObject).unwrap();
 
     let mut start_time = Instant::now();
     let mut input = Input::init();
-    camera.rotate(0., PI, 0.);
-    renderer.data.world_view.view = camera.get_transform();
 
-    event_loop.run(move |event, _, control_flow| match event {
+    event_loop.run_return(move |event, _, control_flow| match event {
         Event::WindowEvent { event, .. } => match event {
             WindowEvent::CloseRequested => {
                 *control_flow = winit::event_loop::ControlFlow::Exit;
-                // gameobject_handler.gameobjects.iter().for_each(|go| {
-                //     if let GameObjectType::Terrain(mesh) = &go.ty {
-                //         mesh.free(&renderer.base.device);
-                //     }
-                // })
             }
             WindowEvent::Resized(..) => {
                 renderer.rebuild_swapchain = true;
@@ -133,6 +108,7 @@ fn main() {
                     return;
                 }
             }
+          
             //Idk where we should handle inputs, it is gonna be here for now.
             if input.get_key_down(winit::event::VirtualKeyCode::Q) {
                 camera.orbit(
@@ -188,20 +164,13 @@ fn main() {
             }
             renderer.data.world_view.view = camera.get_transform();
 
-            aligned_array[0] = gameobject_handler.gameobjects[0].get_transform();
-            let _ = renderer.prepare_renderer();
-
             renderer.data.dynamic_uniform_buffer.update(
                 &renderer.base.device,
                 &[renderer.data.descriptor_sets[renderer.current_frame_index]],
             );
 
-            if let GameObjectType::Terrain(mesh) = &gameobject_handler.gameobjects[0].ty {
-                renderer.stage_mesh(mesh.into_tuple());
-            }
-            if let GameObjectType::Terrain(mesh) = &gameobject_handler.gameobjects[1].ty {
-                renderer.stage_mesh(mesh.into_tuple());
-            }
+            renderer.stage_mesh(ez_go.renderable_form());
+            renderer.stage_mesh(az_go.renderable_form());
 
             if let Err(msg) = renderer.flush() {
                 msg!(error, msg);
