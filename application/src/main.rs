@@ -14,10 +14,9 @@ use winit::{
 
 use renderer::Renderer;
 use renderer::{
-    engine::aligned_array::{self, AlignedArray},
+    engine::aligned_array::{AlignedArray},
     msg,
 };
-
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(
         simplelog::LevelFilter::Info,
@@ -32,18 +31,8 @@ fn main() {
             file,
         ));
     }
-
     // let mesh_templates = objects::mesh::templates::create_templates();
     let mut gameobject_handler = GameObjectHandler::new();
-
-    gameobject_handler.add_object(GameObject::new(
-        Vector3::new(0., 0., 0.),
-        objects::GameObjectType::Terrain(Mesh::from_obj("resources/models/Container.obj"), 0),
-    ));
-    gameobject_handler.add_object(GameObject::new(
-        Vector3::new(0., 0.5, 0.),
-        objects::GameObjectType::Terrain(Mesh::from_obj("resources/models/Basic_house.obj"), 1),
-    ));
 
     let mut camera = GameObject::new(Vector3::new(0., 0., 0.), objects::GameObjectType::Camera);
 
@@ -68,13 +57,26 @@ fn main() {
 
     gameobject_handler.add_object(GameObject::new(
         Vector3::new(0., 0., 0.),
-        objects::GameObjectType::Terrain(Mesh::from_obj(&renderer, "resources/models/ez.obj", 0)),
+        objects::GameObjectType::Terrain(Mesh::from_obj(
+            &renderer,
+            "resources/models/Basic_house.obj",
+            0,
+        )),
+    ));
+    gameobject_handler.add_object(GameObject::new(
+        Vector3::new(1., 0., 0.),
+        objects::GameObjectType::Terrain(Mesh::from_obj(
+            &renderer,
+            "resources/models/Basic_house.obj",
+            1,
+        )),
     ));
 
     let mut aligned_array =
         AlignedArray::<Matrix4<f32>>::from_dynamic_ub_data(&renderer.data.dynamic_uniform_buffer);
 
     aligned_array[0] = gameobject_handler.gameobjects[0].get_transform();
+    aligned_array[1] = gameobject_handler.gameobjects[1].get_transform();
 
     renderer
         .data
@@ -165,14 +167,14 @@ fn main() {
                 );
             }
             if input.get_key_down(winit::event::VirtualKeyCode::W) {
-                let mut direction = -camera.z_axis();
-                direction.y = 0.;
-                direction.normalize_mut();
-                camera.traslate(direction.x * delta_time.as_secs_f32(), 0., direction.z * delta_time.as_secs_f32());
+                let direction = camera.x_axis().cross(&Vector3::y_axis()).normalize()
+                    * delta_time.as_secs_f32();
+                camera.traslate(direction.x, 0., direction.z);
             }
             if input.get_key_down(winit::event::VirtualKeyCode::S) {
-                let direction = -camera.z_axis();
-                camera.traslate(direction.x * delta_time.as_secs_f32(), 0., direction.z * delta_time.as_secs_f32());
+                let direction = Vector3::y_axis().cross(&camera.x_axis()).normalize()
+                    * delta_time.as_secs_f32();
+                camera.traslate(direction.x, 0., direction.z);
             }
             if input.get_key_down(winit::event::VirtualKeyCode::A) {
                 camera.traslate_local(1. * delta_time.as_secs_f32(), 0., 0.);
@@ -180,12 +182,12 @@ fn main() {
             if input.get_key_down(winit::event::VirtualKeyCode::D) {
                 camera.traslate_local(-1. * delta_time.as_secs_f32(), 0., 0.);
             }
+
             if input.get_key_down(winit::event::VirtualKeyCode::L) {
                 dbg!(camera.z_axis());
             }
-            renderer.data.transform.view = camera.get_transform();
+            renderer.data.world_view.view = camera.get_transform();
 
-            
             aligned_array[0] = gameobject_handler.gameobjects[0].get_transform();
             let _ = renderer.prepare_renderer();
 
@@ -195,6 +197,9 @@ fn main() {
             );
 
             if let GameObjectType::Terrain(mesh) = &gameobject_handler.gameobjects[0].ty {
+                renderer.stage_mesh(mesh.into_tuple());
+            }
+            if let GameObjectType::Terrain(mesh) = &gameobject_handler.gameobjects[1].ty {
                 renderer.stage_mesh(mesh.into_tuple());
             }
 

@@ -72,14 +72,15 @@ impl Mesh {
 
         let mut vertex_buffer = Vec::new();
         for vertex in obj.vertices {
-            let position = vertex.position;
-            let normal = vertex.normal.into();
+            let mut position = vertex.position.into();
+            let mut normal = vertex.normal.into();
+            // position *= -1.;
+            // normal *= -1.;
             let new_vertex = Vertex::new(
-                position.into(),
+                position,
                 Vector3::new(1., 1., 1.),
                 normal,
             );
-            dbg!(position, vertex.normal);
             vertex_buffer.push(new_vertex);
         }
         let mut index_buffer = Vec::new();
