@@ -15,10 +15,9 @@ use winit::{
 
 use renderer::Renderer;
 use renderer::{
-    engine::aligned_array::{self, AlignedArray},
+    engine::aligned_array::{AlignedArray},
     msg,
 };
-
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(
         simplelog::LevelFilter::Info,
@@ -52,7 +51,7 @@ fn main() {
             panic!("{}", err);
         }
     };
-
+  
     let mut transform_array =
         AlignedArray::<Matrix4<f32>>::from_dynamic_ub_data(&renderer.data.dynamic_uniform_buffer);
 
@@ -109,19 +108,66 @@ fn main() {
                     return;
                 }
             }
-
-            let _ = renderer.prepare_renderer();
-
-            if input.on_key_down(VirtualKeyCode::A) {
-                az_go.get_mesh().free(&renderer.base.device);
+          
+            //Idk where we should handle inputs, it is gonna be here for now.
+            if input.get_key_down(winit::event::VirtualKeyCode::Q) {
+                camera.orbit(
+                    0.,
+                    (PI / 2.) * delta_time.as_secs_f32(),
+                    0.,
+                    Vector3::new(0., 0., 0.),
+                );
             }
+            if input.get_key_down(winit::event::VirtualKeyCode::E) {
+                camera.orbit(
+                    0.,
+                    -(PI / 2.) * delta_time.as_secs_f32(),
+                    0.,
+                    Vector3::new(0., 0., 0.),
+                );
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::R) {
+                camera.orbit_local(
+                    (PI / 2.) * delta_time.as_secs_f32(),
+                    0.,
+                    0.,
+                    Vector3::new(0., 0., 0.),
+                );
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::F) {
+                camera.orbit_local(
+                    -(PI / 2.) * delta_time.as_secs_f32(),
+                    0.,
+                    0.,
+                    Vector3::new(0., 0., 0.),
+                );
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::W) {
+                let direction = camera.x_axis().cross(&Vector3::y_axis()).normalize()
+                    * delta_time.as_secs_f32();
+                camera.traslate(direction.x, 0., direction.z);
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::S) {
+                let direction = Vector3::y_axis().cross(&camera.x_axis()).normalize()
+                    * delta_time.as_secs_f32();
+                camera.traslate(direction.x, 0., direction.z);
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::A) {
+                camera.traslate_local(1. * delta_time.as_secs_f32(), 0., 0.);
+            }
+            if input.get_key_down(winit::event::VirtualKeyCode::D) {
+                camera.traslate_local(-1. * delta_time.as_secs_f32(), 0., 0.);
+            }
+
+            if input.get_key_down(winit::event::VirtualKeyCode::L) {
+                dbg!(camera.z_axis());
+            }
+            renderer.data.world_view.view = camera.get_transform();
 
             renderer.data.dynamic_uniform_buffer.update(
                 &renderer.base.device,
                 &[renderer.data.descriptor_sets[renderer.current_frame_index]],
             );
-
-            az_go.traslate(delta_time.as_secs_f32(), 0., 0.);
 
             renderer.stage_mesh(ez_go.renderable_form());
             renderer.stage_mesh(az_go.renderable_form());

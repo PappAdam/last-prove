@@ -7,7 +7,7 @@ pub mod mouse;
 
 impl Input {
     #[inline]
-    pub fn on_key_down(&self, key: VirtualKeyCode) -> bool {
+    pub fn get_key_down(&self, key: VirtualKeyCode) -> bool {
         self.keys[key as usize] == ElementState::Pressed
     }
 

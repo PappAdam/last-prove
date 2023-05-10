@@ -6,6 +6,7 @@ use renderer::{engine::aligned_array::AlignedArray, resources::buffer::Buffer};
 
 pub mod mesh;
 pub mod transformations;
+pub mod getters;
 
 pub enum ObjectUsage<'a> {
     Empty,

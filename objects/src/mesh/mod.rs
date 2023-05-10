@@ -66,10 +66,9 @@ impl Mesh {
 
         let mut vertex_buffer = Vec::new();
         for vertex in obj.vertices {
-            let position = vertex.position;
+            let position = vertex.position.into();
             let normal = vertex.normal.into();
-            let new_vertex = Vertex::new(position.into(), Vector3::new(1., 1., 1.), normal);
-            dbg!(position, vertex.normal);
+            let new_vertex = Vertex::new(position, Vector3::new(1., 1., 1.), normal);
             vertex_buffer.push(new_vertex);
         }
 

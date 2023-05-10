@@ -22,9 +22,10 @@ layout(location = 0) out vec3 fragColor;
 
 void main()
 {   
-    mat4 model_view = model.transform * view.view;
+    mat4 model_view = view.view * model.transform;
 
-    vec3 light_source = normalize(vec3(1, 0, 0));
+    vec3 light_source = normalize(vec3(0.3, -1, 0));
+    //Direction of the light
 
     vec4 new_pos = model_view * vec4(pos, 1.);
 
@@ -32,5 +33,6 @@ void main()
 
     gl_Position = vec4(new_pos.x * push_const.wh_ratio, new_pos.y, depth_z, 1.);
 
-    fragColor = color * dot(vec3(model_view * vec4(normal, 0.0)), vec3(view.view * vec4(light_source, 0.0)));
+    // fragColor = color * dot(normalize(vec3(model_view * vec4(normal, 0.0))), normalize(vec3(view.view * vec4(light_source, 0.0))));
+    fragColor = vec3(model.transform * vec4(normal, 0.0));
 }

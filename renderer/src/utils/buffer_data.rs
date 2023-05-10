@@ -3,7 +3,7 @@ use std::{
     ops::{BitAnd, BitOr},
 };
 
-use nalgebra::{Matrix4, Vector3};
+use nalgebra::Matrix4;
 
 pub trait BufferObject {
     fn as_void_ptr(&self) -> *const c_void {
