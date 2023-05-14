@@ -1,13 +1,8 @@
-use std::mem::size_of;
-
 use ash::vk;
 
 use crate::utils::MAX_FRAME_DRAWS;
 
-use super::{
-    buffer::{Buffer, DynamicUniformBuffer, UniformBuffer},
-    image::Image,
-};
+use super::buffer::{DynamicUniformBuffer, UniformBuffer};
 
 pub fn create_descriptor_sets(
     device: &ash::Device,

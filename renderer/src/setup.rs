@@ -584,14 +584,6 @@ pub fn create_swapchain(
     Ok(swapchain)
 }
 
-fn clear_image_views(device: &ash::Device, image_views: &Vec<vk::ImageView>) {
-    for &image_view in image_views {
-        unsafe {
-            device.destroy_image_view(image_view, None);
-        };
-    }
-}
-
 pub fn create_surface(
     entry: &ash::Entry,
     instance: &ash::Instance,

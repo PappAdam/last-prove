@@ -1,21 +1,22 @@
 use nalgebra::{Matrix4, Vector3};
 
-use crate::GameObject;
-
-impl GameObject {
-    pub fn get_transform(&self) -> Matrix4<f32> {
-        self.transform
+pub trait Getters {
+    fn get_position(&self) -> Vector3<f32>;
+    fn x_axis(&self) -> Vector3<f32>;
+    fn y_axis(&self) -> Vector3<f32>;
+    fn z_axis(&self) -> Vector3<f32>;
+}
+impl Getters for Matrix4<f32> {
+    fn get_position(&self) -> Vector3<f32> {
+        self.column(3).xyz()
     }
-    pub fn get_position(&self) -> Vector3<f32> {
-        self.transform.column(3).xyz()
+    fn x_axis(&self) -> Vector3<f32> {
+        self.transform_vector(&Vector3::x_axis())
     }
-    pub fn x_axis(&self) -> Vector3<f32> {
-        self.transform.transform_vector(&Vector3::x_axis())
+    fn y_axis(&self) -> Vector3<f32> {
+        self.transform_vector(&Vector3::y_axis())
     }
-    pub fn y_axis(&self) -> Vector3<f32> {
-        self.transform.transform_vector(&Vector3::y_axis())
-    }
-    pub fn z_axis(&self) -> Vector3<f32> {
-        self.transform.transform_vector(&Vector3::z_axis())
+    fn z_axis(&self) -> Vector3<f32> {
+        self.transform_vector(&Vector3::z_axis())
     }
 }
