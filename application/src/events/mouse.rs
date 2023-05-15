@@ -1,4 +1,4 @@
-use nalgebra::{Vector2, Vector3};
+use nalgebra::Vector2;
 use winit::event::{ElementState, MouseButton};
 
 pub struct Mouse {
