@@ -20,7 +20,7 @@ pub struct AlignedArray<T> {
     first_none_index: Option<usize>,
 }
 
-impl<T: AlignedValue + Display> AlignedArray<T> {
+impl<T: AlignedValue> AlignedArray<T> {
     pub fn from_alignment(alignment: usize, size: usize) -> Result<Self, String> {
         let allocation_layout = Layout::from_size_align(size * size_of::<T>(), alignment)
             .expect("Failed create layout");

@@ -1,12 +1,13 @@
 use std::panic;
 
+use ash::vk;
 use mesh::Mesh;
 use nalgebra::Matrix4;
-use renderer::{engine::aligned_array::AlignedArray, resources::buffer::Buffer};
+use renderer::{engine::aligned_array::AlignedArray, resources::buffer::Buffer, Renderer};
 
+pub mod getters;
 pub mod mesh;
 pub mod transformations;
-pub mod getters;
 
 pub enum ObjectType {
     Camera,
@@ -35,8 +36,12 @@ impl<'a> GameObject<'a> {
             object_type: ty,
             transform: unsafe { &mut *(transform_buf.get_data_pointer(transform_index)) },
             transform_index,
-            mesh
+            mesh,
         })
+    }
+
+    pub fn render(&self, renderer: &Renderer) {
+        renderer.stage_mesh(self.renderable_form())
     }
 
     pub fn get_mesh(&self) -> &'a Mesh {
@@ -44,7 +49,7 @@ impl<'a> GameObject<'a> {
     }
 
     #[inline]
-    pub fn renderable_form(&self) -> (&Buffer, &Buffer, u32, usize) {
+    pub fn renderable_form(&self) -> (vk::Buffer, vk::Buffer, u32, usize) {
         self.get_mesh().into_tuple(self.transform_index)
     }
 }
