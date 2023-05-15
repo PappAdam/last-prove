@@ -1,5 +1,3 @@
-pub mod templates;
-
 use std::{fs::File, io::BufReader, mem::size_of};
 
 use ash::vk;
@@ -13,13 +11,10 @@ pub struct Mesh {
     vertex_buffer: Buffer,
     index_buffer: Buffer,
     index_count: u32,
-    triangles_count: u16,
 }
 
 impl Mesh {
-    pub fn new(renderer: &Renderer, vertices: Vec<Vertex>, indicies: Vec<u16>) -> Self {
-        assert_eq!(indicies.len() % 3, 0);
-
+    fn new(renderer: &Renderer, vertices: Vec<Vertex>, indicies: Vec<u16>) -> Self {
         let vertex_buffer = Buffer::device_local(
             &renderer.base.device,
             vertices.as_ptr() as _,
@@ -46,7 +41,6 @@ impl Mesh {
             index_buffer,
             vertex_buffer,
             index_count: indicies.len() as u32,
-            triangles_count: (indicies.len() / 3) as u16,
         }
     }
 

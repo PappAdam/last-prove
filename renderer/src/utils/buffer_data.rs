@@ -1,7 +1,4 @@
-use std::{
-    ffi::c_void,
-    ops::{BitAnd, BitOr},
-};
+use std::ffi::c_void;
 
 use nalgebra::Matrix4;
 

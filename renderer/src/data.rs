@@ -1,5 +1,3 @@
-use std::mem::size_of;
-
 use nalgebra::Matrix4;
 
 use crate::{

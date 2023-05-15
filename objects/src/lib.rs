@@ -8,11 +8,6 @@ pub mod mesh;
 pub mod transformations;
 pub mod getters;
 
-pub enum ObjectUsage<'a> {
-    Empty,
-    Object(&'a Mesh),
-}
-
 pub enum ObjectType {
     Camera,
     SomeObject,
@@ -21,9 +16,9 @@ pub enum ObjectType {
 
 pub struct GameObject<'a> {
     object_type: ObjectType,
-    object_usage: ObjectUsage<'a>,
     transform: &'a mut Matrix4<f32>,
     transform_index: usize,
+    mesh: &'a Mesh,
 }
 
 impl<'a> GameObject<'a> {
@@ -38,26 +33,14 @@ impl<'a> GameObject<'a> {
 
         Ok(Self {
             object_type: ty,
-            object_usage: ObjectUsage::Object(mesh),
             transform: unsafe { &mut *(transform_buf.get_data_pointer(transform_index)) },
             transform_index,
+            mesh
         })
     }
 
-    pub fn empty(transform: &'a mut Matrix4<f32>, ty: ObjectType) -> Self {
-        Self {
-            object_type: ty,
-            object_usage: ObjectUsage::Empty,
-            transform,
-            transform_index: 0,
-        }
-    }
-
     pub fn get_mesh(&self) -> &'a Mesh {
-        match self.object_usage {
-            ObjectUsage::Empty => panic!("Object has usage empty; Unable to get mesh"),
-            ObjectUsage::Object(mesh) => mesh,
-        }
+        self.mesh
     }
 
     #[inline]

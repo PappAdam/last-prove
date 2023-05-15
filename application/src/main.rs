@@ -1,23 +1,21 @@
-mod events;
+mod input;
+mod mainstruct;
 
 use std::{f32::consts::PI, time::Instant};
 
-use events::input::Input;
-use nalgebra::{Matrix4, Point, Point3, Vector2, Vector3, Vector4, Vector6};
-use objects::{mesh::Mesh, GameObject, ObjectType};
+use input::Input;
+use nalgebra::{Matrix4, Vector3};
+use objects::{mesh::Mesh, GameObject, ObjectType, transformations::Transformations, getters::Getters};
 use winit::{
-    dpi::{LogicalSize, PhysicalSize, Position},
-    event::{Event, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent},
+    dpi::PhysicalSize,
+    event::{Event, KeyboardInput, WindowEvent},
     event_loop::ControlFlow,
     platform::run_return::EventLoopExtRunReturn,
     window::Fullscreen,
 };
 
 use renderer::Renderer;
-use renderer::{
-    engine::aligned_array::{AlignedArray},
-    msg,
-};
+use renderer::{engine::aligned_array::AlignedArray, msg};
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(
         simplelog::LevelFilter::Info,
@@ -51,7 +49,8 @@ fn main() {
             panic!("{}", err);
         }
     };
-  
+    let mut camera_transform = Matrix4::<f32>::identity();
+    let mut camera = Matrix4::identity();
     let mut transform_array =
         AlignedArray::<Matrix4<f32>>::from_dynamic_ub_data(&renderer.data.dynamic_uniform_buffer);
 
@@ -77,10 +76,10 @@ fn main() {
                 renderer.rebuild_swapchain = true;
             }
             WindowEvent::CursorMoved { position, .. } => {
-                input.mouse.set_pos(position.x, position.y);
+                input.handle_mouse_move(position.x, position.y);
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                input.mouse.set_button(button, state);
+                input.handle_mouse_press(button, state);
             }
             WindowEvent::KeyboardInput {
                 input: keyboard_input,
@@ -108,7 +107,7 @@ fn main() {
                     return;
                 }
             }
-          
+
             //Idk where we should handle inputs, it is gonna be here for now.
             if input.get_key_down(winit::event::VirtualKeyCode::Q) {
                 camera.orbit(
@@ -162,13 +161,13 @@ fn main() {
             if input.get_key_down(winit::event::VirtualKeyCode::L) {
                 dbg!(camera.z_axis());
             }
-            renderer.data.world_view.view = camera.get_transform();
+            renderer.data.world_view.view = camera;
 
             renderer.data.dynamic_uniform_buffer.update(
                 &renderer.base.device,
                 &[renderer.data.descriptor_sets[renderer.current_frame_index]],
             );
-
+            renderer.prepare_renderer().unwrap();
             renderer.stage_mesh(ez_go.renderable_form());
             renderer.stage_mesh(az_go.renderable_form());
 

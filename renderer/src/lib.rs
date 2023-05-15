@@ -6,7 +6,7 @@ pub mod resources;
 mod setup;
 pub mod utils;
 
-use std::{mem::size_of, time::Instant};
+use std::time::Instant;
 
 use ash::vk;
 use resources::buffer::Buffer;
