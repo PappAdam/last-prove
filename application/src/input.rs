@@ -32,7 +32,7 @@ impl Input {
             self.keys[key as usize] = state
         }
     }
-    
+
     #[inline]
     pub fn handle_mouse_move(&mut self, x: f64, y: f64) {
         self.mouse.delta_move.x = x as f32 - self.mouse.pos.x;
@@ -62,7 +62,8 @@ impl Input {
     #[inline]
     pub fn get_mouse_button_down(&self, button: MouseButton) -> bool {
         unsafe {
-            self.mouse.buttons[*(&button as *const _ as *const usize)] == ElementState::Pressed
+            self.mouse.buttons[*(&button as *const _ as *const u8) as usize]
+                == ElementState::Pressed
         }
     }
 }
@@ -73,6 +74,4 @@ pub struct Mouse {
     pub delta_move: Vector2<f32>,
 }
 
-impl Mouse {
-
-}
+impl Mouse {}

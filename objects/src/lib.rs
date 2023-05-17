@@ -13,9 +13,9 @@ pub mod getters;
 pub mod mesh;
 pub mod transformations;
 
-#[derive(PartialEq, PartialOrd)]
+#[derive(PartialEq)]
 pub enum ObjectType {
-    None,
+    None = 0,
     SomeObject,
     //  ...
 }
