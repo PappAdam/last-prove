@@ -7,6 +7,8 @@ use renderer::{utils::vertex::Vertex, Renderer};
 use self::tile::Tile;
 
 pub mod tile;
+mod heightmap;
+mod perlin;
 
 pub struct Map {
     matrix: Vec<Vec<Tile>>,
