@@ -6,11 +6,12 @@ pub mod resources;
 mod setup;
 pub mod utils;
 
-use std::time::Instant;
+use std::{mem::size_of, time::Instant};
 
 use ash::vk;
+use engine::aligned_array::AlignedArray;
 use resources::buffer::Buffer;
-use utils::buffer_data::BufferObject;
+use utils::{buffer_data::BufferObject, MAX_WORLD_OBJECTS};
 use winit::window::Window;
 
 use crate::{base::RenderBase, data::RenderData, utils::MAX_FRAME_DRAWS};
@@ -19,10 +20,11 @@ pub struct Renderer {
     pub data: RenderData,
     pub base: RenderBase,
 
+    meshes_buffers: Vec<[Buffer; 2]>,
+
     pub current_frame_index: usize,
     pub rebuild_swapchain: bool,
     pub image_index: usize,
-    pub rotation: f32,
 
     pub start_time: Instant,
 }
@@ -38,12 +40,17 @@ impl Renderer {
             current_frame_index: 0,
             rebuild_swapchain: true,
             image_index: 0,
-            rotation: 0.,
             start_time: Instant::now(),
+            meshes_buffers: Vec::with_capacity(MAX_WORLD_OBJECTS),
         })
     }
 
-    pub fn stage_mesh(&mut self, mesh: (&Buffer, &Buffer, u32, usize)) {
+    pub fn load_mesh(&mut self, mesh: [Buffer; 2]) {
+        self.meshes_buffers.push(mesh)
+    }
+
+    #[inline]
+    pub fn stage_mesh(&self, mesh: (vk::Buffer, vk::Buffer, u32, usize)) {
         let current_command_buffer = self.data.command_buffers[self.current_frame_index];
         unsafe {
             self.base.device.cmd_bind_descriptor_sets(
@@ -55,16 +62,13 @@ impl Renderer {
                 &[mesh.3 as u32 * self.data.dynamic_uniform_buffer.alignment as u32],
             );
 
-            self.base.device.cmd_bind_vertex_buffers(
-                current_command_buffer,
-                0,
-                &[mesh.0.buf],
-                &[0],
-            );
+            self.base
+                .device
+                .cmd_bind_vertex_buffers(current_command_buffer, 0, &[mesh.0], &[0]);
 
             self.base.device.cmd_bind_index_buffer(
                 current_command_buffer,
-                mesh.1.buf,
+                mesh.1,
                 0,
                 vk::IndexType::UINT16,
             );
@@ -151,6 +155,14 @@ impl Drop for Renderer {
         unsafe {
             self.base.device.device_wait_idle().unwrap();
         }
+
+        if self.meshes_buffers.len() != 0 {
+            self.meshes_buffers.iter().for_each(|b| {
+                b[0].free(&self.base.device);
+                b[1].free(&self.base.device)
+            });
+        }
+
         self.data.clean_up(&self.base.device);
         self.base.clean_up();
     }

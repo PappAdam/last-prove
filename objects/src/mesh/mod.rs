@@ -8,13 +8,13 @@ use renderer::{self, resources::buffer::Buffer, utils::vertex::Vertex, Renderer}
 
 // #[derive(Clone)]
 pub struct Mesh {
-    vertex_buffer: Buffer,
-    index_buffer: Buffer,
+    pub vertex_buffer: vk::Buffer,
+    pub index_buffer: vk::Buffer,
     index_count: u32,
 }
 
 impl Mesh {
-    fn new(renderer: &Renderer, vertices: Vec<Vertex>, indicies: Vec<u16>) -> Self {
+    fn new(renderer: &mut Renderer, vertices: Vec<Vertex>, indicies: Vec<u16>) -> Self {
         let vertex_buffer = Buffer::device_local(
             &renderer.base.device,
             vertices.as_ptr() as _,
@@ -37,24 +37,29 @@ impl Mesh {
         )
         .unwrap();
 
+        let ib = index_buffer.buf;
+        let vb = vertex_buffer.buf;
+
+        renderer.load_mesh([index_buffer, vertex_buffer]);
+
         Self {
-            index_buffer,
-            vertex_buffer,
+            index_buffer: ib,
+            vertex_buffer: vb,
             index_count: indicies.len() as u32,
         }
     }
 
     #[inline]
-    pub fn into_tuple(&self, transform_index: usize) -> (&Buffer, &Buffer, u32, usize) {
+    pub fn into_tuple(&self, transform_index: usize) -> (vk::Buffer, vk::Buffer, u32, usize) {
         (
-            &self.vertex_buffer,
-            &self.index_buffer,
+            self.vertex_buffer,
+            self.index_buffer,
             self.index_count,
             transform_index,
         )
     }
 
-    pub fn from_obj(renderer: &Renderer, path: &str) -> Mesh {
+    pub fn from_obj(renderer: &mut Renderer, path: &str) -> Mesh {
         let input = BufReader::new(File::open(path).unwrap());
         let obj: Obj<obj::Vertex, u16> = load_obj(input).unwrap();
 
@@ -72,11 +77,6 @@ impl Mesh {
         }
 
         Mesh::new(renderer, vertex_buffer, index_buffer)
-    }
-
-    pub fn free(&self, device: &ash::Device) {
-        self.vertex_buffer.free(device);
-        self.index_buffer.free(device);
     }
 }
 

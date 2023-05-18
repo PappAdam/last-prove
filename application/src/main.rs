@@ -5,7 +5,9 @@ use std::{f32::consts::PI, time::Instant};
 
 use input::Input;
 use nalgebra::{Matrix4, Vector3};
-use objects::{mesh::Mesh, GameObject, ObjectType, transformations::Transformations, getters::Getters};
+use objects::{
+    getters::Getters, mesh::Mesh, transformations::Transformations, GameObject, ObjectType,
+};
 use winit::{
     dpi::PhysicalSize,
     event::{Event, KeyboardInput, WindowEvent},
@@ -14,8 +16,8 @@ use winit::{
     window::Fullscreen,
 };
 
-use renderer::Renderer;
 use renderer::{engine::aligned_array::AlignedArray, msg};
+use renderer::{resources::buffer::Buffer, Renderer};
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(
         simplelog::LevelFilter::Info,
@@ -49,14 +51,13 @@ fn main() {
             panic!("{}", err);
         }
     };
-    let mut camera_transform = Matrix4::<f32>::identity();
     let mut camera = Matrix4::identity();
     let mut transform_array =
         AlignedArray::<Matrix4<f32>>::from_dynamic_ub_data(&renderer.data.dynamic_uniform_buffer);
 
     let meshes = [
-        Mesh::from_obj(&renderer, "resources/models/rat_obj.obj"),
-        Mesh::from_obj(&renderer, "resources/models/ez.obj"),
+        Mesh::from_obj(&mut renderer, "resources/models/rat_obj.obj"),
+        Mesh::from_obj(&mut renderer, "resources/models/ez.obj"),
     ];
 
     let mut ez_go =
@@ -163,13 +164,14 @@ fn main() {
             }
             renderer.data.world_view.view = camera;
 
+            renderer.prepare_renderer().unwrap();
             renderer.data.dynamic_uniform_buffer.update(
                 &renderer.base.device,
                 &[renderer.data.descriptor_sets[renderer.current_frame_index]],
             );
-            renderer.prepare_renderer().unwrap();
-            renderer.stage_mesh(ez_go.renderable_form());
-            renderer.stage_mesh(az_go.renderable_form());
+
+            ez_go.render(&renderer);
+            az_go.render(&renderer);
 
             if let Err(msg) = renderer.flush() {
                 msg!(error, msg);
