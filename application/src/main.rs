@@ -10,7 +10,7 @@ use objects::{
 };
 use winit::{
     dpi::PhysicalSize,
-    event::{Event, KeyboardInput, WindowEvent},
+    event::{Event, KeyboardInput, MouseScrollDelta, WindowEvent},
     event_loop::ControlFlow,
     platform::run_return::EventLoopExtRunReturn,
     window::Fullscreen,
@@ -82,6 +82,10 @@ fn main() {
             WindowEvent::MouseInput { state, button, .. } => {
                 input.handle_mouse_press(button, state);
             }
+            WindowEvent::MouseWheel {
+                delta: MouseScrollDelta::LineDelta(_, scroll_y),
+                ..
+            } => input.handle_mouse_wheel(scroll_y),
             WindowEvent::KeyboardInput {
                 input: keyboard_input,
                 ..
@@ -98,7 +102,7 @@ fn main() {
             _ => {}
         },
         Event::MainEventsCleared => {
-            let delta_time = start_time.elapsed();
+            let delta_time = start_time.elapsed().as_secs_f32();
             start_time = Instant::now();
 
             if renderer.rebuild_swapchain {
@@ -111,57 +115,37 @@ fn main() {
 
             //Idk where we should handle inputs, it is gonna be here for now.
             if input.get_key_down(winit::event::VirtualKeyCode::Q) {
-                camera.orbit(
-                    0.,
-                    (PI / 2.) * delta_time.as_secs_f32(),
-                    0.,
-                    Vector3::new(0., 0., 0.),
-                );
+                camera.orbit(0., (PI / 2.) * delta_time, 0., Vector3::new(0., 0., 0.));
             }
             if input.get_key_down(winit::event::VirtualKeyCode::E) {
-                camera.orbit(
-                    0.,
-                    -(PI / 2.) * delta_time.as_secs_f32(),
-                    0.,
-                    Vector3::new(0., 0., 0.),
-                );
+                camera.orbit(0., -(PI / 2.) * delta_time, 0., Vector3::new(0., 0., 0.));
             }
             if input.get_key_down(winit::event::VirtualKeyCode::R) {
-                camera.orbit_local(
-                    (PI / 2.) * delta_time.as_secs_f32(),
-                    0.,
-                    0.,
-                    Vector3::new(0., 0., 0.),
-                );
+                camera.orbit_local((PI / 2.) * delta_time, 0., 0., Vector3::new(0., 0., 0.));
             }
             if input.get_key_down(winit::event::VirtualKeyCode::F) {
-                camera.orbit_local(
-                    -(PI / 2.) * delta_time.as_secs_f32(),
-                    0.,
-                    0.,
-                    Vector3::new(0., 0., 0.),
-                );
+                camera.orbit_local(-(PI / 2.) * delta_time, 0., 0., Vector3::new(0., 0., 0.));
             }
             if input.get_key_down(winit::event::VirtualKeyCode::W) {
-                let direction = camera.x_axis().cross(&Vector3::y_axis()).normalize()
-                    * delta_time.as_secs_f32();
-                camera.traslate(direction.x, 0., direction.z);
+                let direction = -camera.z_axis().xz().normalize() * delta_time;
+                camera.traslate(direction.x, 0., direction.y);
             }
             if input.get_key_down(winit::event::VirtualKeyCode::S) {
-                let direction = Vector3::y_axis().cross(&camera.x_axis()).normalize()
-                    * delta_time.as_secs_f32();
-                camera.traslate(direction.x, 0., direction.z);
+                let direction = camera.z_axis().xz().normalize() * delta_time;
+                camera.traslate(direction.x, 0., direction.y);
             }
             if input.get_key_down(winit::event::VirtualKeyCode::A) {
-                camera.traslate_local(1. * delta_time.as_secs_f32(), 0., 0.);
+                camera.traslate_local(1. * delta_time, 0., 0.);
             }
             if input.get_key_down(winit::event::VirtualKeyCode::D) {
-                camera.traslate_local(-1. * delta_time.as_secs_f32(), 0., 0.);
+                camera.traslate_local(-1. * delta_time, 0., 0.);
             }
-
-            if input.get_key_down(winit::event::VirtualKeyCode::L) {
-                dbg!(camera.z_axis());
-            }
+            Transformations::scale(
+                &mut camera,
+                1. + input.get_mouse_wheel() * 0.2,
+                1. + input.get_mouse_wheel() * 0.2,
+                1. + input.get_mouse_wheel() * 0.2,
+            );
             renderer.data.world_view.view = camera;
 
             renderer.prepare_renderer().unwrap();
