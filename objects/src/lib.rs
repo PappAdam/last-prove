@@ -3,21 +3,26 @@ use std::panic;
 use ash::vk;
 use mesh::Mesh;
 use nalgebra::Matrix4;
-use renderer::{engine::aligned_array::AlignedArray, resources::buffer::Buffer, Renderer};
+use renderer::{
+    engine::aligned_array::{AlignedArray, NoneValue},
+    resources::buffer::Buffer,
+    Renderer,
+};
 
 pub mod getters;
 pub mod mesh;
 pub mod transformations;
 
+#[derive(PartialEq)]
 pub enum ObjectType {
-    Camera,
+    None = 0,
     SomeObject,
     //  ...
 }
 
 pub struct GameObject<'a> {
     object_type: ObjectType,
-    transform: &'a mut Matrix4<f32>,
+    pub transform: &'a mut Matrix4<f32>,
     transform_index: usize,
     mesh: &'a Mesh,
 }
@@ -40,6 +45,7 @@ impl<'a> GameObject<'a> {
         })
     }
 
+    #[inline]
     pub fn render(&self, renderer: &Renderer) {
         renderer.stage_mesh(self.renderable_form())
     }
@@ -57,4 +63,14 @@ impl<'a> GameObject<'a> {
 #[derive(Debug)]
 pub enum ObjectCreationError {
     NotEnoughSpace,
+}
+
+impl<'a> NoneValue for GameObject<'a> {
+    fn is_none(&self) -> bool {
+        self.object_type == ObjectType::None
+    }
+
+    fn set_to_none(&mut self) {
+        self.object_type = ObjectType::None;
+    }
 }

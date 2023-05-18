@@ -1,8 +1,9 @@
+mod application;
 mod input;
-mod mainstruct;
 
-use std::{f32::consts::PI, time::Instant};
+use std::{borrow::BorrowMut, f32::consts::PI, sync::Arc, time::Instant};
 
+use application::App;
 use input::Input;
 use nalgebra::{Matrix4, Vector3};
 use objects::{
@@ -17,7 +18,6 @@ use winit::{
 };
 
 use renderer::{engine::aligned_array::AlignedArray, msg};
-use renderer::{resources::buffer::Buffer, Renderer};
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(
         simplelog::LevelFilter::Info,
@@ -44,43 +44,25 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let mut renderer = match Renderer::new(&window) {
-        Ok(base) => base,
-        Err(err) => {
-            msg!(error, err);
-            panic!("{}", err);
-        }
-    };
-    let mut camera = Matrix4::identity();
-    let mut transform_array =
-        AlignedArray::<Matrix4<f32>>::from_dynamic_ub_data(&renderer.data.dynamic_uniform_buffer);
+    let mut app = App::init(&window);
+    let mut meshes = Vec::<Mesh>::new();
 
-    let meshes = [
-        Mesh::from_obj(&mut renderer, "resources/models/rat_obj.obj"),
-        Mesh::from_obj(&mut renderer, "resources/models/ez.obj"),
-    ];
-
-    let mut ez_go =
-        GameObject::object(&mut transform_array, &meshes[0], ObjectType::SomeObject).unwrap();
-    let mut az_go =
-        GameObject::object(&mut transform_array, &meshes[1], ObjectType::SomeObject).unwrap();
+    app.setup(&mut meshes);
 
     let mut start_time = Instant::now();
-    let mut input = Input::init();
-
     event_loop.run_return(move |event, _, control_flow| match event {
         Event::WindowEvent { event, .. } => match event {
             WindowEvent::CloseRequested => {
                 *control_flow = winit::event_loop::ControlFlow::Exit;
             }
             WindowEvent::Resized(..) => {
-                renderer.rebuild_swapchain = true;
+                app.renderer.rebuild_swapchain = true;
             }
             WindowEvent::CursorMoved { position, .. } => {
-                input.handle_mouse_move(position.x, position.y);
+                app.input.handle_mouse_move(position.x, position.y);
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                input.handle_mouse_press(button, state);
+                app.input.handle_mouse_press(button, state);
             }
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::LineDelta(_, scroll_y),
@@ -95,25 +77,25 @@ fn main() {
                     virtual_keycode,
                     ..
                 } => {
-                    input.handle_key_press(virtual_keycode, state);
+                    app.input.handle_key_press(virtual_keycode, state);
                 }
             },
-            WindowEvent::ModifiersChanged(modifier) => input.set_modif(modifier),
+            WindowEvent::ModifiersChanged(modifier) => app.input.set_modif(modifier),
             _ => {}
         },
         Event::MainEventsCleared => {
-            let delta_time = start_time.elapsed().as_secs_f32();
+            app.delta_time = start_time.elapsed();
             start_time = Instant::now();
 
-            if renderer.rebuild_swapchain {
-                renderer.rebuild_swapchain = false;
-                if let Err(msg) = renderer.resize(&window) {
+            if app.renderer.rebuild_swapchain {
+                app.renderer.rebuild_swapchain = false;
+                if let Err(msg) = app.renderer.resize(&window) {
                     msg!(error, msg);
                     return;
                 }
             }
-
             //Idk where we should handle inputs, it is gonna be here for now.
+          /*
             if input.get_key_down(winit::event::VirtualKeyCode::Q) {
                 camera.orbit(0., (PI / 2.) * delta_time, 0., Vector3::new(0., 0., 0.));
             }
@@ -152,18 +134,24 @@ fn main() {
             renderer.data.dynamic_uniform_buffer.update(
                 &renderer.base.device,
                 &[renderer.data.descriptor_sets[renderer.current_frame_index]],
+                */
+            app.renderer.prepare_renderer().unwrap();
+            app.renderer.data.world_view.view = *app.get_cam();
+            app.renderer.data.dynamic_uniform_buffer.update(
+                &app.renderer.base.device,
+                &[app.renderer.data.descriptor_sets[app.renderer.current_frame_index]],
             );
 
-            ez_go.render(&renderer);
-            az_go.render(&renderer);
+            app.camera_move();
+            app.main_loop();
 
-            if let Err(msg) = renderer.flush() {
+            if let Err(msg) = app.renderer.flush() {
                 msg!(error, msg);
                 *control_flow = ControlFlow::Exit;
                 return;
             }
 
-            input.refresh();
+            app.input.refresh();
         }
         _ => {}
     });

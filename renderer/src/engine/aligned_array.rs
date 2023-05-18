@@ -8,8 +8,9 @@ use std::{
 
 use crate::resources::buffer::DynamicUniformBuffer;
 
-pub trait AlignedValue {
+pub trait NoneValue {
     fn is_none(&self) -> bool;
+    fn set_to_none(&mut self);
 }
 
 pub struct AlignedArray<T> {
@@ -20,7 +21,7 @@ pub struct AlignedArray<T> {
     first_none_index: Option<usize>,
 }
 
-impl<T: AlignedValue> AlignedArray<T> {
+impl<T: NoneValue> AlignedArray<T> {
     pub fn from_alignment(alignment: usize, size: usize) -> Result<Self, String> {
         let allocation_layout = Layout::from_size_align(size * size_of::<T>(), alignment)
             .expect("Failed create layout");

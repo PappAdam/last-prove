@@ -25,8 +25,6 @@ pub struct Renderer {
     pub current_frame_index: usize,
     pub rebuild_swapchain: bool,
     pub image_index: usize,
-
-    pub start_time: Instant,
 }
 
 impl Renderer {
@@ -40,7 +38,6 @@ impl Renderer {
             current_frame_index: 0,
             rebuild_swapchain: true,
             image_index: 0,
-            start_time: Instant::now(),
             meshes_buffers: Vec::with_capacity(MAX_WORLD_OBJECTS),
         })
     }
