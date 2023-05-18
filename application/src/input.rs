@@ -17,6 +17,7 @@ impl Input {
                 buttons: [ElementState::Released; 3],
                 pos: Default::default(),
                 delta_move: Default::default(),
+                wheel: 0.,
             },
         }
     }
@@ -49,9 +50,15 @@ impl Input {
     }
 
     #[inline]
+    pub fn handle_mouse_wheel(&mut self, scroll_y: f32) {
+        self.mouse.wheel += scroll_y;
+    }
+
+    #[inline]
     pub fn refresh(&mut self) {
         self.mouse.delta_move.x = 0.;
         self.mouse.delta_move.y = 0.;
+        self.mouse.wheel = 0.;
     }
 
     #[inline]
@@ -66,12 +73,26 @@ impl Input {
                 == ElementState::Pressed
         }
     }
+    
+    #[inline]
+    pub fn get_mouse_wheel(&self) -> f32 {
+        self.mouse.wheel
+    }
 }
 
 pub struct Mouse {
     pub buttons: [ElementState; 3],
     pub pos: Vector2<f32>,
     pub delta_move: Vector2<f32>,
+    pub wheel: f32
 }
 
-impl Mouse {}
+impl Mouse {
+
+}
+
+enum MouseWheelState {
+    Up(u8),
+    Stationary,
+    Down(u8),
+}
