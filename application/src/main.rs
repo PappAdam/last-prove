@@ -62,12 +62,13 @@ fn main() {
                 app.input.handle_mouse_move(position.x, position.y);
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                app.input.handle_mouse_press(button, state);
+                app.input.handle_mouse_press(button, state)
             }
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::LineDelta(_, scroll_y),
                 ..
-            } => input.handle_mouse_wheel(scroll_y),
+            } => app.input.handle_mouse_wheel(scroll_y),
+
             WindowEvent::KeyboardInput {
                 input: keyboard_input,
                 ..
@@ -95,7 +96,7 @@ fn main() {
                 }
             }
             //Idk where we should handle inputs, it is gonna be here for now.
-          /*
+            /*
             if input.get_key_down(winit::event::VirtualKeyCode::Q) {
                 camera.orbit(0., (PI / 2.) * delta_time, 0., Vector3::new(0., 0., 0.));
             }

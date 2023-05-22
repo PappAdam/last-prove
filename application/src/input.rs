@@ -90,9 +90,3 @@ pub struct Mouse {
 impl Mouse {
 
 }
-
-enum MouseWheelState {
-    Up(u8),
-    Stationary,
-    Down(u8),
-}
