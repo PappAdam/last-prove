@@ -34,5 +34,6 @@ void main()
     gl_Position = vec4(new_pos.x * push_const.wh_ratio, new_pos.y, depth_z, 1.);
 
     // fragColor = color * dot(normalize(vec3(model_view * vec4(normal, 0.0))), normalize(vec3(view.view * vec4(light_source, 0.0))));
-    fragColor = vec3(model.transform * vec4(normal, 0.0));
+    // fragColor = vec3(model.transform * vec4(normal, 0.0));
+    fragColor = color;
 }

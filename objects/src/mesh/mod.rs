@@ -1,8 +1,13 @@
-use std::{fs::File, io::BufReader, mem::size_of};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{BufRead, BufReader},
+    mem::size_of,
+};
 
 use ash::vk;
 use nalgebra::Vector3;
-use obj::{load_obj, Obj};
+use obj::{load_obj, raw::parse_mtl, Obj};
 
 use renderer::{self, resources::buffer::Buffer, utils::vertex::Vertex, Renderer};
 
@@ -60,8 +65,11 @@ impl Mesh {
     }
 
     pub fn from_obj(renderer: &mut Renderer, path: &str) -> Mesh {
-        let input = BufReader::new(File::open(path).unwrap());
-        let obj: Obj<obj::Vertex, u32> = load_obj(input).unwrap();
+        let obj_buf = BufReader::new(File::open(path.to_owned() + ".obj").unwrap());
+        let obj: Obj<obj::Vertex, u32> = load_obj(obj_buf).unwrap();
+        let mtl_buf = BufReader::new(File::open(path.to_owned() + ".mtl").unwrap());
+        let mtl = parse_mtl(mtl_buf).unwrap();
+        // dbg!(mtl.materials);
 
         let mut vertex_buffer = Vec::new();
         for vertex in obj.vertices {
@@ -74,6 +82,81 @@ impl Mesh {
         let mut index_buffer = Vec::new();
         for index in obj.indices {
             index_buffer.push(index);
+        }
+
+        Mesh::new(renderer, vertex_buffer, index_buffer)
+    }
+    pub fn from_file(renderer: &mut Renderer, path: &str) -> Mesh {
+        let obj_file = BufReader::new(File::open(path.to_owned() + ".obj").unwrap());
+        let mtl_file = BufReader::new(File::open(path.to_owned() + ".mtl").unwrap());
+
+        //Loading materials
+        let mut materials: HashMap<String, [f32; 3]> = HashMap::new();
+        let mut current_material_name = String::from("");
+        for line in mtl_file.lines() {
+            let line = line.unwrap();
+            if line.contains("newmtl") {
+                current_material_name = line[7..].to_owned();
+            }
+            if line.contains("Kd") {
+                materials.insert(
+                    current_material_name.to_owned(),
+                    [
+                        line[3..11].parse::<f32>().unwrap(),
+                        line[12..20].parse::<f32>().unwrap(),
+                        line[21..29].parse::<f32>().unwrap(),
+                    ],
+                );
+            }
+        }
+        //Finished loading materials
+        let mut vertex_buffer = vec![];
+        let mut index_buffer = vec![];
+
+        let mut vertices = vec![];
+        let mut normals = vec![];
+        let mut textures = vec![];
+        let mut current_material = String::from("");
+        for line in obj_file.lines() {
+            let line = line.unwrap();
+            let splitted_line = line.split(' ').collect::<Vec<_>>();
+            if splitted_line[0] == "v" {
+                vertices.push([
+                    splitted_line[1].parse::<f32>().unwrap(),
+                    splitted_line[2].parse::<f32>().unwrap(),
+                    splitted_line[3].parse::<f32>().unwrap(),
+                ])
+            } else if splitted_line[0] == "vn" {
+                normals.push([
+                    splitted_line[1].parse::<f32>().unwrap(),
+                    splitted_line[2].parse::<f32>().unwrap(),
+                    splitted_line[3].parse::<f32>().unwrap(),
+                ])
+            } else if splitted_line[0] == "vn" {
+                normals.push([
+                    splitted_line[1].parse::<f32>().unwrap(),
+                    splitted_line[2].parse::<f32>().unwrap(),
+                    splitted_line[3].parse::<f32>().unwrap(),
+                ])
+            } else if splitted_line[0] == "vt" {
+                textures.push([
+                    splitted_line[1].parse::<f32>().unwrap(),
+                    splitted_line[2].parse::<f32>().unwrap(),
+                ])
+            } else if splitted_line[0] == "f" {
+                for segment in &splitted_line[1..] {
+                    let splitted_segment = segment.split('/').collect::<Vec<_>>();
+                    vertex_buffer.push(Vertex::new(
+                        vertices[splitted_segment[0].parse::<usize>().unwrap() - 1].into(),
+                        materials[&current_material].into(),
+                        normals[splitted_segment[2].parse::<usize>().unwrap() - 1].into(),
+                    ));
+                    index_buffer.push(index_buffer.len() as u32);
+                }
+            }
+            else if splitted_line[0] == "usemtl" {
+                current_material = splitted_line[1].to_owned();
+            }
         }
 
         Mesh::new(renderer, vertex_buffer, index_buffer)

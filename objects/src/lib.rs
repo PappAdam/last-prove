@@ -1,11 +1,8 @@
-use std::panic;
-
 use ash::vk;
 use mesh::Mesh;
 use nalgebra::Matrix4;
 use renderer::{
     engine::aligned_array::{AlignedArray, NoneValue},
-    resources::buffer::Buffer,
     Renderer,
 };
 

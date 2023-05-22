@@ -54,7 +54,7 @@ impl<'a> App<'a> {
 
     #[inline]
     pub fn load_mesh(&mut self, path: &str, meshes: &mut Vec<Mesh>) {
-        meshes.push(Mesh::from_obj(&mut self.renderer, path));
+        meshes.push(Mesh::from_file(&mut self.renderer, path));
     }
 
     pub fn get_cam(&'a self) -> &'a Matrix4<f32> {

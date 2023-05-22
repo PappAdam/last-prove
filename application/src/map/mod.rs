@@ -59,7 +59,6 @@ impl Map {
                 x += 1;
             }
         }
-        println!("{}", vertices.len());
         Mesh::new(renderer, vertices, indicies)
     }
 
