@@ -38,5 +38,11 @@ impl<'a> App<'a> {
         if self.input.get_key_down(winit::event::VirtualKeyCode::D) {
             self.camera.translate_local(-1. * self.delta_time.as_secs_f32(), 0., 0.);
         }
+        Transformations::scale(
+            &mut self.camera,
+            1. + self.input.get_mouse_wheel() * 0.2,
+            1. + self.input.get_mouse_wheel() * 0.2,
+            1. + self.input.get_mouse_wheel() * 0.2,
+        );
     }
 }
