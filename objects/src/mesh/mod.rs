@@ -10,11 +10,11 @@ use renderer::{self, resources::buffer::Buffer, utils::vertex::Vertex, Renderer}
 pub struct Mesh {
     pub vertex_buffer: vk::Buffer,
     pub index_buffer: vk::Buffer,
-    index_count: u32,
+    pub index_count: u32,
 }
 
 impl Mesh {
-    fn new(renderer: &mut Renderer, vertices: Vec<Vertex>, indicies: Vec<u16>) -> Self {
+    pub fn new(renderer: &mut Renderer, vertices: Vec<Vertex>, indicies: Vec<u16>) -> Self {
         let vertex_buffer = Buffer::device_local(
             &renderer.base.device,
             vertices.as_ptr() as _,

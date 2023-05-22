@@ -4,11 +4,11 @@ use nalgebra::Vector3;
 use objects::mesh::Mesh;
 use renderer::{utils::vertex::Vertex, Renderer};
 
-use self::tile::Tile;
+use self::{heightmap::HeightMap, tile::Tile};
 
-pub mod tile;
 mod heightmap;
 mod perlin;
+pub mod tile;
 
 pub struct Map {
     matrix: Vec<Vec<Tile>>,
@@ -16,37 +16,66 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn full(size: usize) -> Self {
-        Self {
-            matrix: vec::from_elem(vec::from_elem(Tile::new(), size), size),
-            size,
-        }
-    }
-    pub fn convert_to_mesh(&self, renderer: &Renderer) -> Mesh {
-        let mut vertices = vec::from_elem(Vertex::default(), self.size * self.size * 4);
-        let mut indicies = vec::from_elem(0, self.size * self.size * 6);
-        for (y, row) in self.matrix.iter().enumerate() {
-            for (x, tile) in row.iter().enumerate() {
+    pub fn convert_to_mesh(&self, renderer: &mut Renderer) -> Mesh {
+        let mut vertices = vec![];
+        let mut indicies = vec![];
+        let mut tile_index = 0;
+        //Iterating over rows
+        for (y, _) in self.matrix.iter().enumerate() {
+            //Iterating over columns, using while so I can modify x.
+            let mut x = 0;
+            while x < self.size {
+                let tile = &self.matrix[y][x];
+                //If a tile is solid, we search for the next water tile.
                 if tile.is_solid() {
-                    let tile_index = y * self.size + x;
-                    vertices[tile_index * 4] =
-                        Vertex::from_pos(Vector3::new(x as f32, 0., y as f32));
-                    vertices[tile_index * 4 + 1] =
-                        Vertex::from_pos(Vector3::new(x as f32 + 1., 0., y as f32));
-                    vertices[tile_index * 4 + 2] =
-                        Vertex::from_pos(Vector3::new(x as f32, 0., y as f32 + 1.));
-                    vertices[tile_index * 4 + 3] =
-                        Vertex::from_pos(Vector3::new(x as f32 + 1., 0., y as f32 + 1.));
+                    for offset in x..self.size {
+                        if self.matrix[y][offset].is_solid() && offset != self.size - 1 {
+                            continue;
+                        }
+                        //Here we found the next water tile, so we make a square from the first to the last solid tile
+                        let mut square = vec![
+                            Vertex::from_pos(Vector3::new(x as f32, 0., y as f32)),
+                            Vertex::from_pos(Vector3::new(offset as f32, 0., y as f32)),
+                            Vertex::from_pos(Vector3::new(x as f32, 0., y as f32 + 1.)),
+                            Vertex::from_pos(Vector3::new(offset as f32, 0., y as f32 + 1.))
+                        ];
+                        vertices.append(&mut square);
+                        let mut square_indicies = vec![
+                            (tile_index * 4 + 0) as u16,
+                            (tile_index * 4 + 1) as u16,
+                            (tile_index * 4 + 2) as u16,
+                            (tile_index * 4 + 1) as u16,
+                            (tile_index * 4 + 2) as u16,
+                            (tile_index * 4 + 3) as u16
+                        ];
+                        indicies.append(&mut square_indicies);
 
-                    indicies[tile_index * 6 + 0] = (tile_index * 4 + 0) as u16;
-                    indicies[tile_index * 6 + 1] = (tile_index * 4 + 1) as u16;
-                    indicies[tile_index * 6 + 2] = (tile_index * 4 + 2) as u16;
-                    indicies[tile_index * 6 + 3] = (tile_index * 4 + 1) as u16;
-                    indicies[tile_index * 6 + 4] = (tile_index * 4 + 2) as u16;
-                    indicies[tile_index * 6 + 5] = (tile_index * 4 + 3) as u16;
+                        tile_index += 1;
+                        //We can skip all previously checked tiles.
+                        x = offset;
+                        break;
+                    }
+                }
+                x += 1;
+            }
+        }
+        println!("{}", vertices.len());
+        Mesh::new(renderer, vertices, indicies)
+    }
+
+    pub fn generate(size: usize) -> Self {
+        let heightmap = HeightMap::perlin_noise(None, size);
+        let mut tile_matrix = vec::from_elem(vec::from_elem(Tile::none(), size), size);
+        for y in 0..size {
+            for x in 0..size {
+                if heightmap[y][x] > 0.5 {
+                    tile_matrix[y][x] = Tile::new();
                 }
             }
         }
-        Mesh::new(renderer, vertices, indicies)
+        Self {
+            matrix: tile_matrix,
+            size,
+        }
     }
 }

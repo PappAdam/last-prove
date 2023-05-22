@@ -1,10 +1,12 @@
 mod application;
 mod input;
+mod map;
 
 use std::{borrow::BorrowMut, f32::consts::PI, sync::Arc, time::Instant};
 
 use application::App;
 use input::Input;
+use map::Map;
 use nalgebra::{Matrix4, Vector3};
 use objects::{
     getters::Getters, mesh::Mesh, transformations::Transformations, GameObject, ObjectType,
@@ -46,7 +48,8 @@ fn main() {
 
     let mut app = App::init(&window);
     let mut meshes = Vec::<Mesh>::new();
-
+    let map = Map::generate(1000);
+    meshes.push(map.convert_to_mesh(&mut app.renderer));
     app.setup(&mut meshes);
 
     let mut start_time = Instant::now();
@@ -95,7 +98,7 @@ fn main() {
                     return;
                 }
             }
-            
+
             app.renderer.prepare_renderer().unwrap();
             app.renderer.data.world_view.view = *app.get_cam();
             app.renderer.data.dynamic_uniform_buffer.update(

@@ -9,9 +9,9 @@ impl<'a> App<'a> {
     pub fn main_loop(&mut self) {
         self.gameobjects[0].render(&self.renderer);
         self.gameobjects[1].render(&self.renderer);
-        self.gameobjects[1]
-            .transform
-            .rotate(self.delta_time.as_secs_f32(), 0., 0.);
+        // self.gameobjects[1]
+        //     .transform
+        //     .rotate(self.delta_time.as_secs_f32(), 0., 0.);
 
         // self.gameobjects[0]
         //     .transform

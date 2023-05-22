@@ -24,6 +24,9 @@ impl Tile {
     pub(super) fn new() -> Self {
         Self { flags: TileFlag::Solid as u8 }
     }
+    pub(super) fn none() -> Self {
+        Self { flags: 0 }
+    }
 }
 
 #[derive(Clone, Copy)]

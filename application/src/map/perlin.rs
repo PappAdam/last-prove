@@ -11,7 +11,7 @@ impl HeightMap {
 
         for y in 0..size {
             for x in 0..size {
-                let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.02, 1);
+                let perlin_value = perlin_noise.perlin2d(x as f32, y as f32, 0.04, 1);
                 heightmap[y][x] = perlin_value
             }
         }
