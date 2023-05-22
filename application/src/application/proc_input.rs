@@ -23,11 +23,15 @@ impl<'a> App<'a> {
                 );
         }
         if self.input.get_key_down(winit::event::VirtualKeyCode::W) {
-            let direction = -self.camera.z_axis().xz().normalize() * self.delta_time.as_secs_f32();
+            let direction = -self.camera.z_axis().xz().normalize()
+                * self.delta_time.as_secs_f32()
+                * self.camera.get_scale();
             self.camera.translate(direction.x, 0., direction.y);
         }
         if self.input.get_key_down(winit::event::VirtualKeyCode::S) {
-            let direction = self.camera.z_axis().xz().normalize() * self.delta_time.as_secs_f32();
+            let direction = self.camera.z_axis().xz().normalize()
+                * self.delta_time.as_secs_f32()
+                * self.camera.get_scale();
             self.camera.translate(direction.x, 0., direction.y);
         }
         if self.input.get_key_down(winit::event::VirtualKeyCode::A) {

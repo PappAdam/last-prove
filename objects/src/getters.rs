@@ -5,6 +5,7 @@ pub trait Getters {
     fn x_axis(&self) -> Vector3<f32>;
     fn y_axis(&self) -> Vector3<f32>;
     fn z_axis(&self) -> Vector3<f32>;
+    fn get_scale(&self) -> f32;
 }
 impl Getters for Matrix4<f32> {
     fn get_position(&self) -> Vector3<f32> {
@@ -18,5 +19,8 @@ impl Getters for Matrix4<f32> {
     }
     fn z_axis(&self) -> Vector3<f32> {
         (self.try_inverse().unwrap() * Vector4::z()).xyz()
+    }
+    fn get_scale(&self) -> f32 {
+        self.z_axis().magnitude()
     }
 }
