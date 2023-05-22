@@ -37,16 +37,16 @@ impl Map {
                             Vertex::from_pos(Vector3::new(x as f32, 0., y as f32)),
                             Vertex::from_pos(Vector3::new(offset as f32, 0., y as f32)),
                             Vertex::from_pos(Vector3::new(x as f32, 0., y as f32 + 1.)),
-                            Vertex::from_pos(Vector3::new(offset as f32, 0., y as f32 + 1.))
+                            Vertex::from_pos(Vector3::new(offset as f32, 0., y as f32 + 1.)),
                         ];
                         vertices.append(&mut square);
                         let mut square_indicies = vec![
-                            (tile_index * 4 + 0) as u16,
-                            (tile_index * 4 + 1) as u16,
-                            (tile_index * 4 + 2) as u16,
-                            (tile_index * 4 + 1) as u16,
-                            (tile_index * 4 + 2) as u16,
-                            (tile_index * 4 + 3) as u16
+                            (tile_index * 4 + 0) as u32,
+                            (tile_index * 4 + 1) as u32,
+                            (tile_index * 4 + 2) as u32,
+                            (tile_index * 4 + 1) as u32,
+                            (tile_index * 4 + 2) as u32,
+                            (tile_index * 4 + 3) as u32,
                         ];
                         indicies.append(&mut square_indicies);
 

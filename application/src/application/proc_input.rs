@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use nalgebra::{Vector2, Vector3};
 use objects::{getters::Getters, transformations::Transformations};
 use winit::event::MouseButton;
@@ -33,10 +31,12 @@ impl<'a> App<'a> {
             self.camera.translate(direction.x, 0., direction.y);
         }
         if self.input.get_key_down(winit::event::VirtualKeyCode::A) {
-            self.camera.translate_local(1. * self.delta_time.as_secs_f32(), 0., 0.);
+            self.camera
+                .translate_local(1. * self.delta_time.as_secs_f32(), 0., 0.);
         }
         if self.input.get_key_down(winit::event::VirtualKeyCode::D) {
-            self.camera.translate_local(-1. * self.delta_time.as_secs_f32(), 0., 0.);
+            self.camera
+                .translate_local(-1. * self.delta_time.as_secs_f32(), 0., 0.);
         }
         Transformations::scale(
             &mut self.camera,

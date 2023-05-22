@@ -14,7 +14,7 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn new(renderer: &mut Renderer, vertices: Vec<Vertex>, indicies: Vec<u16>) -> Self {
+    pub fn new(renderer: &mut Renderer, vertices: Vec<Vertex>, indicies: Vec<u32>) -> Self {
         let vertex_buffer = Buffer::device_local(
             &renderer.base.device,
             vertices.as_ptr() as _,
@@ -29,7 +29,7 @@ impl Mesh {
         let index_buffer = Buffer::device_local(
             &renderer.base.device,
             indicies.as_ptr() as _,
-            size_of::<u16>() as u64 * indicies.len() as u64,
+            size_of::<u32>() as u64 * indicies.len() as u64,
             renderer.base.physical_device_memory_properties,
             vk::BufferUsageFlags::INDEX_BUFFER,
             renderer.base.queue,
@@ -61,7 +61,7 @@ impl Mesh {
 
     pub fn from_obj(renderer: &mut Renderer, path: &str) -> Mesh {
         let input = BufReader::new(File::open(path).unwrap());
-        let obj: Obj<obj::Vertex, u16> = load_obj(input).unwrap();
+        let obj: Obj<obj::Vertex, u32> = load_obj(input).unwrap();
 
         let mut vertex_buffer = Vec::new();
         for vertex in obj.vertices {

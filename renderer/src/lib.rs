@@ -67,7 +67,7 @@ impl Renderer {
                 current_command_buffer,
                 mesh.1,
                 0,
-                vk::IndexType::UINT16,
+                vk::IndexType::UINT32,
             );
 
             self.base
