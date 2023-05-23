@@ -86,7 +86,7 @@ impl Map {
         let mut tile_matrix = vec::from_elem(vec::from_elem(Tile::none(), size), size);
         for y in 0..size {
             for x in 0..size {
-                if heightmap[y][x] > 0.5 {
+                if heightmap[y][x] > 0.7 {
                     tile_matrix[y][x] = Tile::new();
                 }
             }

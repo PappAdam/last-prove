@@ -6,8 +6,6 @@ use std::{
 };
 
 use ash::vk;
-use nalgebra::Vector3;
-use obj::{load_obj, raw::parse_mtl, Obj};
 
 use renderer::{self, resources::buffer::Buffer, utils::vertex::Vertex, Renderer};
 
@@ -99,26 +97,20 @@ impl Mesh {
             let line = line.unwrap();
             let splitted_line = line.split(' ').collect::<Vec<_>>();
             match splitted_line[0] {
-                "v" => {
-                    vertices.push([
-                        splitted_line[1].parse::<f32>().unwrap(),
-                        splitted_line[2].parse::<f32>().unwrap(),
-                        splitted_line[3].parse::<f32>().unwrap(),
-                    ])
-                },
-                "vn" => {
-                    normals.push([
-                        splitted_line[1].parse::<f32>().unwrap(),
-                        splitted_line[2].parse::<f32>().unwrap(),
-                        splitted_line[3].parse::<f32>().unwrap(),
-                    ])
-                },
-                "vt" => {
-                    textures.push([
-                        splitted_line[1].parse::<f32>().unwrap(),
-                        splitted_line[2].parse::<f32>().unwrap(),
-                    ])
-                },
+                "v" => vertices.push([
+                    splitted_line[1].parse::<f32>().unwrap(),
+                    splitted_line[2].parse::<f32>().unwrap(),
+                    splitted_line[3].parse::<f32>().unwrap(),
+                ]),
+                "vn" => normals.push([
+                    splitted_line[1].parse::<f32>().unwrap(),
+                    splitted_line[2].parse::<f32>().unwrap(),
+                    splitted_line[3].parse::<f32>().unwrap(),
+                ]),
+                "vt" => textures.push([
+                    splitted_line[1].parse::<f32>().unwrap(),
+                    splitted_line[2].parse::<f32>().unwrap(),
+                ]),
                 "f" => {
                     for segment in &splitted_line[1..] {
                         let splitted_segment = segment.split('/').collect::<Vec<_>>();
@@ -129,12 +121,12 @@ impl Mesh {
                         ));
                         index_buffer.push(index_buffer.len() as u32);
                     }
-                },
+                }
                 "usemtl" => {
                     current_material = splitted_line[1].to_owned();
                 }
                 _ => {}
-            } 
+            }
         }
 
         Mesh::new(renderer, vertex_buffer, index_buffer)

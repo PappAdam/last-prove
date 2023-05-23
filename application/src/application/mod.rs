@@ -1,12 +1,9 @@
-use std::{cell::RefCell, f32::consts::PI, path, time::Duration};
+use std::time::Duration;
 
 use nalgebra::Matrix4;
-use objects::{mesh::Mesh, transformations::Transformations, GameObject, ObjectType};
+use objects::{mesh::Mesh, GameObject, ObjectType};
 use renderer::{
-    engine::{
-        aligned_array::{AlignedArray, NoneValue},
-        object_vector::ObjVec,
-    },
+    engine::{aligned_array::AlignedArray, object_vector::ObjVec},
     utils::MAX_WORLD_OBJECTS,
     Renderer,
 };

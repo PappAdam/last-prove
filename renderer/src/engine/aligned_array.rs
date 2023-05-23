@@ -1,6 +1,5 @@
 use std::{
     alloc::{alloc, dealloc, Layout},
-    fmt::Display,
     mem::size_of,
     ops::{Index, IndexMut},
     ptr::write_bytes,

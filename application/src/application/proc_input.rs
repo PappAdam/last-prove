@@ -1,4 +1,4 @@
-use nalgebra::{Vector2, Vector3};
+use nalgebra::Vector3;
 use objects::{getters::Getters, transformations::Transformations};
 use winit::event::MouseButton;
 

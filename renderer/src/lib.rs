@@ -6,10 +6,7 @@ pub mod resources;
 mod setup;
 pub mod utils;
 
-use std::{mem::size_of, time::Instant};
-
 use ash::vk;
-use engine::aligned_array::AlignedArray;
 use resources::buffer::Buffer;
 use utils::{buffer_data::BufferObject, MAX_WORLD_OBJECTS};
 use winit::window::Window;

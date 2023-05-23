@@ -2,15 +2,11 @@ mod application;
 mod input;
 mod map;
 
-use std::{borrow::BorrowMut, f32::consts::PI, sync::Arc, time::Instant};
+use std::time::Instant;
 
 use application::App;
-use input::Input;
 use map::Map;
-use nalgebra::{Matrix4, Vector3};
-use objects::{
-    getters::Getters, mesh::Mesh, transformations::Transformations, GameObject, ObjectType,
-};
+use objects::mesh::Mesh;
 use winit::{
     dpi::PhysicalSize,
     event::{Event, KeyboardInput, MouseScrollDelta, WindowEvent},
@@ -19,7 +15,7 @@ use winit::{
     window::Fullscreen,
 };
 
-use renderer::{engine::aligned_array::AlignedArray, msg};
+use renderer::msg;
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(
         simplelog::LevelFilter::Info,
