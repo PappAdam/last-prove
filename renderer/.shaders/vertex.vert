@@ -24,16 +24,19 @@ void main()
 {   
     mat4 model_view = view.view * model.transform;
 
-    vec3 light_source = normalize(vec3(0.3, -1, 0));
-    //Direction of the light
-
+    // Position calculation
     vec4 new_pos = model_view * vec4(pos, 1.);
-
     float depth_z = (new_pos.z - push_const.min_z) / (push_const.max_z - push_const.min_z);
-
     gl_Position = vec4(new_pos.x * push_const.wh_ratio, new_pos.y, depth_z, 1.);
 
-    // fragColor = color * dot(normalize(vec3(model_view * vec4(normal, 0.0))), normalize(vec3(view.view * vec4(light_source, 0.0))));
+    // Color/light calculation
+    vec4 sun_direction = normalize(vec4(0.3, -1, 0, 1.0));
+    vec4 sun_color = vec4(0.9, 0.9, 0.5, 1.0);
+    float sun_intensity = 1.0;
+    vec4 sun_final_color = sun_intensity * sun_color * dot(normalize(model.transform * vec4(normal, 0.0)), sun_direction);
+
+    vec4 ambient_color = vec4(1.0, 1.0, 1.0, 1.0);
+
+    fragColor = color * vec3(sun_final_color + ambient_color);
     // fragColor = vec3(model.transform * vec4(normal, 0.0));
-    fragColor = color;
 }

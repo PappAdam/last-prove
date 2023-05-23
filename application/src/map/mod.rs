@@ -17,6 +17,9 @@ pub struct Map {
 
 impl Map {
     pub fn convert_to_mesh(&self, renderer: &mut Renderer) -> Mesh {
+        let vertex_color = Vector3::new(33. / 255., 120. / 255., 0.);
+        let vertex_normal = Vector3::y();
+
         let mut vertices = vec![];
         let mut indicies = vec![];
         let mut tile_index = 0;
@@ -34,10 +37,26 @@ impl Map {
                         }
                         //Here we found the next water tile, so we make a square from the first to the last solid tile
                         let mut square = vec![
-                            Vertex::from_pos(Vector3::new(x as f32, 0., y as f32)),
-                            Vertex::from_pos(Vector3::new(offset as f32, 0., y as f32)),
-                            Vertex::from_pos(Vector3::new(x as f32, 0., y as f32 + 1.)),
-                            Vertex::from_pos(Vector3::new(offset as f32, 0., y as f32 + 1.)),
+                            Vertex::new(
+                                Vector3::new(x as f32, 0., y as f32),
+                                vertex_color,
+                                vertex_normal,
+                            ),
+                            Vertex::new(
+                                Vector3::new(offset as f32, 0., y as f32),
+                                vertex_color,
+                                vertex_normal,
+                            ),
+                            Vertex::new(
+                                Vector3::new(x as f32, 0., y as f32 + 1.),
+                                vertex_color,
+                                vertex_normal,
+                            ),
+                            Vertex::new(
+                                Vector3::new(offset as f32, 0., y as f32 + 1.),
+                                vertex_color,
+                                vertex_normal,
+                            ),
                         ];
                         vertices.append(&mut square);
                         let mut square_indicies = vec![

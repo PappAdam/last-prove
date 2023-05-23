@@ -64,28 +64,6 @@ impl Mesh {
         )
     }
 
-    pub fn from_obj(renderer: &mut Renderer, path: &str) -> Mesh {
-        let obj_buf = BufReader::new(File::open(path.to_owned() + ".obj").unwrap());
-        let obj: Obj<obj::Vertex, u32> = load_obj(obj_buf).unwrap();
-        let mtl_buf = BufReader::new(File::open(path.to_owned() + ".mtl").unwrap());
-        let mtl = parse_mtl(mtl_buf).unwrap();
-        // dbg!(mtl.materials);
-
-        let mut vertex_buffer = Vec::new();
-        for vertex in obj.vertices {
-            let position = vertex.position.into();
-            let normal = vertex.normal.into();
-            let new_vertex = Vertex::new(position, Vector3::new(1., 1., 1.), normal);
-            vertex_buffer.push(new_vertex);
-        }
-
-        let mut index_buffer = Vec::new();
-        for index in obj.indices {
-            index_buffer.push(index);
-        }
-
-        Mesh::new(renderer, vertex_buffer, index_buffer)
-    }
     pub fn from_file(renderer: &mut Renderer, path: &str) -> Mesh {
         let obj_file = BufReader::new(File::open(path.to_owned() + ".obj").unwrap());
         let mtl_file = BufReader::new(File::open(path.to_owned() + ".mtl").unwrap());
@@ -153,8 +131,7 @@ impl Mesh {
                     ));
                     index_buffer.push(index_buffer.len() as u32);
                 }
-            }
-            else if splitted_line[0] == "usemtl" {
+            } else if splitted_line[0] == "usemtl" {
                 current_material = splitted_line[1].to_owned();
             }
         }
