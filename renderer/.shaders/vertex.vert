@@ -32,10 +32,10 @@ void main()
     // Color/light calculation
     vec4 sun_direction = normalize(vec4(0.3, -1, 0, 1.0));
     vec4 sun_color = vec4(0.9, 0.9, 0.5, 1.0);
-    float sun_intensity = 1.0;
+    float sun_intensity = 1.5;
     vec4 sun_final_color = sun_intensity * sun_color * dot(normalize(model.transform * vec4(normal, 0.0)), sun_direction);
 
-    vec4 ambient_color = vec4(1.0, 1.0, 1.0, 1.0);
+    vec4 ambient_color = vec4(0.6, 0.6, 0.6, 1.0);
 
     fragColor = color * vec3(sun_final_color + ambient_color);
     // fragColor = vec3(model.transform * vec4(normal, 0.0));

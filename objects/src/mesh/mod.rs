@@ -98,42 +98,43 @@ impl Mesh {
         for line in obj_file.lines() {
             let line = line.unwrap();
             let splitted_line = line.split(' ').collect::<Vec<_>>();
-            if splitted_line[0] == "v" {
-                vertices.push([
-                    splitted_line[1].parse::<f32>().unwrap(),
-                    splitted_line[2].parse::<f32>().unwrap(),
-                    splitted_line[3].parse::<f32>().unwrap(),
-                ])
-            } else if splitted_line[0] == "vn" {
-                normals.push([
-                    splitted_line[1].parse::<f32>().unwrap(),
-                    splitted_line[2].parse::<f32>().unwrap(),
-                    splitted_line[3].parse::<f32>().unwrap(),
-                ])
-            } else if splitted_line[0] == "vn" {
-                normals.push([
-                    splitted_line[1].parse::<f32>().unwrap(),
-                    splitted_line[2].parse::<f32>().unwrap(),
-                    splitted_line[3].parse::<f32>().unwrap(),
-                ])
-            } else if splitted_line[0] == "vt" {
-                textures.push([
-                    splitted_line[1].parse::<f32>().unwrap(),
-                    splitted_line[2].parse::<f32>().unwrap(),
-                ])
-            } else if splitted_line[0] == "f" {
-                for segment in &splitted_line[1..] {
-                    let splitted_segment = segment.split('/').collect::<Vec<_>>();
-                    vertex_buffer.push(Vertex::new(
-                        vertices[splitted_segment[0].parse::<usize>().unwrap() - 1].into(),
-                        materials[&current_material].into(),
-                        normals[splitted_segment[2].parse::<usize>().unwrap() - 1].into(),
-                    ));
-                    index_buffer.push(index_buffer.len() as u32);
+            match splitted_line[0] {
+                "v" => {
+                    vertices.push([
+                        splitted_line[1].parse::<f32>().unwrap(),
+                        splitted_line[2].parse::<f32>().unwrap(),
+                        splitted_line[3].parse::<f32>().unwrap(),
+                    ])
+                },
+                "vn" => {
+                    normals.push([
+                        splitted_line[1].parse::<f32>().unwrap(),
+                        splitted_line[2].parse::<f32>().unwrap(),
+                        splitted_line[3].parse::<f32>().unwrap(),
+                    ])
+                },
+                "vt" => {
+                    textures.push([
+                        splitted_line[1].parse::<f32>().unwrap(),
+                        splitted_line[2].parse::<f32>().unwrap(),
+                    ])
+                },
+                "f" => {
+                    for segment in &splitted_line[1..] {
+                        let splitted_segment = segment.split('/').collect::<Vec<_>>();
+                        vertex_buffer.push(Vertex::new(
+                            vertices[splitted_segment[0].parse::<usize>().unwrap() - 1].into(),
+                            materials[&current_material].into(),
+                            normals[splitted_segment[2].parse::<usize>().unwrap() - 1].into(),
+                        ));
+                        index_buffer.push(index_buffer.len() as u32);
+                    }
+                },
+                "usemtl" => {
+                    current_material = splitted_line[1].to_owned();
                 }
-            } else if splitted_line[0] == "usemtl" {
-                current_material = splitted_line[1].to_owned();
-            }
+                _ => {}
+            } 
         }
 
         Mesh::new(renderer, vertex_buffer, index_buffer)
