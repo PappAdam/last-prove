@@ -40,7 +40,7 @@ impl Default for GameController {
     fn default() -> Self {
         Self {
             time: Default::default(),
-            day_length: 5.,
+            day_length: 120.,
         }
     }
 }
