@@ -24,14 +24,14 @@ impl GameController {
         //Put this function in desmos.com to see the graph: min(abs(sin(x))*2.0, 1.5)
 
         let sun_direction =
-            Vector3::new((self.time / (12. / PI)).cos(), sun_height, 0.2).normalize();
+            Vector3::new((self.time / (12. / PI)).cos(), sun_height, (self.time / (12. / PI)).cos() / 2.).normalize();
 
         if sun_height < 0. {
             renderer.data.push_const.sun_direction = sun_direction;
             renderer.data.push_const.sun_color = Vector3::new(0.9, 0.7, 0.7) * sun_intensity;
         } else {
             renderer.data.push_const.sun_direction = -sun_direction;
-            renderer.data.push_const.sun_color = Vector3::new(0.5, 0.65, 0.87) * sun_intensity;
+            renderer.data.push_const.sun_color = Vector3::new(0.5, 0.65, 0.87) * sun_intensity * 0.6;
         }
     }
 }
@@ -40,7 +40,7 @@ impl Default for GameController {
     fn default() -> Self {
         Self {
             time: Default::default(),
-            day_length: 120.,
+            day_length: 10.,
         }
     }
 }

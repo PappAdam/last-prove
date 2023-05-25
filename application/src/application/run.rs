@@ -17,6 +17,7 @@ impl<'a> App<'a> {
 
     pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>) {
         self.load_mesh("resources/models/Basic_house", meshes);
+        // self.load_mesh("resources/models/az", meshes);
         self.create_obj(ObjectType::SomeObject, &meshes[0]);
         self.create_obj(ObjectType::SomeObject, &meshes[1]);
         self.gameobjects[0]
