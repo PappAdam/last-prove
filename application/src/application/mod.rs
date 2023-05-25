@@ -11,16 +11,23 @@ use winit::window::Window;
 
 use crate::input::Input;
 
+use self::gamecontroller::GameController;
+
+mod gamecontroller;
 pub mod proc_input;
 pub mod run;
 
 pub struct App<'a> {
     pub input: Input,
     pub renderer: Renderer,
+
     gameobjects: ObjVec<GameObject<'a>>,
+    game_controller: GameController,
+
     transform_array: AlignedArray<Matrix4<f32>>,
     camera: Matrix4<f32>,
 
+    //It is like minecraft's time, going from 0 to 65535
     pub delta_time: Duration,
 }
 
@@ -36,6 +43,7 @@ impl<'a> App<'a> {
             renderer,
             camera: Matrix4::identity(),
             gameobjects: ObjVec::with_capacity(MAX_WORLD_OBJECTS),
+            game_controller: GameController::default(),
             delta_time: Duration::ZERO,
         }
     }

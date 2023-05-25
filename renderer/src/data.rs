@@ -1,4 +1,4 @@
-use nalgebra::Matrix4;
+use nalgebra::{Matrix4, Vector3};
 
 use crate::{
     create_shader,
@@ -12,7 +12,7 @@ use crate::{
     },
     setup,
     utils::{
-        buffer_data::{BufferObject, WorldView},
+        buffer_data::{BufferObject, PushConst, WorldView},
         MAX_WORLD_OBJECTS,
     },
 };
@@ -39,6 +39,7 @@ pub struct RenderData {
 
     //Buffer content
     pub world_view: WorldView,
+    pub push_const: PushConst,
 
     //Buffers
     pub uniform_buffer: UniformBuffer,
@@ -172,6 +173,7 @@ impl RenderData {
             //Buffers
             uniform_buffer,
             dynamic_uniform_buffer,
+            push_const: PushConst::default(),
         })
     }
 

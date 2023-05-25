@@ -1,4 +1,4 @@
-use std::mem::size_of;
+use std::mem::{size_of, size_of_val};
 
 use ash::vk;
 
@@ -29,13 +29,8 @@ impl Renderer {
                 vk::ShaderStageFlags::VERTEX,
                 0,
                 std::slice::from_raw_parts(
-                    &[
-                        self.base.surface_extent.height as f32
-                            / self.base.surface_extent.width as f32,
-                        200.,
-                        -100.,
-                    ] as *const _ as *const u8,
-                    size_of::<f32>() * 3,
+                    &self.data.push_const as *const _ as *const u8,
+                    size_of_val(&self.data.push_const),
                 ),
             );
         }

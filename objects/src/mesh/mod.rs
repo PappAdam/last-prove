@@ -85,6 +85,9 @@ impl Mesh {
                 );
             }
         }
+        if materials.len() == 0 {
+            materials.insert("default".to_owned(), [0.9, 0.9, 0.9]);
+        }
         //Finished loading materials
         let mut vertex_buffer = vec![];
         let mut index_buffer = vec![];
@@ -92,7 +95,7 @@ impl Mesh {
         let mut vertices = vec![];
         let mut normals = vec![];
         let mut textures = vec![];
-        let mut current_material = String::from("");
+        let mut current_material = String::from("default");
         for line in obj_file.lines() {
             let line = line.unwrap();
             let splitted_line = line.split(' ').collect::<Vec<_>>();

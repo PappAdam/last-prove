@@ -2,8 +2,10 @@
 
 layout(push_constant) uniform _push_const {
     float wh_ratio;
-    float max_z;
     float min_z;
+    float max_z;
+    vec3 sun_direction;
+    vec3 sun_color;
 } push_const;
 
 layout(location = 0) in vec3 pos;
@@ -11,7 +13,6 @@ layout(location = 1) in vec3 color;
 layout(location = 2) in vec3 normal;
 layout(binding = 0) uniform _view {
     mat4 view;
-    mat4 rotation;
 } view;
 
 layout(binding = 1) uniform _model {
@@ -30,13 +31,14 @@ void main()
     gl_Position = vec4(new_pos.x * push_const.wh_ratio, new_pos.y, depth_z, 1.);
 
     // Color/light calculation
-    vec4 sun_direction = normalize(vec4(0.3, -1, 0, 1.0));
-    vec4 sun_color = vec4(0.9, 0.9, 0.5, 1.0);
-    float sun_intensity = 1.5;
-    vec4 sun_final_color = sun_intensity * sun_color * dot(normalize(model.transform * vec4(normal, 0.0)), sun_direction);
+    vec4 sun_direction = vec4(push_const.sun_direction, 1.0);
+    // vec4 sun_direction = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 sun_color = vec4(push_const.sun_color, 1.0);
+    // vec4 sun_color = vec4(1.0, 0.0, 0.0, 1.0);
+    vec4 sun_final_color = sun_color * dot(normalize(model.transform * vec4(normal, 0.0)), sun_direction);
 
     vec4 ambient_color = vec4(0.6, 0.6, 0.6, 1.0);
 
-    fragColor = color * vec3(sun_final_color + ambient_color);
+    fragColor = color * vec3(sun_final_color + sun_color * 0.4);
     // fragColor = vec3(model.transform * vec4(normal, 0.0));
 }

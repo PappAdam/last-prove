@@ -1,5 +1,6 @@
 use std::f32::consts::PI;
 
+use nalgebra::Vector3;
 use objects::{mesh::Mesh, transformations::Transformations, ObjectType};
 
 use super::App;
@@ -9,13 +10,9 @@ impl<'a> App<'a> {
     pub fn main_loop(&mut self) {
         self.gameobjects[0].render(&self.renderer);
         self.gameobjects[1].render(&self.renderer);
-        // self.gameobjects[1]
-        //     .transform
-        //     .rotate(self.delta_time.as_secs_f32(), 0., 0.);
 
-        // self.gameobjects[0]
-        //     .transform
-        //     .rotate(0., 0., self.delta_time.as_secs_f32());
+        self.game_controller
+            .add_time_elapsed(self.delta_time.as_secs_f32(), &mut self.renderer);
     }
 
     pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>) {

@@ -21,6 +21,7 @@ pub struct Renderer {
 
     pub current_frame_index: usize,
     pub rebuild_swapchain: bool,
+
     pub image_index: usize,
 }
 
@@ -133,6 +134,9 @@ impl Renderer {
         self.set_viewport();
         self.base.resize(window)?;
         self.data.resize(&self.base)?;
+
+        self.data.push_const.wh_ratio =
+            self.base.surface_extent.height as f32 / self.base.surface_extent.width as f32;
 
         Ok(())
     }

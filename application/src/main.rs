@@ -15,7 +15,7 @@ use winit::{
     window::Fullscreen,
 };
 
-use renderer::msg;
+use renderer::{msg, utils::buffer_data::PushConst};
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(
         simplelog::LevelFilter::Info,
@@ -47,6 +47,14 @@ fn main() {
     let map = Map::generate(1000);
     meshes.push(map.convert_to_mesh(&mut app.renderer));
     app.setup(&mut meshes);
+
+    app.renderer.data.push_const = PushConst {
+        wh_ratio: app.renderer.base.surface_extent.width as f32
+            / app.renderer.base.surface_extent.height as f32,
+        min_z: -200.,
+        max_z: 200.,
+        ..Default::default()
+    };
 
     let mut start_time = Instant::now();
     event_loop.run_return(move |event, _, control_flow| match event {
@@ -85,6 +93,7 @@ fn main() {
         },
         Event::MainEventsCleared => {
             app.delta_time = start_time.elapsed();
+
             start_time = Instant::now();
 
             if app.renderer.rebuild_swapchain {

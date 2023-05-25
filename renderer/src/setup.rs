@@ -5,6 +5,7 @@ use ash::extensions::{ext, khr};
 use ash::vk::{self, PresentModeKHR};
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 
+use crate::utils::buffer_data::PushConst;
 use crate::utils::vertex::Vertex;
 use crate::{offset_of, parse_error};
 
@@ -182,7 +183,7 @@ pub fn create_pipeline_layout(
         .push_constant_ranges(&[vk::PushConstantRange {
             stage_flags: vk::ShaderStageFlags::VERTEX,
             offset: 0,
-            size: size_of::<f32>() as u32 * 3,
+            size: size_of::<PushConst>() as u32,
         }])
         .build();
 
