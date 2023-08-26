@@ -1,3 +1,5 @@
+pub mod primitives;
+
 use std::{
     collections::HashMap,
     fs::File,
@@ -71,9 +73,11 @@ impl Mesh {
         let mut current_material_name = String::from("");
         for line in mtl_file.lines() {
             let line = line.unwrap();
+            //Getting material name
             if line.contains("newmtl") {
                 current_material_name = line[7..].to_owned();
             }
+            //Getting material color (Color value is written after the Kd keyword in mtl files)
             if line.contains("Kd") {
                 materials.insert(
                     current_material_name.to_owned(),
@@ -85,35 +89,47 @@ impl Mesh {
                 );
             }
         }
+        //A default material, if no materials are present.
         if materials.len() == 0 {
             materials.insert("default".to_owned(), [0.9, 0.9, 0.9]);
         }
         //Finished loading materials
+
+        //The buffers get filled up when reading face data
         let mut vertex_buffer = vec![];
         let mut index_buffer = vec![];
 
+        //These vectors get filled up with v, vn, and vt values.
         let mut vertices = vec![];
         let mut normals = vec![];
         let mut textures = vec![];
+
+        //Keeping track of what material the face uses.
         let mut current_material = String::from("default");
+
         for line in obj_file.lines() {
             let line = line.unwrap();
             let splitted_line = line.split(' ').collect::<Vec<_>>();
             match splitted_line[0] {
+                //Vertex xample: v 0.0000000 1.0000000 0.5000000
                 "v" => vertices.push([
                     splitted_line[1].parse::<f32>().unwrap(),
-                    splitted_line[2].parse::<f32>().unwrap(),
+                    -splitted_line[2].parse::<f32>().unwrap(),
                     splitted_line[3].parse::<f32>().unwrap(),
                 ]),
+                //Normal example: vn 0.0000000 1.0000000 0.0000000
                 "vn" => normals.push([
                     splitted_line[1].parse::<f32>().unwrap(),
-                    splitted_line[2].parse::<f32>().unwrap(),
+                    -splitted_line[2].parse::<f32>().unwrap(),
                     splitted_line[3].parse::<f32>().unwrap(),
                 ]),
+                //Texture example: vt 0.5000000 1.0000000 (texture is always 2D)
                 "vt" => textures.push([
                     splitted_line[1].parse::<f32>().unwrap(),
                     splitted_line[2].parse::<f32>().unwrap(),
                 ]),
+                //Face example 1/1/1 2/1/1 3/4/1
+                //Format is following: positionindex1/colorindex1/normalindex1 positionindex2/...
                 "f" => {
                     for segment in &splitted_line[1..] {
                         let splitted_segment = segment.split('/').collect::<Vec<_>>();
@@ -122,16 +138,21 @@ impl Mesh {
                             materials[&current_material].into(),
                             normals[splitted_segment[2].parse::<usize>().unwrap() - 1].into(),
                         ));
+
+                        //We are currently loading all vertices in order,
+                        //so the index buffer is just a vector of incrementing numbers.
                         index_buffer.push(index_buffer.len() as u32);
                     }
                 }
+
+                //Material example: usemtl Brick
                 "usemtl" => {
                     current_material = splitted_line[1].to_owned();
                 }
                 _ => {}
             }
         }
-
+        dbg!(vertex_buffer.iter().map(|v| v.pos.y).collect::<Vec<f32>>());
         Mesh::new(renderer, vertex_buffer, index_buffer)
     }
 }

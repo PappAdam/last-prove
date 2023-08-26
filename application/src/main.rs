@@ -5,7 +5,7 @@ mod map;
 use std::time::Instant;
 
 use application::App;
-use map::Map;
+use map::{heightmap::HeightMap, Map};
 use objects::mesh::Mesh;
 use winit::{
     dpi::PhysicalSize,
@@ -44,10 +44,8 @@ fn main() {
 
     let mut app = App::init(&window);
     let mut meshes = Vec::<Mesh>::new();
-    let map = Map::generate(1000);
-    meshes.push(map.convert_to_mesh(&mut app.renderer));
+    meshes.push(Map::generate(100).convert_to_mesh(&mut app.renderer));
     app.setup(&mut meshes);
-
     app.renderer.data.push_const = PushConst {
         wh_ratio: app.renderer.base.surface_extent.width as f32
             / app.renderer.base.surface_extent.height as f32,
@@ -57,7 +55,8 @@ fn main() {
     };
 
     let mut start_time = Instant::now();
-    event_loop.run_return(move |event, _, control_flow| match event {
+    event_loop.run_return(move |event, _,
+        control_flow| match event {
         Event::WindowEvent { event, .. } => match event {
             WindowEvent::CloseRequested => {
                 *control_flow = winit::event_loop::ControlFlow::Exit;

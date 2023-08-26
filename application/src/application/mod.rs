@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use nalgebra::Matrix4;
-use objects::{mesh::Mesh, GameObject, ObjectType};
+use objects::{mesh::Mesh, GameObject, GameObjectCreateInfo};
 use renderer::{
     engine::{aligned_array::AlignedArray, object_vector::ObjVec},
     utils::MAX_WORLD_OBJECTS,
@@ -50,8 +50,8 @@ impl<'a> App<'a> {
 
     /// ##Gameobject creation
     /// returns the index of the created gameobject
-    pub fn create_obj(&mut self, obj_type: ObjectType, mesh: &'a Mesh) -> usize {
-        let obj = GameObject::object(&mut self.transform_array, mesh, obj_type)
+    pub fn create_obj(&mut self, mesh: &'a Mesh, create_info: GameObjectCreateInfo) -> usize {
+        let obj = GameObject::create(&mut self.transform_array, mesh, create_info)
             .expect("Failed to create gameObject");
 
         self.gameobjects.push(obj)

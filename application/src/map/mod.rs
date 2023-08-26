@@ -6,8 +6,7 @@ use renderer::{utils::vertex::Vertex, Renderer};
 
 use self::{heightmap::HeightMap, tile::Tile};
 
-mod heightmap;
-mod perlin;
+pub mod heightmap;
 pub mod tile;
 
 pub struct Map {
@@ -17,8 +16,8 @@ pub struct Map {
 
 impl Map {
     pub fn convert_to_mesh(&self, renderer: &mut Renderer) -> Mesh {
-        let vertex_color = Vector3::new(33. / 255., 120. / 255., 0.);
-        let vertex_normal = Vector3::y();
+        // let vertex_color = Vector3::new(33. / 255., 120. / 255., 0.);
+        // let vertex_color = Vector3::new(255. / 255., 255. / 255., 255. / 255.);
 
         let mut vertices = vec![];
         let mut indicies = vec![];
@@ -28,48 +27,58 @@ impl Map {
             //Iterating over columns, using while so I can modify x.
             let mut x = 0;
             while x < self.size {
-                let tile = &self.matrix[y][x];
-                //If a tile is solid, we search for the next water tile.
-                if tile.is_solid() {
+                //If a tile is solid, we search for the next water tile in that column.
+                if self.matrix[y][x].is_solid() {
                     for offset in x..self.size {
-                        if self.matrix[y][offset].is_solid() && offset != self.size - 1 {
+                        if self.matrix[y][offset].is_solid() {
+                            //Searching for the next water tile on the column, increasing offset.
                             continue;
                         }
-                        //Here we found the next water tile, so we make a square from the first to the last solid tile
-                        let mut square = vec![
-                            Vertex::new(
+                        let vertex_color =
+                            Vector3::new(rand::random(), rand::random(), rand::random());
+                        //Found the next water tile, so make a square from the first to the last solid tile
+                        let (mut square_vertices, mut square_indicies) = Mesh::quad(
+                            [
                                 Vector3::new(x as f32, 0., y as f32),
-                                vertex_color,
-                                vertex_normal,
-                            ),
-                            Vertex::new(
                                 Vector3::new(offset as f32, 0., y as f32),
-                                vertex_color,
-                                vertex_normal,
-                            ),
-                            Vertex::new(
                                 Vector3::new(x as f32, 0., y as f32 + 1.),
-                                vertex_color,
-                                vertex_normal,
-                            ),
-                            Vertex::new(
                                 Vector3::new(offset as f32, 0., y as f32 + 1.),
-                                vertex_color,
-                                vertex_normal,
-                            ),
-                        ];
-                        vertices.append(&mut square);
-                        let mut square_indicies = vec![
-                            (tile_index * 4 + 0) as u32,
-                            (tile_index * 4 + 1) as u32,
-                            (tile_index * 4 + 2) as u32,
-                            (tile_index * 4 + 1) as u32,
-                            (tile_index * 4 + 2) as u32,
-                            (tile_index * 4 + 3) as u32,
-                        ];
+                            ],
+                            vertex_color,
+                            tile_index * 4,
+                        );
+                        vertices.append(&mut square_vertices);
                         indicies.append(&mut square_indicies);
-
                         tile_index += 1;
+
+                        let (mut square_vertices, mut square_indicies) = Mesh::quad(
+                            [
+                                Vector3::new(x as f32 - 0.1, 0.1, y as f32),
+                                Vector3::new(x as f32, 0., y as f32),
+                                Vector3::new(x as f32 - 0.1, 0.1, y as f32 + 1.),
+                                Vector3::new(x as f32, 0., y as f32 + 1.),
+                            ],
+                            vertex_color,
+                            tile_index * 4,
+                        );
+                        vertices.append(&mut square_vertices);
+                        indicies.append(&mut square_indicies);
+                        tile_index += 1;
+
+                        let (mut square_vertices, mut square_indicies) = Mesh::quad(
+                            [
+                                Vector3::new(offset as f32, 0., y as f32),
+                                Vector3::new(offset as f32 + 0.1, 0.1, y as f32),
+                                Vector3::new(offset as f32, 0., y as f32 + 1.),
+                                Vector3::new(offset as f32 + 0.1, 0.1, y as f32 + 1.),
+                            ],
+                            vertex_color,
+                            tile_index * 4,
+                        );
+                        vertices.append(&mut square_vertices);
+                        indicies.append(&mut square_indicies);
+                        tile_index += 1;
+
                         //We can skip all previously checked tiles.
                         x = offset;
                         break;
@@ -82,7 +91,7 @@ impl Map {
     }
 
     pub fn generate(size: usize) -> Self {
-        let heightmap = HeightMap::perlin_noise(None, size);
+        let heightmap = HeightMap::perlin_noise(100, 30., 0.65, 4);
         let mut tile_matrix = vec::from_elem(vec::from_elem(Tile::none(), size), size);
         for y in 0..size {
             for x in 0..size {

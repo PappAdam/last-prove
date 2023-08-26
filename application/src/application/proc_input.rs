@@ -7,7 +7,8 @@ use super::App;
 impl<'a> App<'a> {
     #[inline]
     pub fn camera_move(&mut self) {
-        if self.input.get_mouse_button_down(MouseButton::Middle) {
+        // if self.input.get_mouse_button_down(MouseButton::Middle) {
+        if self.input.get_key_down(winit::event::VirtualKeyCode::U) {
             self.camera
                 .orbit(
                     0.,

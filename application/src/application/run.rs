@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use nalgebra::Vector3;
-use objects::{mesh::Mesh, transformations::Transformations, ObjectType};
+use objects::{mesh::Mesh, GameObjectCreateInfo, transformations::Transformations};
 
 use super::App;
 
@@ -16,20 +16,14 @@ impl<'a> App<'a> {
     }
 
     pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>) {
-        self.load_mesh("resources/models/Basic_house", meshes);
+        self.load_mesh("resources/models/pine_tree", meshes);
         // self.load_mesh("resources/models/az", meshes);
-        self.create_obj(ObjectType::SomeObject, &meshes[0]);
-        self.create_obj(ObjectType::SomeObject, &meshes[1]);
-        self.gameobjects[0]
-            .transform
-            .translate(0., 0.5, 0.)
-            .rotate(0., 0., PI)
-            .scale(0.3, 0.3, 0.3);
-
-        self.gameobjects[1]
-            .transform
-            .translate(1., 0., 0.)
-            .rotate(0., 0., PI)
-            .scale(0.3, 0.3, 0.3);
+        self.create_obj(&meshes[0], GameObjectCreateInfo::position(Vector3::new(-5., 5., 0.)));
+        // self.gameobjects[0].transform.rotate(PI/2., 0., 0.);
+        // self.gameobjects[0].transform.scale(0.1, 0.1, 0.1);
+        self.create_obj(
+            &meshes[1],
+            GameObjectCreateInfo::position(Vector3::new(200., 0., 2.)),
+        );
     }
 }

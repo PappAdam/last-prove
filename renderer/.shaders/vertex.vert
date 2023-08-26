@@ -40,5 +40,6 @@ void main()
     vec4 ambient_color = vec4(0.6, 0.6, 0.6, 1.0);
 
     fragColor = color * vec3(sun_final_color + sun_color * 0.4);
+    // fragColor = color;
     // fragColor = vec3(model.transform * vec4(normal, 0.0));
 }

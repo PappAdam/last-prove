@@ -19,19 +19,25 @@ impl GameController {
         if self.time > 24. {
             self.time -= 24.;
         }
-        let sun_height = (self.time / (12. / PI)).sin();
+        let sun_height = -((self.time / (12. / PI)).cos());
         let sun_intensity = (sun_height.abs() * 3.).min(1.2);
         //Put this function in desmos.com to see the graph: min(abs(sin(x))*2.0, 1.5)
 
-        let sun_direction =
-            Vector3::new((self.time / (12. / PI)).cos(), sun_height, (self.time / (12. / PI)).cos() / 2.).normalize();
+        let sun_direction = Vector3::new(
+            (self.time / (12. / PI)).sin(),
+            sun_height,
+            (self.time / (12. / PI)).sin() / 2.,
+        )
+        .normalize();
 
-        if sun_height < 0. {
-            renderer.data.push_const.sun_direction = sun_direction;
-            renderer.data.push_const.sun_color = Vector3::new(0.9, 0.7, 0.7) * sun_intensity;
-        } else {
+        if sun_height > 0. {
             renderer.data.push_const.sun_direction = -sun_direction;
-            renderer.data.push_const.sun_color = Vector3::new(0.5, 0.65, 0.87) * sun_intensity * 0.6;
+            renderer.data.push_const.sun_color = Vector3::new(0.9, 0.7, 0.7) * sun_intensity;
+            // renderer.data.push_const.sun_color = Vector3::new(1., 1., 1.);
+        } else {
+            renderer.data.push_const.sun_direction = sun_direction;
+            renderer.data.push_const.sun_color =
+                Vector3::new(0.5, 0.65, 0.87) * sun_intensity * 0.6;
         }
     }
 }
