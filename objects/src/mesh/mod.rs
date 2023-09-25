@@ -152,7 +152,6 @@ impl Mesh {
                 _ => {}
             }
         }
-        dbg!(vertex_buffer.iter().map(|v| v.pos.y).collect::<Vec<f32>>());
         Mesh::new(renderer, vertex_buffer, index_buffer)
     }
 }

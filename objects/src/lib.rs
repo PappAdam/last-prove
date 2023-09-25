@@ -26,7 +26,7 @@ impl<'a> GameObject<'a> {
     pub fn create(
         transform_buf: &mut AlignedArray<Matrix4<f32>>,
         mesh: &'a Mesh,
-        create_info: GameObjectCreateInfo,
+        create_info: &GameObjectCreateInfo,
     ) -> Result<Self, ObjectCreationError> {
         let transform_index = transform_buf
             .push(Matrix4::identity())
@@ -79,6 +79,14 @@ impl GameObjectCreateInfo {
         Self {
             position,
             scale: 1.,
+        }
+    }
+
+    #[inline]
+    pub fn position_scale(position: Vector3<f32>, scale: f32) -> Self {
+        Self {
+            position,
+            scale,
         }
     }
 }

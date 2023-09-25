@@ -1,4 +1,4 @@
-use std::mem::{size_of, size_of_val};
+use std::mem::size_of_val;
 
 use ash::vk;
 

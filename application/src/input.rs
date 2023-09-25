@@ -73,7 +73,7 @@ impl Input {
                 == ElementState::Pressed
         }
     }
-    
+
     #[inline]
     pub fn get_mouse_wheel(&self) -> f32 {
         self.mouse.wheel
@@ -84,9 +84,7 @@ pub struct Mouse {
     pub buttons: [ElementState; 3],
     pub pos: Vector2<f32>,
     pub delta_move: Vector2<f32>,
-    pub wheel: f32
+    pub wheel: f32,
 }
 
-impl Mouse {
-
-}
+impl Mouse {}

@@ -3,11 +3,7 @@ use std::{
     vec,
 };
 
-use cellular_automaton::life_like::Automaton;
-use nalgebra::{Vector2, Vector3};
-use noise::{NoiseFn, OpenSimplex, Perlin, Simplex};
-use objects::mesh::Mesh;
-use renderer::{utils::vertex::Vertex, Renderer};
+use noise::{NoiseFn, OpenSimplex};
 
 pub struct HeightMap {
     size: usize,
@@ -26,7 +22,6 @@ impl HeightMap {
 
         let mut heightmap = Self::new(size);
         let mut amplitude = 1.0;
-        let mut total_amplitude = 0.0;
 
         for octave in 0..octaves {
             let frequency = 2.0_f64.powi(octave as i32);
@@ -38,7 +33,6 @@ impl HeightMap {
                     heightmap[x][y] += (perlin.get([nx, ny]) * amplitude) as f32;
                 }
             }
-            total_amplitude += amplitude;
             amplitude *= persistence;
         }
         let center = size as f32 / 2.;

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use nalgebra::Matrix4;
+use nalgebra::{Matrix4, Vector3};
 use objects::{mesh::Mesh, GameObject, GameObjectCreateInfo};
 use renderer::{
     engine::{aligned_array::AlignedArray, object_vector::ObjVec},
@@ -26,6 +26,7 @@ pub struct App<'a> {
 
     transform_array: AlignedArray<Matrix4<f32>>,
     camera: Matrix4<f32>,
+    pub camera_view_location: Vector3<f32>,
 
     //It is like minecraft's time, going from 0 to 65535
     pub delta_time: Duration,
@@ -33,24 +34,24 @@ pub struct App<'a> {
 
 impl<'a> App<'a> {
     pub fn init(window: &Window) -> Self {
-        let renderer = Renderer::new(window).expect("Failed to setup renderer");
-
+        let mut renderer = Renderer::new(window).expect("Failed to setup renderer");
         Self {
             input: Input::init(),
             transform_array: AlignedArray::from_dynamic_ub_data(
                 &renderer.data.dynamic_uniform_buffer,
             ),
+            game_controller: GameController::init(&mut renderer),
             renderer,
             camera: Matrix4::identity(),
+            camera_view_location: Vector3::new(0., 0., 0.),
             gameobjects: ObjVec::with_capacity(MAX_WORLD_OBJECTS),
-            game_controller: GameController::default(),
             delta_time: Duration::ZERO,
         }
     }
 
     /// ##Gameobject creation
     /// returns the index of the created gameobject
-    pub fn create_obj(&mut self, mesh: &'a Mesh, create_info: GameObjectCreateInfo) -> usize {
+    pub fn create_obj(&mut self, mesh: &'a Mesh, create_info: &GameObjectCreateInfo) -> usize {
         let obj = GameObject::create(&mut self.transform_array, mesh, create_info)
             .expect("Failed to create gameObject");
 

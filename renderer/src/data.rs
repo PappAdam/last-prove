@@ -1,4 +1,4 @@
-use nalgebra::{Matrix4, Vector3};
+use nalgebra::Matrix4;
 
 use crate::{
     create_shader,

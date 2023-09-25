@@ -5,7 +5,7 @@ mod map;
 use std::time::Instant;
 
 use application::App;
-use map::{heightmap::HeightMap, Map};
+use map::Map;
 use objects::mesh::Mesh;
 use winit::{
     dpi::PhysicalSize,
@@ -15,7 +15,7 @@ use winit::{
     window::Fullscreen,
 };
 
-use renderer::{msg, utils::buffer_data::PushConst};
+use renderer::msg;
 fn main() {
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![simplelog::TermLogger::new(
         simplelog::LevelFilter::Info,
@@ -44,19 +44,16 @@ fn main() {
 
     let mut app = App::init(&window);
     let mut meshes = Vec::<Mesh>::new();
-    meshes.push(Map::generate(100).convert_to_mesh(&mut app.renderer));
+    meshes.push(Map::generate(500).convert_to_mesh(&mut app.renderer));
     app.setup(&mut meshes);
-    app.renderer.data.push_const = PushConst {
-        wh_ratio: app.renderer.base.surface_extent.width as f32
-            / app.renderer.base.surface_extent.height as f32,
-        min_z: -200.,
-        max_z: 200.,
-        ..Default::default()
-    };
+
+    app.renderer.data.push_const.wh_ratio = app.renderer.base.surface_extent.width as f32
+        / app.renderer.base.surface_extent.height as f32;
+    app.renderer.data.push_const.min_z = -200.;
+    app.renderer.data.push_const.max_z = 200.;
 
     let mut start_time = Instant::now();
-    event_loop.run_return(move |event, _,
-        control_flow| match event {
+    event_loop.run_return(move |event, _, control_flow| match event {
         Event::WindowEvent { event, .. } => match event {
             WindowEvent::CloseRequested => {
                 *control_flow = winit::event_loop::ControlFlow::Exit;
@@ -104,12 +101,13 @@ fn main() {
             }
 
             app.renderer.prepare_renderer().unwrap();
-            app.renderer.data.world_view.view = *app.get_cam();
+
             app.renderer.data.dynamic_uniform_buffer.update(
                 &app.renderer.base.device,
                 &[app.renderer.data.descriptor_sets[app.renderer.current_frame_index]],
             );
 
+            app.renderer.data.world_view.view = *app.get_cam();
             app.camera_move();
             app.main_loop();
 

@@ -21,6 +21,8 @@ impl Getters for Matrix4<f32> {
         (self.try_inverse().unwrap() * Vector4::z()).xyz()
     }
     fn get_scale(&self) -> f32 {
-        self.z_axis().magnitude()
+        self.column(0).xyz().magnitude()
+        //Returns the length of the X axis! (scale of X)
+        //Because we use uniform scales only, other axis have the same scale.
     }
 }

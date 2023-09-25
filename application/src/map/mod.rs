@@ -1,8 +1,8 @@
-use std::vec;
+use std::{ops::Range, vec};
 
 use nalgebra::Vector3;
 use objects::mesh::Mesh;
-use renderer::{utils::vertex::Vertex, Renderer};
+use renderer::Renderer;
 
 use self::{heightmap::HeightMap, tile::Tile};
 
@@ -16,15 +16,15 @@ pub struct Map {
 
 impl Map {
     pub fn convert_to_mesh(&self, renderer: &mut Renderer) -> Mesh {
-        // let vertex_color = Vector3::new(33. / 255., 120. / 255., 0.);
-        // let vertex_color = Vector3::new(255. / 255., 255. / 255., 255. / 255.);
-
+        let grass_color = Vector3::new(148. / 255., 186. / 255., 101. / 255.);
+        let mut quads: Vec<Vec<Range<usize>>> = vec![];
         let mut vertices = vec![];
         let mut indicies = vec![];
         let mut tile_index = 0;
         //Iterating over rows
         for (y, _) in self.matrix.iter().enumerate() {
             //Iterating over columns, using while so I can modify x.
+            quads.push(vec![]);
             let mut x = 0;
             while x < self.size {
                 //If a tile is solid, we search for the next water tile in that column.
@@ -34,52 +34,7 @@ impl Map {
                             //Searching for the next water tile on the column, increasing offset.
                             continue;
                         }
-                        let vertex_color =
-                            Vector3::new(rand::random(), rand::random(), rand::random());
-                        //Found the next water tile, so make a square from the first to the last solid tile
-                        let (mut square_vertices, mut square_indicies) = Mesh::quad(
-                            [
-                                Vector3::new(x as f32, 0., y as f32),
-                                Vector3::new(offset as f32, 0., y as f32),
-                                Vector3::new(x as f32, 0., y as f32 + 1.),
-                                Vector3::new(offset as f32, 0., y as f32 + 1.),
-                            ],
-                            vertex_color,
-                            tile_index * 4,
-                        );
-                        vertices.append(&mut square_vertices);
-                        indicies.append(&mut square_indicies);
-                        tile_index += 1;
-
-                        let (mut square_vertices, mut square_indicies) = Mesh::quad(
-                            [
-                                Vector3::new(x as f32 - 0.1, 0.1, y as f32),
-                                Vector3::new(x as f32, 0., y as f32),
-                                Vector3::new(x as f32 - 0.1, 0.1, y as f32 + 1.),
-                                Vector3::new(x as f32, 0., y as f32 + 1.),
-                            ],
-                            vertex_color,
-                            tile_index * 4,
-                        );
-                        vertices.append(&mut square_vertices);
-                        indicies.append(&mut square_indicies);
-                        tile_index += 1;
-
-                        let (mut square_vertices, mut square_indicies) = Mesh::quad(
-                            [
-                                Vector3::new(offset as f32, 0., y as f32),
-                                Vector3::new(offset as f32 + 0.1, 0.1, y as f32),
-                                Vector3::new(offset as f32, 0., y as f32 + 1.),
-                                Vector3::new(offset as f32 + 0.1, 0.1, y as f32 + 1.),
-                            ],
-                            vertex_color,
-                            tile_index * 4,
-                        );
-                        vertices.append(&mut square_vertices);
-                        indicies.append(&mut square_indicies);
-                        tile_index += 1;
-
-                        //We can skip all previously checked tiles.
+                        quads[y].push(x..offset);
                         x = offset;
                         break;
                     }
@@ -87,11 +42,59 @@ impl Map {
                 x += 1;
             }
         }
+
+        //We can skip all previously checked tiles.
+        let mut y = 0;
+        while y < self.size {
+            let row = quads[y].clone();
+            for section in row {
+                let mut y_offset = 1;
+                let mut index = 0;
+                while quads[y + y_offset]
+                    .iter()
+                    .enumerate()
+                    .find(|(i, foundsection)| {
+                        index = *i;
+                        &&section == foundsection
+                    })
+                    .is_some()
+                {
+                    quads[y + y_offset].remove(index);
+                    y_offset += 1;
+                }
+                let (mut square_vertices, mut square_indicies) = Mesh::rounded_quad(
+                    [
+                        Vector3::new(section.start as f32, 0., y as f32),
+                        Vector3::new(section.end as f32, 0., y as f32),
+                        Vector3::new(section.start as f32, 0., y as f32 + y_offset as f32),
+                        Vector3::new(section.end as f32, 0., y as f32 + y_offset as f32),
+                    ],
+                    grass_color,
+                    tile_index * 20,
+                );
+                vertices.append(&mut square_vertices);
+                indicies.append(&mut square_indicies);
+                tile_index += 1;
+            }
+            y += 1;
+        }
+        let (mut water_vertices, mut water_indicies) = Mesh::quad(
+            [
+                Vector3::new(0., 0.1, 0.),
+                Vector3::new(self.size as f32, 0.1, 0.),
+                Vector3::new(0., 0.1, self.size as f32),
+                Vector3::new(self.size as f32, 0.1, self.size as f32),
+            ],
+            Vector3::new(39. / 255., 144. / 255., 176. / 255.),
+            tile_index * 20,
+        );
+        vertices.append(&mut water_vertices);
+        indicies.append(&mut water_indicies);
         Mesh::new(renderer, vertices, indicies)
     }
 
     pub fn generate(size: usize) -> Self {
-        let heightmap = HeightMap::perlin_noise(100, 30., 0.65, 4);
+        let heightmap = HeightMap::perlin_noise(size, 30., 0.65, 4);
         let mut tile_matrix = vec::from_elem(vec::from_elem(Tile::none(), size), size);
         for y in 0..size {
             for x in 0..size {

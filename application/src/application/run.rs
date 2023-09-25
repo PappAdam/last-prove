@@ -1,29 +1,37 @@
-use std::f32::consts::PI;
-
 use nalgebra::Vector3;
-use objects::{mesh::Mesh, GameObjectCreateInfo, transformations::Transformations};
+use objects::{mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
 
 use super::App;
 
 impl<'a> App<'a> {
     #[inline]
     pub fn main_loop(&mut self) {
-        self.gameobjects[0].render(&self.renderer);
-        self.gameobjects[1].render(&self.renderer);
+        let cam = self.camera;
+        self.gameobjects[1]
+            .transform
+            .set_transform(&cam.try_inverse().unwrap());
+        self.gameobjects[1].transform.scale(0.01);
 
-        self.game_controller
-            .add_time_elapsed(self.delta_time.as_secs_f32(), &mut self.renderer);
+        self.gameobjects[0].render(&self.renderer);
+        
+        //gameobjects[1] is a ball tracking the camera
+        // self.gameobjects[1].render(&self.renderer);
+
+        // self.game_controller
+        //     .add_time_elapsed(self.delta_time.as_secs_f32(), &mut self.renderer);
     }
 
     pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>) {
-        self.load_mesh("resources/models/pine_tree", meshes);
+        self.load_mesh("resources/models/az", meshes);
+        self.load_mesh("resources/models/az", meshes);
         // self.load_mesh("resources/models/az", meshes);
-        self.create_obj(&meshes[0], GameObjectCreateInfo::position(Vector3::new(-5., 5., 0.)));
-        // self.gameobjects[0].transform.rotate(PI/2., 0., 0.);
-        // self.gameobjects[0].transform.scale(0.1, 0.1, 0.1);
+        self.create_obj(
+            &meshes[0],
+            &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
+        );
         self.create_obj(
             &meshes[1],
-            GameObjectCreateInfo::position(Vector3::new(200., 0., 2.)),
+            &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
     }
 }

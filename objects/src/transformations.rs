@@ -1,4 +1,4 @@
-use nalgebra::{Matrix4, OPoint, Point3, Rotation3, Scale3, Translation3, Vector3};
+use nalgebra::{Matrix4, OPoint, Point3, Rotation3, Translation3, Vector3};
 
 use crate::getters::Getters;
 
@@ -17,7 +17,8 @@ pub trait Transformations<'a> {
         translation_z: f32,
     ) -> &'a mut Self;
     fn traslate_vec3(&'a mut self, translation: Vector3<f32>) -> &'a mut Self;
-    fn scale(&'a mut self, scale_x: f32, scale_y: f32, scale_z: f32) -> &'a mut Self;
+    fn set_position(&'a mut self, position: Vector3<f32>) -> &'a mut Self;
+    fn scale(&'a mut self, scale: f32) -> &'a mut Self;
     fn rotate(&'a mut self, rotation_x: f32, rotation_y: f32, rotation_z: f32) -> &'a mut Self;
     fn rotate_local(
         &'a mut self,
@@ -40,6 +41,7 @@ pub trait Transformations<'a> {
         orbit_center: Vector3<f32>,
     ) -> &'a mut Self;
     fn look_at(&'a mut self, target: Vector3<f32>) -> &'a mut Self;
+    fn set_transform(&'a mut self, matrix: &Self) -> &'a mut Self;
 }
 impl<'a> Transformations<'a> for Matrix4<f32> {
     fn global_to_local_coordinate(&self, global_coordinate: Vector3<f32>) -> Vector3<f32> {
@@ -85,9 +87,27 @@ impl<'a> Transformations<'a> for Matrix4<f32> {
         *self *= translation_matrix;
         self
     }
-    fn scale(&'a mut self, scale_x: f32, scale_y: f32, scale_z: f32) -> &'a mut Self {
-        let scale_matrix = Matrix4::from(Scale3::from(Vector3::new(scale_x, scale_y, scale_z)));
-        *self *= scale_matrix;
+    fn set_position(&'a mut self, position: Vector3<f32>) -> &'a mut Self {
+        self[12] = position.x;
+        self[13] = position.y;
+        self[14] = position.z;
+        self
+    }
+    fn scale(&'a mut self, scale: f32) -> &'a mut Self {
+        //Uniform scaling only, scaling each basis vector.
+
+        //X Axis
+        self[0] *= scale;
+        self[1] *= scale;
+        self[2] *= scale;
+        //Y Axis
+        self[4] *= scale;
+        self[5] *= scale;
+        self[6] *= scale;
+        //Z Axis
+        self[8] *= scale;
+        self[9] *= scale;
+        self[10] *= scale;
 
         self
     }
@@ -150,6 +170,13 @@ impl<'a> Transformations<'a> for Matrix4<f32> {
             &Vector3::y_axis(),
         );
         // dbg!(self.get_position());
+        self
+    }
+    fn set_transform(&'a mut self, matrix: &Self) -> &'a mut Self {
+        *self = *matrix;
+        self[12] = matrix[12];
+        self[13] = matrix[13];
+        self[14] = matrix[14];
         self
     }
 }
