@@ -25,7 +25,7 @@ impl GameController {
         //A cosine function, so that 24 in time = 360 degrees rotation.
         //Peak at 12 hour, is 0 at 6 and 18.
         let sun_height = -((self.time / (12. / PI)).cos());
-        let sun_intensity = (sun_height.abs() * 3.).min(1.2);
+        let sun_intensity = (sun_height.abs() * 0.4).min(0.3);
         //See graph at desmos.com: \min(\operatorname{abs}(\cos\left(\frac{x\ \cdot\ \pi}{12}\right))*3.0,1.2)
         //Where x equals time.
 
@@ -56,8 +56,8 @@ impl GameController {
 impl GameController {
     pub fn init(renderer: &mut Renderer) -> Self {
         let mut game_controller = Self {
-            time: 12.,
-            day_length: 24.,
+            time: 11.,
+            day_length: 10.,
         };
         game_controller.add_time_elapsed(0., renderer);
         game_controller

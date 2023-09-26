@@ -1,6 +1,7 @@
 use std::mem::size_of_val;
 
 use ash::vk;
+use nalgebra::Vector3;
 
 use crate::Renderer;
 
@@ -51,8 +52,11 @@ impl Renderer {
 
     #[inline]
     pub fn begin_render_pass(&self) {
+        let water_color = Vector3::new(39. / 255., 144. / 255., 176. / 255.)
+            + self.data.push_const.sun_color
+                * -Vector3::y().dot(&self.data.push_const.sun_direction);
         let clear_color = vk::ClearColorValue {
-            float32: [0.04f32, 0.01f32, 0.1f32, 1.0f32],
+            float32: [water_color.x, water_color.y, water_color.z, 1.],
         };
 
         let depth_clear = vk::ClearDepthStencilValue {

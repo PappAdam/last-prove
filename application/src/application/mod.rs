@@ -9,7 +9,7 @@ use renderer::{
 };
 use winit::window::Window;
 
-use crate::input::Input;
+use crate::{input::Input, map::Map};
 
 use self::gamecontroller::GameController;
 
@@ -21,30 +21,36 @@ pub struct App<'a> {
     pub input: Input,
     pub renderer: Renderer,
 
+    map: Map,
     gameobjects: ObjVec<GameObject<'a>>,
     game_controller: GameController,
 
     transform_array: AlignedArray<Matrix4<f32>>,
-    camera: Matrix4<f32>,
-    pub camera_view_location: Vector3<f32>,
+        camera: Matrix4<f32>,
 
     //It is like minecraft's time, going from 0 to 65535
     pub delta_time: Duration,
 }
 
 impl<'a> App<'a> {
-    pub fn init(window: &Window) -> Self {
+    pub fn init(window: &Window, map_size: usize) -> Self {
         let mut renderer = Renderer::new(window).expect("Failed to setup renderer");
+        let map = Map::generate(map_size);
         Self {
             input: Input::init(),
+            
+            map,
+            gameobjects: ObjVec::with_capacity(MAX_WORLD_OBJECTS),
+            game_controller: GameController::init(&mut renderer),
+            
             transform_array: AlignedArray::from_dynamic_ub_data(
                 &renderer.data.dynamic_uniform_buffer,
             ),
-            game_controller: GameController::init(&mut renderer),
+            
             renderer,
+
             camera: Matrix4::identity(),
-            camera_view_location: Vector3::new(0., 0., 0.),
-            gameobjects: ObjVec::with_capacity(MAX_WORLD_OBJECTS),
+
             delta_time: Duration::ZERO,
         }
     }

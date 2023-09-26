@@ -53,12 +53,12 @@ impl Mesh {
                 (-Vector3::y() + Vector3::x()) * angled_normal,
             ),
             Vertex::new(
-                positions[0] - Vector3::new(0.1, -0.1, 0.1),
+                positions[0] - Vector3::new(0.1, -0.2, 0.1),
                 color,
                 (-Vector3::y() + Vector3::x()) * angled_normal,
             ),
             Vertex::new(
-                positions[1] - Vector3::new(-0.1, -0.1, 0.1),
+                positions[1] - Vector3::new(-0.1, -0.2, 0.1),
                 color,
                 (-Vector3::y() + Vector3::x()) * angled_normal,
             ),
@@ -74,12 +74,12 @@ impl Mesh {
                 (-Vector3::y() - Vector3::x()) * angled_normal,
             ),
             Vertex::new(
-                positions[2] - Vector3::new(0.1, -0.1, -0.1),
+                positions[2] - Vector3::new(0.1, -0.2, -0.1),
                 color,
                 (-Vector3::y() - Vector3::x()) * angled_normal,
             ),
             Vertex::new(
-                positions[3] - Vector3::new(-0.1, -0.1, -0.1),
+                positions[3] - Vector3::new(-0.1, -0.2, -0.1),
                 color,
                 (-Vector3::y() - Vector3::x()) * angled_normal,
             ),
@@ -95,12 +95,12 @@ impl Mesh {
                 (-Vector3::y() - Vector3::z()) * angled_normal,
             ),
             Vertex::new(
-                positions[1] - Vector3::new(-0.1, -0.1, 0.1),
+                positions[1] - Vector3::new(-0.1, -0.2, 0.1),
                 color,
                 (-Vector3::y() - Vector3::z()) * angled_normal,
             ),
             Vertex::new(
-                positions[3] - Vector3::new(-0.1, -0.1, -0.1),
+                positions[3] - Vector3::new(-0.1, -0.2, -0.1),
                 color,
                 (-Vector3::y() - Vector3::z()) * angled_normal,
             ),
@@ -116,12 +116,12 @@ impl Mesh {
                 (-Vector3::y() + Vector3::z()) * angled_normal,
             ),
             Vertex::new(
-                positions[0] - Vector3::new(0.1, -0.1, 0.1),
+                positions[0] - Vector3::new(0.1, -0.2, 0.1),
                 color,
                 (-Vector3::y() + Vector3::z()) * angled_normal,
             ),
             Vertex::new(
-                positions[2] - Vector3::new(0.1, -0.1, -0.1),
+                positions[2] - Vector3::new(0.1, -0.2, -0.1),
                 color,
                 (-Vector3::y() + Vector3::z()) * angled_normal,
             ),

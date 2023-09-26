@@ -42,9 +42,8 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let mut app = App::init(&window);
-    let mut meshes = Vec::<Mesh>::new();
-    meshes.push(Map::generate(500).convert_to_mesh(&mut app.renderer));
+    let mut meshes: Vec<Mesh> = vec![];
+    let mut app = App::init(&window, 500);
     app.setup(&mut meshes);
 
     app.renderer.data.push_const.wh_ratio = app.renderer.base.surface_extent.width as f32

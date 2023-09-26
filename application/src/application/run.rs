@@ -22,15 +22,16 @@ impl<'a> App<'a> {
     }
 
     pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>) {
+        meshes.push(self.map.convert_to_mesh(&mut self.renderer));
         self.load_mesh("resources/models/az", meshes);
         self.load_mesh("resources/models/az", meshes);
         // self.load_mesh("resources/models/az", meshes);
         self.create_obj(
-            &meshes[0],
+&meshes[0],
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
         self.create_obj(
-            &meshes[1],
+&meshes[1],
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
     }

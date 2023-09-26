@@ -80,10 +80,10 @@ impl Map {
         }
         let (mut water_vertices, mut water_indicies) = Mesh::quad(
             [
-                Vector3::new(0., 0.1, 0.),
-                Vector3::new(self.size as f32, 0.1, 0.),
-                Vector3::new(0., 0.1, self.size as f32),
-                Vector3::new(self.size as f32, 0.1, self.size as f32),
+                Vector3::new(0., 0.2, 0.),
+                Vector3::new(self.size as f32, 0.2, 0.),
+                Vector3::new(0., 0.2, self.size as f32),
+                Vector3::new(self.size as f32, 0.2, self.size as f32),
             ],
             Vector3::new(39. / 255., 144. / 255., 176. / 255.),
             tile_index * 20,
