@@ -1,6 +1,6 @@
-use std::time::Duration;
+use std::{f32::consts::PI, time::Duration};
 
-use nalgebra::{Matrix4, Vector3};
+use nalgebra::{Matrix4, Vector2};
 use objects::{mesh::Mesh, GameObject, GameObjectCreateInfo};
 use renderer::{
     engine::{aligned_array::AlignedArray, object_vector::ObjVec},
@@ -11,10 +11,10 @@ use winit::window::Window;
 
 use crate::{input::Input, map::Map};
 
-use self::gamecontroller::GameController;
+use self::{camera::Camera, gamecontroller::GameController};
 
+mod camera;
 mod gamecontroller;
-pub mod proc_input;
 pub mod run;
 
 pub struct App<'a> {
@@ -26,7 +26,8 @@ pub struct App<'a> {
     game_controller: GameController,
 
     transform_array: AlignedArray<Matrix4<f32>>,
-        camera: Matrix4<f32>,
+
+    pub camera: Camera,
 
     //It is like minecraft's time, going from 0 to 65535
     pub delta_time: Duration,
@@ -38,18 +39,22 @@ impl<'a> App<'a> {
         let map = Map::generate(map_size);
         Self {
             input: Input::init(),
-            
+
             map,
             gameobjects: ObjVec::with_capacity(MAX_WORLD_OBJECTS),
             game_controller: GameController::init(&mut renderer),
-            
+
             transform_array: AlignedArray::from_dynamic_ub_data(
                 &renderer.data.dynamic_uniform_buffer,
             ),
-            
+
             renderer,
 
-            camera: Matrix4::identity(),
+            camera: Camera::init(
+                Vector2::new(-(map_size as f32) / 2., -(map_size as f32) / 2.),
+                PI / 6.,
+                0.1,
+            ),
 
             delta_time: Duration::ZERO,
         }
@@ -67,9 +72,5 @@ impl<'a> App<'a> {
     #[inline]
     pub fn load_mesh(&mut self, path: &str, meshes: &mut Vec<Mesh>) {
         meshes.push(Mesh::from_file(&mut self.renderer, path));
-    }
-
-    pub fn get_cam(&'a self) -> &'a Matrix4<f32> {
-        &self.camera
     }
 }

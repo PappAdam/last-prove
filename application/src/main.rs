@@ -5,7 +5,6 @@ mod map;
 use std::time::Instant;
 
 use application::App;
-use map::Map;
 use objects::mesh::Mesh;
 use winit::{
     dpi::PhysicalSize,
@@ -14,6 +13,8 @@ use winit::{
     platform::run_return::EventLoopExtRunReturn,
     window::Fullscreen,
 };
+
+pub const MAP_SIZE: usize = 500;
 
 use renderer::msg;
 fn main() {
@@ -43,7 +44,7 @@ fn main() {
         .unwrap();
 
     let mut meshes: Vec<Mesh> = vec![];
-    let mut app = App::init(&window, 500);
+    let mut app = App::init(&window, MAP_SIZE);
     app.setup(&mut meshes);
 
     app.renderer.data.push_const.wh_ratio = app.renderer.base.surface_extent.width as f32
@@ -106,8 +107,8 @@ fn main() {
                 &[app.renderer.data.descriptor_sets[app.renderer.current_frame_index]],
             );
 
-            app.renderer.data.world_view.view = *app.get_cam();
-            app.camera_move();
+            app.renderer.data.world_view.view = *app.camera.get_transform();
+            app.camera.camera_move(&app.input, app.delta_time.as_secs_f32());
             app.main_loop();
 
             if let Err(msg) = app.renderer.flush() {

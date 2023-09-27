@@ -4,6 +4,8 @@ use nalgebra::Vector3;
 use objects::mesh::Mesh;
 use renderer::Renderer;
 
+use crate::MAP_SIZE;
+
 use self::{heightmap::HeightMap, tile::Tile};
 
 pub mod heightmap;
@@ -11,7 +13,6 @@ pub mod tile;
 
 pub struct Map {
     matrix: Vec<Vec<Tile>>,
-    size: usize,
 }
 
 impl Map {
@@ -26,11 +27,11 @@ impl Map {
             //Iterating over columns, using while so I can modify x.
             quads.push(vec![]);
             let mut x = 0;
-            while x < self.size {
+            while x < MAP_SIZE {
                 //If a tile is solid, we search for the next water tile in that column.
                 if self.matrix[y][x].is_solid() {
-                    for offset in x..self.size {
-                        if self.matrix[y][offset].is_solid() {
+                    for offset in x..MAP_SIZE {
+                        if self.matrix[y][offset].is_solid(){
                             //Searching for the next water tile on the column, increasing offset.
                             continue;
                         }
@@ -45,7 +46,7 @@ impl Map {
 
         //We can skip all previously checked tiles.
         let mut y = 0;
-        while y < self.size {
+        while y < MAP_SIZE {
             let row = quads[y].clone();
             for section in row {
                 let mut y_offset = 1;
@@ -81,9 +82,9 @@ impl Map {
         let (mut water_vertices, mut water_indicies) = Mesh::quad(
             [
                 Vector3::new(0., 0.2, 0.),
-                Vector3::new(self.size as f32, 0.2, 0.),
-                Vector3::new(0., 0.2, self.size as f32),
-                Vector3::new(self.size as f32, 0.2, self.size as f32),
+                Vector3::new(MAP_SIZE as f32, 0.2, 0.),
+                Vector3::new(0., 0.2, MAP_SIZE as f32),
+                Vector3::new(MAP_SIZE as f32, 0.2, MAP_SIZE as f32),
             ],
             Vector3::new(39. / 255., 144. / 255., 176. / 255.),
             tile_index * 20,
@@ -105,7 +106,6 @@ impl Map {
         }
         Self {
             matrix: tile_matrix,
-            size,
         }
     }
 }
