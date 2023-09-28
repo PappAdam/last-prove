@@ -1,7 +1,7 @@
 use std::{f32::consts::PI, time::Duration};
 
 use nalgebra::{Matrix4, Vector2};
-use objects::{mesh::Mesh, GameObject, GameObjectCreateInfo};
+use objects::{hitbox::Hitbox, mesh::Mesh, GameObject, GameObjectCreateInfo};
 use renderer::{
     engine::{aligned_array::AlignedArray, object_vector::ObjVec},
     utils::MAX_WORLD_OBJECTS,
@@ -14,7 +14,9 @@ use crate::{input::Input, map::Map};
 use self::{camera::Camera, gamecontroller::GameController};
 
 mod camera;
+pub mod click;
 mod gamecontroller;
+pub mod load;
 pub mod run;
 
 pub struct App<'a> {
@@ -62,15 +64,15 @@ impl<'a> App<'a> {
 
     /// ##Gameobject creation
     /// returns the index of the created gameobject
-    pub fn create_obj(&mut self, mesh: &'a Mesh, create_info: &GameObjectCreateInfo) -> usize {
-        let obj = GameObject::create(&mut self.transform_array, mesh, create_info)
+    pub fn create_obj(
+        &mut self,
+        mesh: &'a Mesh,
+        hitbox: &'a Hitbox,
+        create_info: &GameObjectCreateInfo,
+    ) -> usize {
+        let obj = GameObject::create(&mut self.transform_array, mesh, hitbox, create_info)
             .expect("Failed to create gameObject");
 
         self.gameobjects.push(obj)
-    }
-
-    #[inline]
-    pub fn load_mesh(&mut self, path: &str, meshes: &mut Vec<Mesh>) {
-        meshes.push(Mesh::from_file(&mut self.renderer, path));
     }
 }

@@ -1,5 +1,5 @@
 use nalgebra::Vector3;
-use objects::{mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
+use objects::{hitbox::Hitbox, mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
 
 use super::App;
 
@@ -20,17 +20,18 @@ impl<'a> App<'a> {
         //     .add_time_elapsed(self.delta_time.as_secs_f32(), &mut self.renderer);
     }
 
-    pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>) {
-        meshes.push(self.map.convert_to_mesh(&mut self.renderer));
-        self.load_mesh("resources/models/Basic_house", meshes);
-        // self.load_mesh("resources/models/az", meshes);
-        // self.load_mesh("resources/models/az", meshes);
+    pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>, hitboxes: &'a mut Vec<Hitbox>) {
+        self.load_meshes(meshes, hitboxes);
+
+
         self.create_obj(
             &meshes[0],
+            &hitboxes[0],
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
         self.create_obj(
             &meshes[1],
+            &hitboxes[0],
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
     }

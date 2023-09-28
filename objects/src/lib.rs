@@ -1,4 +1,5 @@
 use ash::vk;
+use hitbox::Hitbox;
 use mesh::Mesh;
 use nalgebra::{Matrix4, Vector3};
 use renderer::{
@@ -7,6 +8,7 @@ use renderer::{
 };
 
 pub mod getters;
+pub mod hitbox;
 pub mod mesh;
 pub mod transformations;
 
@@ -19,6 +21,7 @@ pub struct GameObject<'a> {
     pub transform: &'a mut Matrix4<f32>,
     transform_index: usize,
     mesh: &'a Mesh,
+    hitbox: &'a Hitbox,
     flags: u8,
 }
 
@@ -26,19 +29,21 @@ impl<'a> GameObject<'a> {
     pub fn create(
         transform_buf: &mut AlignedArray<Matrix4<f32>>,
         mesh: &'a Mesh,
+        hitbox: &'a Hitbox,
         create_info: &GameObjectCreateInfo,
     ) -> Result<Self, ObjectCreationError> {
         let transform_index = transform_buf
             .push(Matrix4::identity())
             .map_err(|_| ObjectCreationError::NotEnoughSpace)?;
-        let transform_ptr = unsafe { &mut *(transform_buf.get_data_pointer(transform_index)) };
         let transform = Matrix4::new_translation(&create_info.position);
+        let transform_ptr = unsafe { &mut *(transform_buf.get_data_pointer(transform_index)) };
         *transform_ptr = transform;
         Ok(Self {
             flags: 0,
             transform: transform_ptr,
             transform_index,
             mesh,
+            hitbox
         })
     }
 
@@ -84,10 +89,7 @@ impl GameObjectCreateInfo {
 
     #[inline]
     pub fn position_scale(position: Vector3<f32>, scale: f32) -> Self {
-        Self {
-            position,
-            scale,
-        }
+        Self { position, scale }
     }
 }
 
