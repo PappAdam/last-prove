@@ -1,6 +1,8 @@
 use nalgebra::Vector2;
 use winit::event::{ElementState, ModifiersState, MouseButton, VirtualKeyCode};
 
+use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
+
 pub struct Input {
     pub keys: [ElementState; 163],
     pub modifier: ModifiersState,
@@ -77,6 +79,14 @@ impl Input {
     #[inline]
     pub fn get_mouse_wheel(&self) -> f32 {
         self.mouse.wheel
+    }
+
+    #[inline]
+    pub fn get_relative_mouse_position(&self) -> Vector2<f32> {
+        Vector2::new(
+            (self.mouse.pos.x / WINDOW_WIDTH as f32) * 2. - 1.,
+            (self.mouse.pos.y / WINDOW_HEIGHT as f32) * 2. - 1.,
+        )
     }
 }
 

@@ -62,7 +62,7 @@ impl<'a> App<'a> {
         }
     }
 
-    /// ##Gameobject creation
+    /// Gameobject creation
     /// returns the index of the created gameobject
     pub fn create_obj(
         &mut self,

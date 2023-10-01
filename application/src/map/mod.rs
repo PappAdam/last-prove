@@ -19,6 +19,7 @@ impl Map {
     pub fn convert_to_mesh(&self, renderer: &mut Renderer) -> Mesh {
         let grass_color = Vector3::new(148. / 255., 186. / 255., 101. / 255.);
         let mut quads: Vec<Vec<Range<usize>>> = vec![];
+
         let mut vertices = vec![];
         let mut indicies = vec![];
         let mut tile_index = 0;
@@ -31,7 +32,7 @@ impl Map {
                 //If a tile is solid, we search for the next water tile in that column.
                 if self.matrix[y][x].is_solid() {
                     for offset in x..MAP_SIZE {
-                        if self.matrix[y][offset].is_solid(){
+                        if self.matrix[y][offset].is_solid() {
                             //Searching for the next water tile on the column, increasing offset.
                             continue;
                         }

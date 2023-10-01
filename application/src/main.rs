@@ -15,6 +15,8 @@ use winit::{
 };
 
 pub const MAP_SIZE: usize = 500;
+pub const WINDOW_WIDTH: u32 = 1920;
+pub const WINDOW_HEIGHT: u32 = 1080;
 
 use renderer::msg;
 fn main() {
@@ -37,14 +39,14 @@ fn main() {
     let mut event_loop = winit::event_loop::EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_title("HAHA")
-        .with_inner_size(PhysicalSize::new(1920, 1080))
+        .with_inner_size(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT))
         .with_fullscreen(Some(Fullscreen::Borderless(None)))
         .with_resizable(false)
         .build(&event_loop)
         .unwrap();
 
     let mut meshes: Vec<Mesh> = vec![];
-    let mut hitboxes: Vec<Hitbox> = vec![Hitbox::new(vec![], vec![])];
+    let mut hitboxes: Vec<Hitbox> = vec![];
     let mut app = App::init(&window, MAP_SIZE);
     app.setup(&mut meshes, &mut hitboxes);
 
@@ -110,7 +112,9 @@ fn main() {
 
             app.renderer.data.world_view.view = *app.camera.get_transform();
             app.camera.camera_move(&app.input, app.delta_time.as_secs_f32());
+            let click_detection_start_time = Instant::now();
             app.click_detection();
+            // dbg!(click_detection_start_time.elapsed().as_secs_f32());
             app.main_loop();
 
             if let Err(msg) = app.renderer.flush() {

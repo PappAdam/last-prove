@@ -65,8 +65,8 @@ impl Mesh {
     }
 
     pub fn from_file(renderer: &mut Renderer, path: &str) -> Mesh {
-        let obj_file = BufReader::new(File::open(path.to_owned() + ".obj").unwrap());
-        let mtl_file = BufReader::new(File::open(path.to_owned() + ".mtl").unwrap());
+        let obj_file = BufReader::new(File::open(path.to_owned() + "/Object.obj").unwrap());
+        let mtl_file = BufReader::new(File::open(path.to_owned() + "/Object.mtl").unwrap());
 
         //Loading materials
         let mut materials: HashMap<String, [f32; 3]> = HashMap::new();
