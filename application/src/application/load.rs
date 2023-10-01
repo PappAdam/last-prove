@@ -1,3 +1,4 @@
+use nalgebra::Vector3;
 use objects::{hitbox::Hitbox, mesh::Mesh};
 
 use super::App;
@@ -11,7 +12,8 @@ impl<'a> App<'a> {
         hitboxes.push(Hitbox::new(vec![], vec![]));
         //Indexing starts from 1 because of map.
         // self.load_object("resources/models/Structures/House", meshes, hitboxes);
-        self.load_object("resources/models/Debug/Plane", meshes, hitboxes);
+        self.load_object("resources/models/Structures/House", meshes, hitboxes);
+        meshes[1] = hitboxes[1].into_mesh(&mut self.renderer, Vector3::x());
     }
     #[inline]
     fn load_object(&mut self, path: &str, meshes: &mut Vec<Mesh>, hitboxes: &mut Vec<Hitbox>) {

@@ -15,7 +15,6 @@ impl<'a> App<'a> {
             -self.camera.get_position().y,
         ));
         self.gameobjects[1].render(&self.renderer);
-
         // self.game_controller
         //     .add_time_elapsed(self.delta_time.as_secs_f32(), &mut self.renderer);
     }
