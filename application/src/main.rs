@@ -112,9 +112,6 @@ fn main() {
 
             app.renderer.data.world_view.view = *app.camera.get_transform();
             app.camera.camera_move(&app.input, app.delta_time.as_secs_f32());
-            let click_detection_start_time = Instant::now();
-            app.click_detection();
-            dbg!(click_detection_start_time.elapsed().as_secs_f32());
             app.main_loop();
 
             if let Err(msg) = app.renderer.flush() {

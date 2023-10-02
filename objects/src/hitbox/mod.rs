@@ -84,7 +84,7 @@ impl GameObject<'_> {
         &self,
         camera: &Matrix4<f32>,
         relative_mouse_position: Vector2<f32>,
-    ) -> f32 {
+    ) -> Option<Vector3<f32>> {
         let model_view_matrix = *camera * *self.transform;
         let wh_ratio = 1080. / 1920.;
         let mut transformed_vertices = Vec::with_capacity(self.hitbox.vertices.len());
@@ -92,58 +92,65 @@ impl GameObject<'_> {
             let mut transformed_vertex =
                 model_view_matrix * Vector4::new(vertex.x, vertex.y, vertex.z, 1.);
             transformed_vertex.x *= wh_ratio;
-            transformed_vertices.push(transformed_vertex);
+            transformed_vertices.push(transformed_vertex.xyz());
         }
-        let mut object_clicked = false;
+        let mut closest_collision_point = None;
         for triangle in &self.hitbox.triangles {
             let points = [
-                transformed_vertices[triangle[0]].xy(),
-                transformed_vertices[triangle[1]].xy(),
-                transformed_vertices[triangle[2]].xy(),
+                transformed_vertices[triangle[0]],
+                transformed_vertices[triangle[1]],
+                transformed_vertices[triangle[2]],
             ];
-            if mouse_inside_triangle(points, relative_mouse_position) {
-                object_clicked = true;
-                break;
+            if let Some(collision_point) = mouse_inside_triangle(points, relative_mouse_position) {
+                if closest_collision_point.is_none() {
+                    closest_collision_point = Some(collision_point);
+                    continue;
+                }
+                if closest_collision_point.unwrap().z < collision_point.z {
+                    closest_collision_point = Some(collision_point);
+                }
             }
         }
-        dbg!(object_clicked);
-        0.
+        if let Some(mut closest_collision_point) = closest_collision_point {
+            closest_collision_point.x /= wh_ratio;
+            let collision_global_coordinate = model_view_matrix.try_inverse().unwrap()
+                * Vector4::new(
+                    closest_collision_point.x,
+                    closest_collision_point.y,
+                    closest_collision_point.z,
+                    1.,
+                );
+            return Some(collision_global_coordinate.xyz());
+        }
+        None
     }
 }
 #[inline]
 fn mouse_inside_triangle(
-    triangle_points: [Vector2<f32>; 3],
+    triangle_points: [Vector3<f32>; 3],
     relative_mouse_position: Vector2<f32>,
-) -> bool {
-    let triangle_area = area_of_triangle(&triangle_points);
-    let sub_triangle1_area = area_of_triangle(&[
-        triangle_points[0],
-        triangle_points[1],
-        relative_mouse_position,
-    ]);
-    let sub_triangle2_area = area_of_triangle(&[
-        triangle_points[1],
-        triangle_points[2],
-        relative_mouse_position,
-    ]);
-    let sub_triangle3_area = area_of_triangle(&[
-        triangle_points[2],
-        triangle_points[0],
-        relative_mouse_position,
-    ]);
-    if ((sub_triangle1_area + sub_triangle2_area + sub_triangle3_area) - triangle_area).abs() < 1e-7 {
-        return true;
+) -> Option<Vector3<f32>> {
+    //PLEASE DONT MODIFY THIS IDK WHAT IT DOES
+    let v0 = triangle_points[1].xy() - triangle_points[0].xy();
+    let v1 = triangle_points[2].xy() - triangle_points[0].xy();
+    let v2 = relative_mouse_position - triangle_points[0].xy();
+    let d00 = v0.dot(&v0);
+    let d01 = v0.dot(&v1);
+    let d11 = v1.dot(&v1);
+    let d20 = v2.dot(&v0);
+    let d21 = v2.dot(&v1);
+    let denominator = d00 * d11 - d01 * d01;
+    let v = (d11 * d20 - d01 * d21) / denominator;
+    let w = (d00 * d21 - d01 * d20) / denominator;
+    let u = 1. - v - w;
+    if ((v + w + u) - 1.).abs() < 1e-7 && v >= 0. && w >= 0. && u >= 0. {
+        let clicked_z =
+            triangle_points[0].z * u + triangle_points[1].z * v + triangle_points[2].z * w;
+        return Some(Vector3::new(
+            relative_mouse_position.x,
+            relative_mouse_position.y,
+            clicked_z,
+        ));
     }
-
-    false
-}
-#[inline]
-fn area_of_triangle(points: &[Vector2<f32>; 3]) -> f32 {
-    //(1/2)  |x1          (    y2      −      y3    )
-    0.5 * ((points[0].x * (points[1].y - points[2].y)
-    //  +   x2          (    y3      −     y1     )
-        + points[1].x * (points[2].y - points[0].y)
-    //  +    x3         (    y1      −     y2     )|
-        + points[2].x * (points[0].y - points[1].y))
-        .abs())
+    None
 }

@@ -5,6 +5,8 @@ use super::App;
 
 pub const MAP_MESH_INDEX: usize = 0;
 pub const HOUSE_MESH_INDEX: usize = 1;
+pub const PLANE_MESH_INDEX: usize = 2;
+pub const SPHERE_MESH_INDEX: usize = 3;
 
 impl<'a> App<'a> {
     pub fn load_meshes(&mut self, meshes: &mut Vec<Mesh>, hitboxes: &mut Vec<Hitbox>) {
@@ -13,7 +15,8 @@ impl<'a> App<'a> {
         //Indexing starts from 1 because of map.
         // self.load_object("resources/models/Structures/House", meshes, hitboxes);
         self.load_object("resources/models/Structures/House", meshes, hitboxes);
-        meshes[1] = hitboxes[1].into_mesh(&mut self.renderer, Vector3::x());
+        self.load_object("resources/models/Debug/Plane", meshes, hitboxes);
+        self.load_object("resources/models/Debug/Sphere", meshes, hitboxes);
     }
     #[inline]
     fn load_object(&mut self, path: &str, meshes: &mut Vec<Mesh>, hitboxes: &mut Vec<Hitbox>) {
