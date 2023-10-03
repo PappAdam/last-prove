@@ -2,13 +2,15 @@ use nalgebra::Vector3;
 use objects::{hitbox::Hitbox, mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
 
 use super::{
-    load::{HOUSE_MESH_INDEX, MAP_MESH_INDEX, SPHERE_MESH_INDEX},
+    load::{HOUSE_MESH_INDEX, MAP_MESH_INDEX, SPHERE_MESH_INDEX, EMPTY_MESH_INDEX, PLANE_MESH_INDEX},
     App,
 };
 
 impl<'a> App<'a> {
     #[inline]
     pub fn main_loop(&mut self) {
+        if self.input.get_key_down(winit::event::VirtualKeyCode::U) {
+        }
         self.gameobjects[0].render(&self.renderer);
         self.gameobjects[1].render(&self.renderer);
         self.gameobjects[2].render(&self.renderer);
@@ -19,9 +21,9 @@ impl<'a> App<'a> {
             0.,
             -self.camera.get_position().y,
         ));
+        
         if let Some(click_position) = self.click_detection() {
             self.gameobjects[2].transform.set_position(click_position);
-            dbg!(click_position);
         }
 
         // self.game_controller
@@ -43,8 +45,8 @@ impl<'a> App<'a> {
         );
         self.create_obj(
             &meshes[SPHERE_MESH_INDEX],
-            &hitboxes[SPHERE_MESH_INDEX],
-            &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
+            &hitboxes[EMPTY_MESH_INDEX],
+            &GameObjectCreateInfo::position_scale(Vector3::new(0., 0., 0.), 0.1),
         );
     }
 }

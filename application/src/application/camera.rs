@@ -19,7 +19,7 @@ impl Camera {
     pub fn init(position: Vector2<f32>, tilt: f32, scale: f32) -> Self {
         Self {
             transform: *Matrix4::identity()
-                .scale(scale)
+                .scale_object(scale)
                 .translate(position.x, 0., position.y)
                 .orbit(0., PI / 4., 0., Vector3::zeros())
                 .orbit_local(tilt, 0., 0., Vector3::zeros()),
@@ -45,7 +45,7 @@ impl Camera {
     #[inline]
     pub fn scale_camera(&mut self, scale: f32) -> &mut Self {
         self.scale *= scale;
-        Transformations::scale(&mut self.transform, scale);
+        self.transform.scale_object(scale);
         self.transform[12] *= scale;
         self.transform[13] *= scale;
         self.transform[14] *= scale;
@@ -113,8 +113,8 @@ impl Camera {
         let scale_factor = 1.2_f32.powi(input.get_mouse_wheel() as i32);
         //Scaling constaints
         // if (self.scale > 0.02 && scale_factor < 1.) || (self.scale < 0.5 && scale_factor > 1.) {
-            //Applying scaling
-            self.scale_camera(scale_factor);
+        //Applying scaling
+        self.scale_camera(scale_factor);
         // }
     }
 }

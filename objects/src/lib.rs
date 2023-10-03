@@ -6,6 +6,7 @@ use renderer::{
     engine::aligned_array::{AlignedArray, NoneValue},
     Renderer,
 };
+use transformations::Transformations;
 
 pub mod getters;
 pub mod hitbox;
@@ -35,7 +36,7 @@ impl<'a> GameObject<'a> {
         let transform_index = transform_buf
             .push(Matrix4::identity())
             .map_err(|_| ObjectCreationError::NotEnoughSpace)?;
-        let transform = Matrix4::new_translation(&create_info.position);
+        let transform = *Matrix4::new_translation(&create_info.position).scale_object(create_info.scale);
         let transform_ptr = unsafe { &mut *(transform_buf.get_data_pointer(transform_index)) };
         *transform_ptr = transform;
         Ok(Self {

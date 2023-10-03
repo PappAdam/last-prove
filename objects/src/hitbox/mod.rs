@@ -6,7 +6,7 @@ use std::{
 use nalgebra::{Matrix4, Vector2, Vector3, Vector4};
 use renderer::{utils::vertex::Vertex, Renderer};
 
-use crate::{mesh::Mesh, GameObject};
+use crate::{mesh::Mesh, GameObject, getters::Getters};
 
 type Triangle = [usize; 3];
 
@@ -106,14 +106,14 @@ impl GameObject<'_> {
                     closest_collision_point = Some(collision_point);
                     continue;
                 }
-                if closest_collision_point.unwrap().z < collision_point.z {
+                if closest_collision_point.unwrap().z > collision_point.z {
                     closest_collision_point = Some(collision_point);
                 }
             }
         }
         if let Some(mut closest_collision_point) = closest_collision_point {
             closest_collision_point.x /= wh_ratio;
-            let collision_global_coordinate = model_view_matrix.try_inverse().unwrap()
+            let mut collision_global_coordinate = camera.try_inverse().unwrap()
                 * Vector4::new(
                     closest_collision_point.x,
                     closest_collision_point.y,

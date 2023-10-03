@@ -18,7 +18,7 @@ pub trait Transformations<'a> {
     ) -> &'a mut Self;
     fn traslate_vec3(&'a mut self, translation: Vector3<f32>) -> &'a mut Self;
     fn set_position(&'a mut self, position: Vector3<f32>) -> &'a mut Self;
-    fn scale(&'a mut self, scale: f32) -> &'a mut Self;
+    fn scale_object(&'a mut self, scale: f32) -> &'a mut Self;
     fn rotate(&'a mut self, rotation_x: f32, rotation_y: f32, rotation_z: f32) -> &'a mut Self;
     fn rotate_local(
         &'a mut self,
@@ -93,7 +93,7 @@ impl<'a> Transformations<'a> for Matrix4<f32> {
         self[14] = position.z;
         self
     }
-    fn scale(&'a mut self, scale: f32) -> &'a mut Self {
+    fn scale_object(&'a mut self, scale: f32) -> &'a mut Self {
         //Uniform scaling only, scaling each basis vector.
 
         //X Axis
