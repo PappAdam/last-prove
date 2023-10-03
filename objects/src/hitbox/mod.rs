@@ -6,21 +6,18 @@ use std::{
 use nalgebra::{Matrix4, Vector2, Vector3, Vector4};
 use renderer::{utils::vertex::Vertex, Renderer};
 
-use crate::{mesh::Mesh, GameObject, getters::Getters};
+use crate::{mesh::Mesh, GameObject};
 
 type Triangle = [usize; 3];
 
 pub struct Hitbox {
     vertices: Vec<Vector3<f32>>,
-    triangles: Vec<Triangle>,
+    indicies: Vec<usize>,
 }
 
 impl Hitbox {
-    pub fn new(vertices: Vec<Vector3<f32>>, triangles: Vec<Triangle>) -> Self {
-        Self {
-            vertices,
-            triangles,
-        }
+    pub fn new(vertices: Vec<Vector3<f32>>, indicies: Vec<usize>) -> Self {
+        Self { vertices, indicies }
     }
     pub fn from_file(path: &str) -> Self {
         let obj_file = BufReader::new(File::open(path.to_owned() + "/Hitbox.obj").unwrap());
@@ -43,12 +40,9 @@ impl Hitbox {
                 //Format is following: positionindex1/colorindex1/normalindex1 positionindex2/...
                 //Only position is required here.
                 "f" => {
-                    let triangle = [
-                        splitted_line[1].parse::<usize>().unwrap() - 1,
-                        splitted_line[2].parse::<usize>().unwrap() - 1,
-                        splitted_line[3].parse::<usize>().unwrap() - 1,
-                    ];
-                    triangles.push(triangle)
+                    triangles.push(splitted_line[1].parse::<usize>().unwrap() - 1);
+                    triangles.push(splitted_line[2].parse::<usize>().unwrap() - 1);
+                    triangles.push(splitted_line[3].parse::<usize>().unwrap() - 1);
                 }
                 row => {
                     panic!("Hitbox can't handle this type: {row}")
@@ -63,28 +57,23 @@ impl Hitbox {
         for vertex in &self.vertices {
             vertex_buffer.push(Vertex::new(*vertex, color, Vector3::y()));
         }
-        //Collecting indicies
-        let mut index_buffer = Vec::with_capacity(self.triangles.len() * 3);
-        for triangle in &self.triangles {
-            index_buffer.append(&mut vec![
-                triangle[0] as u32,
-                triangle[1] as u32,
-                triangle[2] as u32,
-            ])
-        }
 
-        Mesh::new(renderer, vertex_buffer, index_buffer)
+        Mesh::new(
+            renderer,
+            vertex_buffer,
+            self.indicies.iter().map(|v| *v as u32).collect(),
+        )
     }
 }
 
 impl GameObject<'_> {
     ///Checks if a given screen position collides with the object or not.
-    /// Returns the global coordinate of the collision if yes.
+    /// Returns the global coordinate with the screen Z coordinate of the collision if yes
     pub fn check_object_clicked(
         &self,
         camera: &Matrix4<f32>,
         relative_mouse_position: Vector2<f32>,
-    ) -> Option<Vector3<f32>> {
+    ) -> Option<(Vector3<f32>, f32)> {
         let model_view_matrix = *camera * *self.transform;
         let wh_ratio = 1080. / 1920.;
         let mut transformed_vertices = Vec::with_capacity(self.hitbox.vertices.len());
@@ -95,11 +84,11 @@ impl GameObject<'_> {
             transformed_vertices.push(transformed_vertex.xyz());
         }
         let mut closest_collision_point = None;
-        for triangle in &self.hitbox.triangles {
+        for triangle_index in 0..self.hitbox.indicies.len() / 3 {
             let points = [
-                transformed_vertices[triangle[0]],
-                transformed_vertices[triangle[1]],
-                transformed_vertices[triangle[2]],
+                transformed_vertices[self.hitbox.indicies[triangle_index * 3 + 0]],
+                transformed_vertices[self.hitbox.indicies[triangle_index * 3 + 1]],
+                transformed_vertices[self.hitbox.indicies[triangle_index * 3 + 2]],
             ];
             if let Some(collision_point) = mouse_inside_triangle(points, relative_mouse_position) {
                 if closest_collision_point.is_none() {
@@ -113,14 +102,14 @@ impl GameObject<'_> {
         }
         if let Some(mut closest_collision_point) = closest_collision_point {
             closest_collision_point.x /= wh_ratio;
-            let mut collision_global_coordinate = camera.try_inverse().unwrap()
+            let collision_global_coordinate = camera.try_inverse().unwrap()
                 * Vector4::new(
                     closest_collision_point.x,
                     closest_collision_point.y,
                     closest_collision_point.z,
                     1.,
                 );
-            return Some(collision_global_coordinate.xyz());
+            return Some((collision_global_coordinate.xyz(), closest_collision_point.z));
         }
         None
     }

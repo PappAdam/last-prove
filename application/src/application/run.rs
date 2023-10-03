@@ -2,51 +2,37 @@ use nalgebra::Vector3;
 use objects::{hitbox::Hitbox, mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
 
 use super::{
-    load::{HOUSE_MESH_INDEX, MAP_MESH_INDEX, SPHERE_MESH_INDEX, EMPTY_MESH_INDEX, PLANE_MESH_INDEX},
-    App,
+    App, load::{_MAP_MESH_INDEX, _HOUSE_MESH_INDEX, _SPHERE_MESH_INDEX, _EMPTY_MESH_INDEX},
 };
 
 impl<'a> App<'a> {
     #[inline]
     pub fn main_loop(&mut self) {
-        if self.input.get_key_down(winit::event::VirtualKeyCode::U) {
-        }
-        self.gameobjects[0].render(&self.renderer);
-        self.gameobjects[1].render(&self.renderer);
-        self.gameobjects[2].render(&self.renderer);
-
-        //gameobjects[1] is a ball tracking the camera
-        self.gameobjects[1].transform.set_position(Vector3::new(
-            -self.camera.get_position().x,
-            0.,
-            -self.camera.get_position().y,
-        ));
         
         if let Some(click_position) = self.click_detection() {
-            self.gameobjects[2].transform.set_position(click_position);
+            self.gameobjects[1].transform.set_position(click_position);
         }
-
+        
         // self.game_controller
         //     .add_time_elapsed(self.delta_time.as_secs_f32(), &mut self.renderer);
+        for gameobject in &self.gameobjects {
+            gameobject.render(&self.renderer);
+        }
     }
 
     pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>, hitboxes: &'a mut Vec<Hitbox>) {
         self.load_meshes(meshes, hitboxes);
 
         self.create_obj(
-            &meshes[MAP_MESH_INDEX],
-            &hitboxes[MAP_MESH_INDEX],
+            &meshes[_MAP_MESH_INDEX],
+            &hitboxes[_MAP_MESH_INDEX],
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
         self.create_obj(
-            &meshes[HOUSE_MESH_INDEX],
-            &hitboxes[HOUSE_MESH_INDEX],
+            &meshes[_SPHERE_MESH_INDEX],
+            &hitboxes[_EMPTY_MESH_INDEX],
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
-        self.create_obj(
-            &meshes[SPHERE_MESH_INDEX],
-            &hitboxes[EMPTY_MESH_INDEX],
-            &GameObjectCreateInfo::position_scale(Vector3::new(0., 0., 0.), 0.1),
-        );
+        self.gameobjects[1].transform.scale_object(0.05);
     }
 }

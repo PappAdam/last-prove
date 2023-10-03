@@ -1,7 +1,7 @@
 use std::{ops::Range, vec};
 
 use nalgebra::Vector3;
-use objects::mesh::Mesh;
+use objects::{hitbox::Hitbox, mesh::Mesh};
 use renderer::Renderer;
 
 use crate::MAP_SIZE;
@@ -16,7 +16,7 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn convert_to_mesh(&self, renderer: &mut Renderer) -> Mesh {
+    pub fn convert_to_mesh(&self, renderer: &mut Renderer) -> (Mesh, Hitbox) {
         let grass_color = Vector3::new(148. / 255., 186. / 255., 101. / 255.);
         let mut quads: Vec<Vec<Range<usize>>> = vec![];
 
@@ -92,7 +92,13 @@ impl Map {
         );
         vertices.append(&mut water_vertices);
         indicies.append(&mut water_indicies);
-        Mesh::new(renderer, vertices, indicies)
+        let vertex_positions: Vec<Vector3<f32>> = vertices.iter().map(|v| v.pos).collect();
+        dbg!(&vertex_positions.len());
+        let indicies_usize = indicies.iter().map(|v| *v as usize).collect();
+        (
+            Mesh::new(renderer, vertices, indicies),
+            Hitbox::new(vertex_positions, indicies_usize)
+        )
     }
 
     pub fn generate(size: usize) -> Self {
