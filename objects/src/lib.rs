@@ -6,8 +6,10 @@ use renderer::{
     engine::aligned_array::{AlignedArray, NoneValue},
     Renderer,
 };
+use tags::ObjectTag;
 use transformations::Transformations;
 
+pub mod tags;
 pub mod getters;
 pub mod hitbox;
 pub mod mesh;
@@ -23,6 +25,7 @@ pub struct GameObject<'a> {
     transform_index: usize,
     mesh: &'a Mesh,
     hitbox: &'a Hitbox,
+    pub tags: Vec<ObjectTag>,
     flags: u8,
 }
 
@@ -41,6 +44,7 @@ impl<'a> GameObject<'a> {
         *transform_ptr = transform;
         Ok(Self {
             flags: 0,
+            tags: vec![],
             transform: transform_ptr,
             transform_index,
             mesh,

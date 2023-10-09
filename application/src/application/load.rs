@@ -6,23 +6,27 @@ use super::App;
 pub const _EMPTY_MESH_INDEX: usize = 0;
 pub const _MAP_MESH_INDEX: usize = 1;
 pub const _HOUSE_MESH_INDEX: usize = 2;
-pub const _PLANE_MESH_INDEX: usize = 3;
-pub const _SPHERE_MESH_INDEX: usize = 4;
+pub const _MAPSELECTION_MESH_INDEX: usize = 3;
+pub const _PLANE_MESH_INDEX: usize = 4;
+pub const _SPHERE_MESH_INDEX: usize = 5;
 
 impl<'a> App<'a> {
     pub fn load_meshes(&mut self, meshes: &mut Vec<Mesh>, hitboxes: &mut Vec<Hitbox>) {
+        //Empty
         meshes.push(Mesh::new(
             &mut self.renderer,
             vec![Vertex::default()],
             vec![0, 0, 0],
         ));
         hitboxes.push(Hitbox::new(vec![], vec![]));
+        //Map
         let (map_mesh, map_hitbox) = self.map.convert_to_mesh(&mut self.renderer);
         hitboxes.push(map_hitbox);
         meshes.push(map_mesh);
         //Indexing starts from 1 because of map.
         // self.load_object("resources/models/Structures/House", meshes, hitboxes);
         self.load_object("resources/models/Structures/House", meshes, hitboxes);
+        self.load_object("resources/models/Indicators/MapSelection", meshes, hitboxes);
         self.load_object("resources/models/Debug/Plane", meshes, hitboxes);
         self.load_object("resources/models/Debug/Sphere", meshes, hitboxes);
     }

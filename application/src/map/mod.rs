@@ -2,13 +2,15 @@ use std::{ops::Range, vec};
 
 use nalgebra::Vector3;
 use objects::{hitbox::Hitbox, mesh::Mesh};
-use renderer::Renderer;
+use renderer::{engine::object_vector::ObjVec, Renderer};
 
 use crate::MAP_SIZE;
 
-use self::{heightmap::HeightMap, tile::Tile};
+use self::{heightmap::HeightMap, structure::Structure, tile::Tile};
 
 pub mod heightmap;
+pub mod mouse_hover;
+pub mod structure;
 pub mod tile;
 
 pub struct Map {
@@ -93,11 +95,10 @@ impl Map {
         vertices.append(&mut water_vertices);
         indicies.append(&mut water_indicies);
         let vertex_positions: Vec<Vector3<f32>> = vertices.iter().map(|v| v.pos).collect();
-        dbg!(&vertex_positions.len());
         let indicies_usize = indicies.iter().map(|v| *v as usize).collect();
         (
             Mesh::new(renderer, vertices, indicies),
-            Hitbox::new(vertex_positions, indicies_usize)
+            Hitbox::new(vertex_positions, indicies_usize),
         )
     }
 

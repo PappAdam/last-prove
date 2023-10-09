@@ -22,7 +22,9 @@ impl Tile {
         self.flags |= flag as u8
     }
     pub(super) fn new() -> Self {
-        Self { flags: TileFlag::Solid as u8 }
+        Self {
+            flags: TileFlag::Solid as u8,
+        }
     }
     pub(super) fn none() -> Self {
         Self { flags: 0 }
