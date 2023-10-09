@@ -6,7 +6,7 @@ use std::{
 use nalgebra::{Matrix4, Vector2, Vector3, Vector4};
 use renderer::{utils::vertex::Vertex, Renderer};
 
-use crate::{mesh::Mesh, GameObject};
+use crate::{mesh::Mesh, GameObject, getters::Getters};
 
 type Triangle = [usize; 3];
 
@@ -45,7 +45,7 @@ impl Hitbox {
                     triangles.push(splitted_line[3].parse::<usize>().unwrap() - 1);
                 }
                 row => {
-                    panic!("Hitbox can't handle this type: {row}")
+                    dbg!("Hitbox doesn't use this information, should be removed from file: ".to_owned() + &line);
                 }
             }
         }
@@ -74,6 +74,16 @@ impl GameObject<'_> {
         camera: &Matrix4<f32>,
         relative_mouse_position: Vector2<f32>,
     ) -> Option<(Vector3<f32>, f32)> {
+        let mut click_global_coordinates = (camera.try_inverse().unwrap()
+        * Vector4::new(
+            relative_mouse_position.x,
+            relative_mouse_position.y,
+            0.,
+            1.,
+        )).xyz();
+        dbg!(relative_mouse_position);
+        click_global_coordinates += camera.z_axis() * ((camera.z_axis().y) / click_global_coordinates.y);
+        dbg!(click_global_coordinates);
         let model_view_matrix = *camera * *self.transform;
         let wh_ratio = 1080. / 1920.;
         let mut transformed_vertices = Vec::with_capacity(self.hitbox.vertices.len());
