@@ -46,9 +46,8 @@ fn main() {
         .unwrap();
 
     let mut meshes: Vec<Mesh> = vec![];
-    let mut hitboxes: Vec<Hitbox> = vec![];
     let mut app = App::init(&window, MAP_SIZE);
-    app.setup(&mut meshes, &mut hitboxes);
+    app.setup(&mut meshes);
 
     app.renderer.data.push_const.wh_ratio = app.renderer.base.surface_extent.width as f32
         / app.renderer.base.surface_extent.height as f32;

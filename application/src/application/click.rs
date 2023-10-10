@@ -12,6 +12,9 @@ impl<'a> App<'a> {
             .get_mouse_button_down(winit::event::MouseButton::Left)
         {
             for object in &self.gameobjects {
+                if object.flag_active(objects::GameObjectFlag::NotClickable) {
+                    continue;
+                }
                 if let Some((clicked_position, screen_z)) = object.check_object_clicked(
                     self.camera.get_transform(),
                     self.input.get_relative_mouse_position(),

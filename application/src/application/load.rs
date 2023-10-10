@@ -15,29 +15,27 @@ pub const _SPHERE_MESH_INDEX: usize = 5;
 //WHEN ADDING MORE OBJECTS, BE CAREFUL TO UPDATE MAX_VERTEX_DISTANCE IF NEEDED
 
 impl<'a> App<'a> {
-    pub fn load_meshes(&mut self, meshes: &mut Vec<Mesh>, hitboxes: &mut Vec<Hitbox>) {
+    pub fn load_meshes(&mut self, meshes: &mut Vec<Mesh>) {
         //Empty
         meshes.push(Mesh::new(
             &mut self.renderer,
             vec![Vertex::default()],
             vec![0, 0, 0],
+            Hitbox::new(vec![], vec![])
         ));
-        hitboxes.push(Hitbox::new(vec![], vec![]));
         //Map
-        let (map_mesh, map_hitbox) = self.map.convert_to_mesh(&mut self.renderer);
-        hitboxes.push(map_hitbox);
+        let map_mesh = self.map.convert_to_mesh(&mut self.renderer);
         meshes.push(map_mesh);
         //Indexing starts from 1 because of map.
         // self.load_object("resources/models/Structures/House", meshes, hitboxes);
-        self.load_object("resources/models/Structures/House", meshes, hitboxes);
-        self.load_object("resources/models/Indicators/MapSelection", meshes, hitboxes);
-        self.load_object("resources/models/Debug/Plane", meshes, hitboxes);
-        self.load_object("resources/models/Debug/Sphere", meshes, hitboxes);
+        self.load_object("resources/models/Structures/House", meshes);
+        self.load_object("resources/models/Indicators/MapSelection", meshes);
+        self.load_object("resources/models/Debug/Plane", meshes);
+        self.load_object("resources/models/Debug/Sphere", meshes);
     }
     #[inline]
-    fn load_object(&mut self, path: &str, meshes: &mut Vec<Mesh>, hitboxes: &mut Vec<Hitbox>) {
+    fn load_object(&mut self, path: &str, meshes: &mut Vec<Mesh>) {
         meshes.push(Mesh::from_file(&mut self.renderer, path));
-        hitboxes.push(Hitbox::from_file(path));
     }
     // #[inline]
     // fn load_hitbox_file(path: &str, hitboxes: &mut Vec<Hitbox>) {

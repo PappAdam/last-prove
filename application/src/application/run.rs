@@ -1,5 +1,7 @@
 use nalgebra::Vector3;
-use objects::{hitbox::Hitbox, mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
+use objects::{hitbox::{Hitbox, Triangle, self}, mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
+
+use crate::application::load::_PLANE_MESH_INDEX;
 
 use super::{
     load::{
@@ -13,10 +15,12 @@ impl<'a> App<'a> {
     #[inline]
     pub fn main_loop(&mut self) {
         if let Some((clicked_object, click_position)) = self.click_detection() {
-            if clicked_object.has_tag(&objects::tags::ObjectTag::Map) {
-                let map_coordinates = self.map.world_coordinate_to_tile_center(&click_position);
-                self.gameobjects[1].transform.set_position(map_coordinates);
-            }
+            // if clicked_object.has_tag(&objects::tags::ObjectTag::Map) {
+            //     let map_coordinates = self.map.world_coordinate_to_tile_center(&click_position);
+            //     self.gameobjects[1].transform.set_position(map_coordinates);
+            // }
+            dbg!(click_position);
+            self.gameobjects[1].transform.set_position(click_position);
         }
 
         // self.game_controller
@@ -26,20 +30,24 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>, hitboxes: &'a mut Vec<Hitbox>) {
-        self.load_meshes(meshes, hitboxes);
+    pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>) {
+        self.load_meshes(meshes);
+
+        // self.create_obj(
+        //     &meshes[_MAP_MESH_INDEX],
+        //     &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
+        // );
+        // self.gameobjects[0].add_tag(objects::tags::ObjectTag::Map);
 
         self.create_obj(
-            &meshes[_MAP_MESH_INDEX],
-            &hitboxes[_MAP_MESH_INDEX],
-            &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
+            &meshes[_PLANE_MESH_INDEX],
+            &GameObjectCreateInfo::position(Vector3::new(250., 0., 250.)),
         );
-        self.gameobjects[0].add_tag(objects::tags::ObjectTag::Map);
-
+        self.gameobjects[0].transform.scale_object(100.).rotate(0.4, 0.2, 0.);
         self.create_obj(
-            &meshes[_MAPSELECTION_MESH_INDEX],
-            &hitboxes[_EMPTY_MESH_INDEX],
+            &meshes[_SPHERE_MESH_INDEX],
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
+        self.gameobjects[1].set_flag(objects::GameObjectFlag::NotClickable);
     }
 }
