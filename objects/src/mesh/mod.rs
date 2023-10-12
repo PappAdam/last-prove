@@ -11,15 +11,18 @@ use ash::vk;
 
 use renderer::{self, resources::buffer::Buffer, utils::vertex::Vertex, Renderer};
 
+use crate::hitbox::Hitbox;
+
 // #[derive(Clone)]
 pub struct Mesh {
     pub vertex_buffer: vk::Buffer,
     pub index_buffer: vk::Buffer,
+    pub hitbox: Hitbox,
     pub index_count: u32,
 }
 
 impl Mesh {
-    pub fn new(renderer: &mut Renderer, vertices: Vec<Vertex>, indicies: Vec<u32>) -> Self {
+    pub fn new(renderer: &mut Renderer, vertices: Vec<Vertex>, indicies: Vec<u32>, hitbox: Hitbox) -> Self {
         let vertex_buffer = Buffer::device_local(
             &renderer.base.device,
             vertices.as_ptr() as _,
@@ -51,6 +54,7 @@ impl Mesh {
             index_buffer: ib,
             vertex_buffer: vb,
             index_count: indicies.len() as u32,
+            hitbox
         }
     }
 
@@ -91,7 +95,7 @@ impl Mesh {
         }
         //A default material, if no materials are present.
         if materials.len() == 0 {
-            materials.insert("default".to_owned(), [0.9, 0.9, 0.9]);
+            materials.insert("default".to_owned(), [1.0, 0.0, 1.0]);
         }
         //Finished loading materials
 
@@ -152,7 +156,7 @@ impl Mesh {
                 _ => {}
             }
         }
-        Mesh::new(renderer, vertex_buffer, index_buffer)
+        Mesh::new(renderer, vertex_buffer, index_buffer, Hitbox::from_file(path))
     }
 }
 

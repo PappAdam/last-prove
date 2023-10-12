@@ -18,13 +18,13 @@ pub mod transformations;
 #[derive(Clone, Copy)]
 pub enum GameObjectFlag {
     None = 0b00000001,
+    NotClickable = 0b00000010,
 }
 
 pub struct GameObject<'a> {
     pub transform: &'a mut Matrix4<f32>,
     transform_index: usize,
     mesh: &'a Mesh,
-    hitbox: &'a Hitbox,
     pub tags: Vec<ObjectTag>,
     flags: u8,
 }
@@ -33,7 +33,6 @@ impl<'a> GameObject<'a> {
     pub fn create(
         transform_buf: &mut AlignedArray<Matrix4<f32>>,
         mesh: &'a Mesh,
-        hitbox: &'a Hitbox,
         create_info: &GameObjectCreateInfo,
     ) -> Result<Self, ObjectCreationError> {
         let transform_index = transform_buf
@@ -47,8 +46,7 @@ impl<'a> GameObject<'a> {
             tags: vec![],
             transform: transform_ptr,
             transform_index,
-            mesh,
-            hitbox
+            mesh
         })
     }
 

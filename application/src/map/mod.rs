@@ -18,7 +18,7 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn convert_to_mesh(&self, renderer: &mut Renderer) -> (Mesh, Hitbox) {
+    pub fn convert_to_mesh(&self, renderer: &mut Renderer) -> Mesh {
         let grass_color = Vector3::new(148. / 255., 186. / 255., 101. / 255.);
         let mut quads: Vec<Vec<Range<usize>>> = vec![];
 
@@ -96,8 +96,10 @@ impl Map {
         indicies.append(&mut water_indicies);
         let vertex_positions: Vec<Vector3<f32>> = vertices.iter().map(|v| v.pos).collect();
         let indicies_usize = indicies.iter().map(|v| *v as usize).collect();
-        (
-            Mesh::new(renderer, vertices, indicies),
+        Mesh::new(
+            renderer,
+            vertices,
+            indicies,
             Hitbox::new(vertex_positions, indicies_usize),
         )
     }

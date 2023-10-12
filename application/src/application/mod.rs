@@ -67,10 +67,9 @@ impl<'a> App<'a> {
     pub fn create_obj(
         &mut self,
         mesh: &'a Mesh,
-        hitbox: &'a Hitbox,
         create_info: &GameObjectCreateInfo,
     ) -> usize {
-        let obj = GameObject::create(&mut self.transform_array, mesh, hitbox, create_info)
+        let obj = GameObject::create(&mut self.transform_array, mesh, create_info)
             .expect("Failed to create gameObject");
 
         self.gameobjects.push(obj)
