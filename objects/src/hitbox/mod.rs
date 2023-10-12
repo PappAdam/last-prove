@@ -81,9 +81,7 @@ impl GameObject<'_> {
             0.,
             1.,
         )).xyz();
-        dbg!(relative_mouse_position);
         click_global_coordinates += camera.z_axis() * ((camera.z_axis().y) / click_global_coordinates.y);
-        dbg!(click_global_coordinates);
         let model_view_matrix = *camera * *self.transform;
         let wh_ratio = 1080. / 1920.;
         let mut transformed_vertices = Vec::with_capacity(self.hitbox.vertices.len());

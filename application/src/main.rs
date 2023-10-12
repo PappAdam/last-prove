@@ -14,9 +14,11 @@ use winit::{
     window::Fullscreen,
 };
 
-pub const MAP_SIZE: usize = 500;
-pub const WINDOW_WIDTH: u32 = 1920;
-pub const WINDOW_HEIGHT: u32 = 1080;
+use constants::make_answer;
+
+make_answer!("application/src/constants.const");
+
+
 
 use renderer::msg;
 fn main() {

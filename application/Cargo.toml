@@ -11,6 +11,7 @@ nalgebra = "0.32.2"
 rand = "0.8.5"
 renderer = {path = "../renderer"}
 objects = {path = "../objects"}
+constants = {path = "../constants"}
 simplelog = "0.12.1"
 winit = "0.28.3"
 lazy_static = "1.4.0"
