@@ -1,6 +1,8 @@
 use nalgebra::Vector3;
 use objects::GameObject;
 
+use crate::input::EventState;
+
 use super::App;
 
 impl<'a> App<'a> {
@@ -9,7 +11,7 @@ impl<'a> App<'a> {
         let closest_z = f32::MIN;
         if self
             .input
-            .get_mouse_button_down(winit::event::MouseButton::Left)
+            .mouse_button_state(winit::event::MouseButton::Left, EventState::Down)
         {
             for object in &self.gameobjects {
                 if object.flag_active(objects::GameObjectFlag::NotClickable) {

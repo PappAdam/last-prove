@@ -48,7 +48,7 @@ fn main() {
         .unwrap();
 
     let mut meshes: Vec<Mesh> = vec![];
-    let mut app = App::init(&window, MAP_SIZE);
+    let mut app = App::init(&window, MAP_SIZE, &meshes);
     app.setup(&mut meshes);
 
     app.renderer.data.push_const.wh_ratio = app.renderer.base.surface_extent.width as f32

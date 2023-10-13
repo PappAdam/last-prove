@@ -20,7 +20,6 @@ impl Ray {
         if dot_direction_normal.abs() < 1e-3 {
             return None;
         }
-        dbg!(dot_direction_normal);
 
         let dot_origin_normal = plane_normal.dot(&self.origin);
 

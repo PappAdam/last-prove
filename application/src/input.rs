@@ -1,22 +1,32 @@
 use nalgebra::Vector2;
-use winit::event::{ElementState, ModifiersState, MouseButton, VirtualKeyCode};
+use winit::event::{ElementState, ModifiersState, MouseButton, VirtualKeyCode, Event};
 
 use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
 pub struct Input {
-    pub keys: [ElementState; 163],
+    pub keys: [EventState; 163],
     pub modifier: ModifiersState,
     pub mouse: Mouse,
+    last_modified_keys: Vec<u8>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum EventState {
+    Pressed,
+    Released,
+    Up,
+    Down,
 }
 
 impl Input {
     pub fn init() -> Self {
-        let keys = [ElementState::Released; 163];
+        let keys = [EventState::Released; 163];
         Self {
             keys,
             modifier: Default::default(),
+            last_modified_keys: Vec::default(),
             mouse: Mouse {
-                buttons: [ElementState::Released; 3],
+                buttons: [EventState::Released; 3],
                 pos: Default::default(),
                 delta_move: Default::default(),
                 wheel: 0.,
@@ -32,7 +42,15 @@ impl Input {
     #[inline]
     pub fn handle_key_press(&mut self, key: Option<VirtualKeyCode>, state: ElementState) {
         if let Some(key) = key {
-            self.keys[key as usize] = state
+            match state {
+                ElementState::Pressed => {
+                    self.keys[key as usize] = EventState::Pressed;
+                },
+                ElementState::Released => {
+                    self.keys[key as usize] = EventState::Released;
+                },
+            }
+            self.last_modified_keys.push(key as u8)
         }
     }
 
@@ -47,7 +65,14 @@ impl Input {
     #[inline]
     pub fn handle_mouse_press(&mut self, button: MouseButton, state: ElementState) {
         unsafe {
-            self.mouse.buttons[*(&button as *const _ as *const u8) as usize] = state;
+            match state {
+                ElementState::Pressed => {
+                    self.mouse.buttons[Self::get_mouse_button_index(button)] = EventState::Pressed;
+                },
+                ElementState::Released => {
+                    self.mouse.buttons[Self::get_mouse_button_index(button)] = EventState::Released;
+                },
+            }
         }
     }
 
@@ -61,18 +86,41 @@ impl Input {
         self.mouse.delta_move.x = 0.;
         self.mouse.delta_move.y = 0.;
         self.mouse.wheel = 0.;
+
+        self.last_modified_keys.iter().for_each(|k| {
+            match self.keys[*k as usize] {
+                EventState::Pressed => self.keys[*k as usize] = EventState::Down,
+                EventState::Released => self.keys[*k as usize] = EventState::Up,
+                _ => ()
+            }
+        });
+
+        self.last_modified_keys.clear();
+
+        self.mouse.buttons.iter_mut().for_each(|mut b| {
+            match b {
+                EventState::Pressed => {*b = EventState::Down},
+                EventState::Released => {*b = EventState::Up},
+                _ => ()
+            }
+        });
     }
 
     #[inline]
-    pub fn get_key_down(&self, key: VirtualKeyCode) -> bool {
-        self.keys[key as usize] == ElementState::Pressed
+    pub fn key_state(&self, key: VirtualKeyCode, state: EventState) -> bool {
+        match state {
+            EventState::Pressed | EventState::Released=> self.keys[key as usize] == state,
+            EventState::Up => self.keys[key as usize] == EventState::Up || self.keys[key as usize] == EventState::Released,
+            EventState::Down => self.keys[key as usize] == EventState::Down || self.keys[key as usize] == EventState::Pressed,
+        }
     }
 
     #[inline]
-    pub fn get_mouse_button_down(&self, button: MouseButton) -> bool {
-        unsafe {
-            self.mouse.buttons[*(&button as *const _ as *const u8) as usize]
-                == ElementState::Pressed
+    pub fn mouse_button_state(&self, button: MouseButton, state: EventState) -> bool {
+        match state {
+            EventState::Pressed | EventState::Released=> self.get_mouse_button_state(button) == state,
+            EventState::Up => self.get_mouse_button_state(button) == EventState::Up || self.get_mouse_button_state(button) == EventState::Released,
+            EventState::Down => self.get_mouse_button_state(button) == EventState::Down || self.get_mouse_button_state(button) == EventState::Pressed,
         }
     }
 
@@ -88,13 +136,23 @@ impl Input {
             (self.mouse.pos.y / WINDOW_HEIGHT as f32) * 2. - 1.,
         )
     }
+
+    fn get_mouse_button_state(&self, button: MouseButton) -> EventState {
+        unsafe {
+            self.mouse.buttons[*(&button as *const _ as *const u8) as usize]
+        }
+    }
+
+    pub fn get_mouse_button_index(button: MouseButton) -> usize {
+        unsafe { *(&button as *const _ as *const u8) as usize }
+    }
+
 }
 
 pub struct Mouse {
-    pub buttons: [ElementState; 3],
+    pub buttons: [EventState; 3],
     pub pos: Vector2<f32>,
     pub delta_move: Vector2<f32>,
     pub wheel: f32,
 }
 
-impl Mouse {}

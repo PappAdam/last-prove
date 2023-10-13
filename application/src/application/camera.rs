@@ -4,7 +4,7 @@ use nalgebra::{Matrix4, Vector2, Vector3};
 use objects::{getters::Getters, transformations::Transformations};
 use winit::event::MouseButton;
 
-use crate::{input::Input, MAP_SIZE};
+use crate::{input::{Input, EventState}, MAP_SIZE};
 
 pub struct Camera {
     transform: Matrix4<f32>,
@@ -60,7 +60,7 @@ impl Camera {
     #[inline]
     pub fn camera_move(&mut self, input: &Input, delta_time_seconds: f32) {
         //CAMERA ROTATION
-        if input.get_mouse_button_down(MouseButton::Middle) {
+        if input.mouse_button_state(MouseButton::Middle, EventState::Down) {
             //Horizontal rotation, no constraits
             self.transform
                 .orbit(0., -input.mouse.delta_move.x * 0.001, 0., Vector3::zeros());
@@ -78,18 +78,18 @@ impl Camera {
         //CAMERA TRANSLATION
         let mut camera_position_change = Vector2::zeros();
         //Keyboard inputs, collecting translations
-        if input.get_key_down(winit::event::VirtualKeyCode::W) {
+        if input.key_state(winit::event::VirtualKeyCode::W, EventState::Down) {
             let direction = (self.transform.y_axis()).xz().normalize() / self.scale;
             camera_position_change += direction;
         }
-        if input.get_key_down(winit::event::VirtualKeyCode::S) {
+        if input.key_state(winit::event::VirtualKeyCode::S, EventState::Down) {
             let direction = (-self.transform.y_axis()).xz().normalize() / self.scale;
             camera_position_change += direction;
         }
-        if input.get_key_down(winit::event::VirtualKeyCode::A) {
+        if input.key_state(winit::event::VirtualKeyCode::A,EventState::Down) {
             camera_position_change += self.transform.x_axis().xz();
         }
-        if input.get_key_down(winit::event::VirtualKeyCode::D) {
+        if input.key_state(winit::event::VirtualKeyCode::D, EventState::Down) {
             camera_position_change += -self.transform.x_axis().xz();
         }
 

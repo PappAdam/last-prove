@@ -14,6 +14,5 @@ pub fn make_answer(item: TokenStream) -> TokenStream {
         result += ";";
     }
 
-
     result.parse().unwrap()
 }
