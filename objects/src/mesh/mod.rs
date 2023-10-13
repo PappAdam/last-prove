@@ -104,7 +104,7 @@ impl Mesh {
         let mut index_buffer = vec![];
 
         //These vectors get filled up with v, vn, and vt values.
-        let mut vertices = vec![];
+        let mut positions = vec![];
         let mut normals = vec![];
         let mut textures = vec![];
 
@@ -116,7 +116,7 @@ impl Mesh {
             let splitted_line = line.split(' ').collect::<Vec<_>>();
             match splitted_line[0] {
                 //Vertex xample: v 0.0000000 1.0000000 0.5000000
-                "v" => vertices.push([
+                "v" => positions.push([
                     splitted_line[1].parse::<f32>().unwrap(),
                     -splitted_line[2].parse::<f32>().unwrap(),
                     splitted_line[3].parse::<f32>().unwrap(),
@@ -138,7 +138,7 @@ impl Mesh {
                     for segment in &splitted_line[1..] {
                         let splitted_segment = segment.split('/').collect::<Vec<_>>();
                         vertex_buffer.push(Vertex::new(
-                            vertices[splitted_segment[0].parse::<usize>().unwrap() - 1].into(),
+                            positions[splitted_segment[0].parse::<usize>().unwrap() - 1].into(),
                             materials[&current_material].into(),
                             normals[splitted_segment[2].parse::<usize>().unwrap() - 1].into(),
                         ));

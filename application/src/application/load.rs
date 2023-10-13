@@ -21,13 +21,11 @@ impl<'a> App<'a> {
             &mut self.renderer,
             vec![Vertex::default()],
             vec![0, 0, 0],
-            Hitbox::new(vec![], vec![])
+            Hitbox::new(vec![], vec![], vec![])
         ));
         //Map
         let map_mesh = self.map.convert_to_mesh(&mut self.renderer);
         meshes.push(map_mesh);
-        //Indexing starts from 1 because of map.
-        // self.load_object("resources/models/Structures/House", meshes, hitboxes);
         self.load_object("resources/models/Structures/House", meshes);
         self.load_object("resources/models/Indicators/MapSelection", meshes);
         self.load_object("resources/models/Debug/Plane", meshes);

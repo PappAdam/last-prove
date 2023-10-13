@@ -1,5 +1,5 @@
 use nalgebra::Vector3;
-use objects::{hitbox::{Hitbox, Triangle, self}, mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
+use objects::{mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
 
 use crate::application::load::_PLANE_MESH_INDEX;
 
@@ -33,17 +33,11 @@ impl<'a> App<'a> {
     pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>) {
         self.load_meshes(meshes);
 
-        // self.create_obj(
-        //     &meshes[_MAP_MESH_INDEX],
-        //     &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
-        // );
-        // self.gameobjects[0].add_tag(objects::tags::ObjectTag::Map);
-
         self.create_obj(
-            &meshes[_PLANE_MESH_INDEX],
-            &GameObjectCreateInfo::position(Vector3::new(250., 0., 250.)),
+            &meshes[_MAP_MESH_INDEX],
+            &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
-        self.gameobjects[0].transform.scale_object(100.).rotate(0.4, 0.2, 0.);
+        // self.gameobjects[0].add_tag(objects::tags::ObjectTag::Map);
         self.create_obj(
             &meshes[_SPHERE_MESH_INDEX],
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),

@@ -52,9 +52,10 @@ impl Renderer {
 
     #[inline]
     pub fn begin_render_pass(&self) {
-        let water_color = Vector3::new(39. / 255., 144. / 255., 176. / 255.)
-            + self.data.push_const.sun_color
-                * -Vector3::y().dot(&self.data.push_const.sun_direction);
+        // let water_color = Vector3::new(39. / 255., 144. / 255., 176. / 255.)
+        //     + self.data.push_const.sun_color
+        //         * -Vector3::y().dot(&self.data.push_const.sun_direction);
+        let water_color = Vector3::zeros();
         let clear_color = vk::ClearColorValue {
             float32: [water_color.x, water_color.y, water_color.z, 1.],
         };

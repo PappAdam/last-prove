@@ -20,15 +20,16 @@ pub struct Map {
 impl Map {
     pub fn convert_to_mesh(&self, renderer: &mut Renderer) -> Mesh {
         let grass_color = Vector3::new(148. / 255., 186. / 255., 101. / 255.);
-        let mut quads: Vec<Vec<Range<usize>>> = vec![];
+        let mut tile_quads: Vec<Vec<Range<usize>>> = vec![];
 
         let mut vertices = vec![];
         let mut indicies = vec![];
+        let mut hitbox_quads = vec![];
         let mut tile_index = 0;
         //Iterating over rows
         for (y, _) in self.matrix.iter().enumerate() {
             //Iterating over columns, using while so I can modify x.
-            quads.push(vec![]);
+            tile_quads.push(vec![]);
             let mut x = 0;
             while x < MAP_SIZE {
                 //If a tile is solid, we search for the next water tile in that column.
@@ -38,7 +39,7 @@ impl Map {
                             //Searching for the next water tile on the column, increasing offset.
                             continue;
                         }
-                        quads[y].push(x..offset);
+                        tile_quads[y].push(x..offset);
                         x = offset;
                         break;
                     }
@@ -50,11 +51,11 @@ impl Map {
         //We can skip all previously checked tiles.
         let mut y = 0;
         while y < MAP_SIZE {
-            let row = quads[y].clone();
+            let row = tile_quads[y].clone();
             for section in row {
                 let mut y_offset = 1;
                 let mut index = 0;
-                while quads[y + y_offset]
+                while tile_quads[y + y_offset]
                     .iter()
                     .enumerate()
                     .find(|(i, foundsection)| {
@@ -63,44 +64,51 @@ impl Map {
                     })
                     .is_some()
                 {
-                    quads[y + y_offset].remove(index);
+                    tile_quads[y + y_offset].remove(index);
                     y_offset += 1;
                 }
-                let (mut square_vertices, mut square_indicies) = Mesh::rounded_quad(
+                let (mut square_vertices, mut tile_rounded_quad) = Mesh::rounded_quad(
                     [
                         Vector3::new(section.start as f32, 0., y as f32),
-                        Vector3::new(section.end as f32, 0., y as f32),
                         Vector3::new(section.start as f32, 0., y as f32 + y_offset as f32),
                         Vector3::new(section.end as f32, 0., y as f32 + y_offset as f32),
+                        Vector3::new(section.end as f32, 0., y as f32),
                     ],
                     grass_color,
                     tile_index * 20,
                 );
                 vertices.append(&mut square_vertices);
-                indicies.append(&mut square_indicies);
+                indicies.append(&mut tile_rounded_quad[0].triangulated_indicies());
+                indicies.append(&mut tile_rounded_quad[1].triangulated_indicies());
+                indicies.append(&mut tile_rounded_quad[2].triangulated_indicies());
+                indicies.append(&mut tile_rounded_quad[3].triangulated_indicies());
+                indicies.append(&mut tile_rounded_quad[4].triangulated_indicies());
+                hitbox_quads.append(&mut tile_rounded_quad);
                 tile_index += 1;
             }
             y += 1;
         }
-        let (mut water_vertices, mut water_indicies) = Mesh::quad(
+        let (mut water_vertices, water_quad) = Mesh::quad(
             [
                 Vector3::new(0., 0.2, 0.),
-                Vector3::new(MAP_SIZE as f32, 0.2, 0.),
                 Vector3::new(0., 0.2, MAP_SIZE as f32),
                 Vector3::new(MAP_SIZE as f32, 0.2, MAP_SIZE as f32),
+                Vector3::new(MAP_SIZE as f32, 0.2, 0.),
             ],
             Vector3::new(39. / 255., 144. / 255., 176. / 255.),
             tile_index * 20,
         );
+        dbg!(&water_vertices);
+        dbg!(&water_quad.triangulated_indicies());
         vertices.append(&mut water_vertices);
-        indicies.append(&mut water_indicies);
+        indicies.append(&mut water_quad.triangulated_indicies());
+        hitbox_quads.push(water_quad);
         let vertex_positions: Vec<Vector3<f32>> = vertices.iter().map(|v| v.pos).collect();
-        let indicies_usize = indicies.iter().map(|v| *v as usize).collect();
         Mesh::new(
             renderer,
             vertices,
             indicies,
-            Hitbox::new(vertex_positions, indicies_usize),
+            Hitbox::new(vertex_positions, vec![], hitbox_quads),
         )
     }
 

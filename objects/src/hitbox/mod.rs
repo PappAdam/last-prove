@@ -3,58 +3,29 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use nalgebra::{Matrix4, Vector2, Vector3, Vector4};
+use nalgebra::{Vector2, Vector3, Vector4};
 
-use crate::{getters::Getters, GameObject};
+use crate::{
+    mesh::primitives::{Quad, Triangle},
+    GameObject,
+};
 
 use self::ray::Ray;
 
 pub mod ray;
 
 #[derive(Debug)]
-pub struct Triangle {
-    indicies: [usize; 3],
-    normal: Vector3<f32>,
-}
-impl Triangle {
-    #[inline]
-    pub fn new(vertices: &Vec<Vector3<f32>>, indicies: [usize; 3]) -> Self {
-        let a_to_b = vertices[indicies[1]] - vertices[indicies[0]];
-        let a_to_c = vertices[indicies[2]] - vertices[indicies[0]];
-        let normal = a_to_c.cross(&a_to_b).normalize();
-        Self { indicies, normal }
-    }
-    #[inline]
-    pub fn get_vertices(&self, vertices: &Vec<Vector3<f32>>) -> [Vector3<f32>; 3] {
-        [
-            vertices[self.indicies[0]],
-            vertices[self.indicies[1]],
-            vertices[self.indicies[2]],
-        ]
-    }
-}
-
-#[derive(Debug)]
 pub struct Hitbox {
     pub vertices: Vec<Vector3<f32>>,
+    pub quads: Vec<Quad>,
     pub triangles: Vec<Triangle>,
 }
 
 impl Hitbox {
-    pub fn new(vertices: Vec<Vector3<f32>>, indicies: Vec<usize>) -> Self {
-        let mut triangles = Vec::with_capacity(indicies.len() / 3);
-        for triangle_index in 0..indicies.len() / 3 {
-            triangles.push(Triangle::new(
-                &vertices,
-                [
-                    indicies[triangle_index * 3 + 0],
-                    indicies[triangle_index * 3 + 1],
-                    indicies[triangle_index * 3 + 2],
-                ],
-            ));
-        }
+    pub fn new(vertices: Vec<Vector3<f32>>, triangles: Vec<Triangle>, quads: Vec<Quad>) -> Self {
         Self {
             vertices,
+            quads,
             triangles,
         }
     }
@@ -63,8 +34,10 @@ impl Hitbox {
 
         //The buffers get filled up when reading face data
         let mut vertices = vec![];
-        let mut indicies = vec![];
+        let mut triangles = vec![];
+        let mut quads = vec![];
 
+        //Iterating over lines
         for line in obj_file.lines() {
             let line = line.unwrap();
             let splitted_line = line.split(' ').collect::<Vec<_>>();
@@ -79,9 +52,30 @@ impl Hitbox {
                 //Format is following: positionindex1/colorindex1/normalindex1 positionindex2/...
                 //Only position is required here.
                 "f" => {
-                    indicies.push(splitted_line[1].parse::<usize>().unwrap() - 1);
-                    indicies.push(splitted_line[2].parse::<usize>().unwrap() - 1);
-                    indicies.push(splitted_line[3].parse::<usize>().unwrap() - 1);
+                    match splitted_line.len() {
+                        //Triangle
+                        4 => triangles.push(Triangle::new(
+                            &vertices,
+                            [
+                                splitted_line[1].parse::<usize>().unwrap() - 1,
+                                splitted_line[2].parse::<usize>().unwrap() - 1,
+                                splitted_line[3].parse::<usize>().unwrap() - 1,
+                            ],
+                        )),
+                        //Quad
+                        5 => quads.push(Quad::new(
+                            &vertices,
+                            [
+                                splitted_line[1].parse::<usize>().unwrap() - 1,
+                                splitted_line[2].parse::<usize>().unwrap() - 1,
+                                splitted_line[3].parse::<usize>().unwrap() - 1,
+                                splitted_line[4].parse::<usize>().unwrap() - 1,
+                            ],
+                        )),
+                        _ => {
+                            panic!("Not valid hitbox face!")
+                        }
+                    }
                 }
                 row => {
                     dbg!(
@@ -92,7 +86,7 @@ impl Hitbox {
                 }
             }
         }
-        Hitbox::new(vertices, indicies)
+        Hitbox::new(vertices, triangles, quads)
     }
     // pub fn into_mesh(&self, renderer: &mut Renderer, color: Vector3<f32>) -> Mesh {
     //     //Collecting vertices
@@ -112,29 +106,16 @@ impl Hitbox {
 impl GameObject<'_> {
     ///Checks if a given screen position collides with the object or not.
     /// Returns the global coordinate with the screen Z coordinate of the collision if yes
-    pub fn check_object_clicked(
-        &self,
-        camera: &Matrix4<f32>,
-        mut relative_mouse_position: Vector2<f32>,
-    ) -> Option<(Vector3<f32>, f32)> {
-        relative_mouse_position.x *= 1920. / 1080.;
-        let ray_origin = (self.transform.try_inverse().unwrap()
-            * camera.try_inverse().unwrap()
-            * Vector4::new(relative_mouse_position.x, relative_mouse_position.y, 0., 1.))
-        .xyz();
-        let cam_direction = camera.z_axis();
-        let ray_direction = (self.transform.try_inverse().unwrap()
-            * Vector4::new(cam_direction.x, cam_direction.y, cam_direction.z, 0.))
-        .xyz();
-        let ray = Ray::new(ray_origin, ray_direction);
-        let plane = plane_from_points(
-            self.mesh.hitbox.triangles[0].get_vertices(&self.mesh.hitbox.vertices),
-        );
-        let possible_intersection_point = ray.plane_intersection_point(plane);
-        if let None = possible_intersection_point {
+    pub fn ray_object_intersection_point(&self, ray: &Ray) -> Option<(Vector3<f32>, f32)> {
+        let ray = self.transform.try_inverse().unwrap() * ray;
+        let untransformed_intersection_point = ray.hitbox_intersection_point(&self.mesh.hitbox);
+
+        if let None = untransformed_intersection_point {
             return None;
         }
-        let (mut intersection_point, t) = unsafe { possible_intersection_point.unwrap_unchecked() };
+        let (mut intersection_point, t) =
+            unsafe { untransformed_intersection_point.unwrap_unchecked() };
+
         intersection_point = (*self.transform
             * Vector4::new(
                 intersection_point.x,
@@ -174,12 +155,4 @@ fn mouse_inside_triangle(
         ));
     }
     None
-}
-
-fn plane_from_points(points: [Vector3<f32>; 3]) -> Vector4<f32> {
-    let a_to_b = points[1] - points[0];
-    let a_to_c = points[2] - points[0];
-    let normal = a_to_c.cross(&a_to_b).normalize();
-    let plane_d = points[0].x * normal.x + points[0].y * normal.y + points[0].z * normal.z;
-    return Vector4::new(normal.x, normal.y, normal.z, plane_d);
 }
