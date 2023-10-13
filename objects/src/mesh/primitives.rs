@@ -11,7 +11,7 @@ pub type Hexagon = Polygon<6>;
 #[derive(Debug)]
 pub struct Polygon<const CORNER_COUNT: usize> {
     indicies: [usize; CORNER_COUNT],
-    normal: Vector3<f32>,
+    pub normal: Vector3<f32>,
 }
 impl<const CORNER_COUNT: usize> Polygon<CORNER_COUNT> {
     #[inline]
@@ -53,10 +53,6 @@ impl<const CORNER_COUNT: usize> Polygon<CORNER_COUNT> {
         }
         triangle_indicies
     }
-}
-
-impl As {
-    
 }
 
 //Generating primitives for map mesh.

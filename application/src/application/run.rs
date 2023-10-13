@@ -19,7 +19,6 @@ impl<'a> App<'a> {
             //     let map_coordinates = self.map.world_coordinate_to_tile_center(&click_position);
             //     self.gameobjects[1].transform.set_position(map_coordinates);
             // }
-            dbg!(click_position);
             self.gameobjects[1].transform.set_position(click_position);
         }
 
@@ -34,8 +33,8 @@ impl<'a> App<'a> {
         self.load_meshes(meshes);
 
         self.create_obj(
-            &meshes[_MAP_MESH_INDEX],
-            &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
+            &meshes[_HOUSE_MESH_INDEX],
+            &GameObjectCreateInfo::position(Vector3::new(250., 0., 250.)),
         );
         // self.gameobjects[0].add_tag(objects::tags::ObjectTag::Map);
         self.create_obj(
@@ -43,5 +42,6 @@ impl<'a> App<'a> {
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
         self.gameobjects[1].set_flag(objects::GameObjectFlag::NotClickable);
+        self.gameobjects[1].transform.scale_object(0.01);
     }
 }

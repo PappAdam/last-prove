@@ -98,8 +98,6 @@ impl Map {
             Vector3::new(39. / 255., 144. / 255., 176. / 255.),
             tile_index * 20,
         );
-        dbg!(&water_vertices);
-        dbg!(&water_quad.triangulated_indicies());
         vertices.append(&mut water_vertices);
         indicies.append(&mut water_quad.triangulated_indicies());
         hitbox_quads.push(water_quad);
