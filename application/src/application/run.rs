@@ -1,8 +1,6 @@
 use nalgebra::Vector3;
 use objects::{hitbox::{Hitbox, Triangle, self}, mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
 use winit::event::MouseButton;
-
-
 use crate::input::EventState;
 
 use super::{
@@ -16,10 +14,6 @@ impl<'a> App<'a> {
         for gameobject in &self.gameobjects {
             gameobject.render(&self.renderer);
         }
-
-        if self.input.mouse_button_state(MouseButton::Right, EventState::Down) {
-            println!("asd");
-        }
     }
 
     pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>) {
@@ -29,6 +23,5 @@ impl<'a> App<'a> {
             MeshPreset::Map,
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
-
     }
 }

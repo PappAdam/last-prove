@@ -6,7 +6,7 @@ use crate::{
         self,
         buffer::{Buffer, DynamicUniformBuffer, UniformBuffer},
         desriptors::{
-            create_descriptor_pool, create_descriptor_set_layout, create_descriptor_sets,
+            create_descriptor_pool, create_descriptor_set_layout, create_descriptor_sets, update_descriptor_sets,
         },
         image::Image,
     },
@@ -51,7 +51,24 @@ impl RenderData {
         let vertex_shader_module = create_shader!("../.compiled_shaders/vert.spv", base.device);
         let fragment_shader_module = create_shader!("../.compiled_shaders/frag.spv", base.device);
 
-        let descriptor_set_layout = create_descriptor_set_layout(&base.device)?;
+        let layout_bindings = [
+            vk::DescriptorSetLayoutBinding {
+                binding: 0,
+                descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
+                descriptor_count: 1,
+                stage_flags: vk::ShaderStageFlags::VERTEX,
+                ..Default::default()
+            },
+            vk::DescriptorSetLayoutBinding {
+                binding: 1,
+                descriptor_type: vk::DescriptorType::UNIFORM_BUFFER_DYNAMIC,
+                descriptor_count: 1,
+                stage_flags: vk::ShaderStageFlags::VERTEX,
+                ..Default::default()
+            },
+        ];
+
+        let descriptor_set_layout = create_descriptor_set_layout(&base.device, &layout_bindings)?;
         let pipeline_layout = setup::create_pipeline_layout(&base.device, descriptor_set_layout)?;
 
         let render_pass =
@@ -123,7 +140,18 @@ impl RenderData {
             }
         };
 
-        let descriptor_pool = create_descriptor_pool(&base.device)?;
+        let pool_sizes = [
+            vk::DescriptorPoolSize {
+                ty: vk::DescriptorType::UNIFORM_BUFFER,
+                descriptor_count: MAX_FRAME_DRAWS as u32,
+            },
+            vk::DescriptorPoolSize {
+                ty: vk::DescriptorType::UNIFORM_BUFFER_DYNAMIC,
+                descriptor_count: MAX_FRAME_DRAWS as u32,
+            },
+        ];
+
+        let descriptor_pool = create_descriptor_pool(&base.device, &pool_sizes)?;
 
         let world_view = WorldView::new();
         let uniform_buffer = Buffer::uniform_buffer::<WorldView>(
@@ -145,10 +173,38 @@ impl RenderData {
             &base.device,
             descriptor_pool,
             descriptor_set_layout,
-            &dynamic_uniform_buffer,
-            &uniform_buffer,
         )?;
 
+        let uniform_buffer_descriptor = vk::DescriptorBufferInfo {
+            buffer: uniform_buffer.buf,
+            offset: 0,
+            range: uniform_buffer.size,
+        };
+
+        let dynamic_uniform_buffer_descriptor = vk::DescriptorBufferInfo {
+            buffer: dynamic_uniform_buffer.buf,
+            offset: 0,
+            range: dynamic_uniform_buffer.size,
+        };
+
+        let mut write_desc_sets = [
+            vk::WriteDescriptorSet {
+                dst_binding: uniform_buffer.binding,
+                descriptor_count: 1,
+                descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
+                p_buffer_info: &uniform_buffer_descriptor,
+                ..Default::default()
+            },
+            vk::WriteDescriptorSet {
+                dst_binding: dynamic_uniform_buffer.binding,
+                descriptor_count: 1,
+                descriptor_type: vk::DescriptorType::UNIFORM_BUFFER_DYNAMIC,
+                p_buffer_info: &dynamic_uniform_buffer_descriptor,
+                ..Default::default()
+            },
+        ];
+
+        update_descriptor_sets(&base.device, &descriptor_sets, &mut write_desc_sets);
         uniform_buffer.update(&base.device, world_view.as_void_ptr(), &descriptor_sets);
 
         Ok(Self {
