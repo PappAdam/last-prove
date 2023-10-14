@@ -107,6 +107,8 @@ impl GameObject<'_> {
     ///Checks if a given screen position collides with the object or not.
     /// Returns the global coordinate with the screen Z coordinate of the collision if yes
     pub fn ray_object_intersection_point(&self, ray: &Ray) -> Option<(Vector3<f32>, f32)> {
+        //Intead of transforming the vertices with the model transform, we only tranform the ray
+        //The relative positions of the vertices and the ray will be the same this way. 
         let ray = self.transform.try_inverse().unwrap() * ray;
         let untransformed_intersection_point = ray.hitbox_intersection_point(&self.mesh.hitbox);
 

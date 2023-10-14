@@ -164,7 +164,7 @@ fn plane_from_points(points: &Vec<Vector3<f32>>) -> Vector4<f32> {
     );
     let a_to_b = points[1] - points[0];
     let a_to_c = points[2] - points[0];
-    let normal = a_to_c.cross(&a_to_b).normalize();
+    let normal = a_to_c.cross(&a_to_b);
     let plane_d = points[0].x * normal.x + points[0].y * normal.y + points[0].z * normal.z;
     return Vector4::new(normal.x, normal.y, normal.z, plane_d);
 }
