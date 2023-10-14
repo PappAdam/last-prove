@@ -86,7 +86,6 @@ impl Hitbox {
                 }
             }
         }
-        dbg!(&quads);
         Hitbox::new(vertices, triangles, quads)
     }
     // pub fn into_mesh(&self, renderer: &mut Renderer, color: Vector3<f32>) -> Mesh {

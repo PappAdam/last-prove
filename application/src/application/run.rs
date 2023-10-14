@@ -21,7 +21,6 @@ impl<'a> App<'a> {
             //     let map_coordinates = self.map.world_coordinate_to_tile_center(&click_position);
             //     self.gameobjects[1].transform.set_position(map_coordinates);
             // }
-            dbg!(click_position);
             self.gameobjects[1].transform.set_position(click_position);
         }
 
