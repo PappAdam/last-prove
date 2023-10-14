@@ -21,7 +21,7 @@ impl Camera {
             transform: *Matrix4::identity()
                 .scale_object(scale)
                 .translate(position.x, 0., position.y)
-                .orbit(0., PI / 4., 0., Vector3::zeros())
+                // .orbit(0., PI / 4., 0., Vector3::zeros())
                 .orbit_local(tilt, 0., 0., Vector3::zeros()),
             position,
             tilt,

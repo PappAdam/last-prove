@@ -9,6 +9,9 @@ pub type Pentagon = Polygon<5>;
 pub type Hexagon = Polygon<6>;
 
 #[derive(Debug)]
+///A shape that can have CORNER_COUNT amount of corners.
+///Does not store the vertex positions, just the indicies.
+///Doesn't check if the points are on one plane or not *(TODO if needed later)*
 pub struct Polygon<const CORNER_COUNT: usize> {
     indicies: [usize; CORNER_COUNT],
     pub normal: Vector3<f32>,
@@ -55,23 +58,29 @@ impl<const CORNER_COUNT: usize> Polygon<CORNER_COUNT> {
     }
 }
 
-//Generating primitives for map mesh.
 impl Mesh {
+    ///Returns a quad with the vertices of it.
+    ///Uses right-handed normal calculation, CW order of positions is advised.
     pub fn quad(
         corners: [Vector3<f32>; 4],
         color: Vector3<f32>,
         start_index: usize, //We return a Vec<Vertex> instead of a [Vertex; 4], so we can append the return value to Vecs without converting types.
     ) -> (Vec<Vertex>, Quad) {
-        //Normals only work if all the vertex have the same normals, and they are in the right order
-        let normal = (corners[1] - corners[0])
-            .cross(&(corners[2] - corners[0]))
+        //This is why specific (CW) order is required. Opposite order will produce a normal facing the opposite way.
+        let normal = (corners[2] - corners[0])
+            .cross(&(corners[1] - corners[0]))
             .normalize();
+
+        //Creating the verticies with the specified color and the calculated normal
         let vertices = vec![
             Vertex::new(corners[0], color, normal),
             Vertex::new(corners[1], color, normal),
             Vertex::new(corners[2], color, normal),
             Vertex::new(corners[3], color, normal),
         ];
+
+        //Creating the quad, indexing will start from start_index.
+        //Normal is also stored for faster click_detection calculation.
         let quad = Quad::new_with_normal(
             [
                 (start_index + 0),
@@ -81,154 +90,69 @@ impl Mesh {
             ],
             normal,
         );
+        //Returning the created values.
         return (vertices, quad);
     }
+    #[inline]
+    ///Returns with 5 quads that round down the first one
+    ///Uses right-handed normal calculation, CW order of positions is advised.
     pub fn rounded_quad(
         positions: [Vector3<f32>; 4],
         color: Vector3<f32>,
         start_index: usize, //We return a Vec<Vertex> instead of a [Vertex; 4], so we can append the return value to Vecs without converting types.
     ) -> (Vec<Vertex>, Vec<Quad>) {
-        let angled_normal: f32 = 0.70710678118654752440084436210485;
-        let side1_normal = positions[0];
-        let vertices = vec![
-            //FLAT TOP
-            Vertex::new(positions[0], color, -Vector3::y()),
-            Vertex::new(positions[1], color, -Vector3::y()),
-            Vertex::new(positions[2], color, -Vector3::y()),
-            Vertex::new(positions[3], color, -Vector3::y()),
-            //NEW SIDE
-            Vertex::new(
-                positions[0],
-                color,
-                (-Vector3::y() + Vector3::x()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[1],
-                color,
-                (-Vector3::y() + Vector3::x()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[1] - Vector3::new(0.1, -0.2, -0.1),
-                color,
-                (-Vector3::y() + Vector3::x()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[0] - Vector3::new(0.1, -0.2, 0.1),
-                color,
-                (-Vector3::y() + Vector3::x()) * angled_normal,
-            ),
-            //NEW SIDE
-            Vertex::new(
-                positions[1],
-                color,
-                (-Vector3::y() - Vector3::x()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[2],
-                color,
-                (-Vector3::y() - Vector3::x()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[2] - Vector3::new(-0.1, -0.2, -0.1),
-                color,
-                (-Vector3::y() - Vector3::x()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[1] - Vector3::new(0.1, -0.2, -0.1),
-                color,
-                (-Vector3::y() - Vector3::x()) * angled_normal,
-            ),
-            //NEW SIDE
-            Vertex::new(
-                positions[2],
-                color,
-                (-Vector3::y() - Vector3::z()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[3],
-                color,
-                (-Vector3::y() - Vector3::z()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[3] - Vector3::new(-0.1, -0.2, 0.1),
-                color,
-                (-Vector3::y() - Vector3::z()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[2] - Vector3::new(-0.1, -0.2, -0.1),
-                color,
-                (-Vector3::y() - Vector3::z()) * angled_normal,
-            ),
-            //NEW SIDE
-            Vertex::new(
-                positions[3],
-                color,
-                (-Vector3::y() + Vector3::z()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[0],
-                color,
-                (-Vector3::y() + Vector3::z()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[0] - Vector3::new(0.1, -0.2, 0.1),
-                color,
-                (-Vector3::y() + Vector3::z()) * angled_normal,
-            ),
-            Vertex::new(
-                positions[3] - Vector3::new(-0.1, -0.2, 0.1),
-                color,
-                (-Vector3::y() + Vector3::z()) * angled_normal,
-            ),
-        ];
-        let quads = vec![
-            Quad::new_with_normal(
-                [
-                    (start_index + 0),
-                    (start_index + 1),
-                    (start_index + 2),
-                    (start_index + 3),
-                ],
-                vertices[0].normal,
-            ),
-            Quad::new_with_normal(
-                [
-                    (start_index + 4 + 0),
-                    (start_index + 4 + 1),
-                    (start_index + 4 + 2),
-                    (start_index + 4 + 3),
-                ],
-                vertices[4].normal,
-            ),
-            Quad::new_with_normal(
-                [
-                    (start_index + 8 + 0),
-                    (start_index + 8 + 1),
-                    (start_index + 8 + 2),
-                    (start_index + 8 + 3),
-                ],
-                vertices[8].normal,
-            ),
-            Quad::new_with_normal(
-                [
-                    (start_index + 12 + 0),
-                    (start_index + 12 + 1),
-                    (start_index + 12 + 2),
-                    (start_index + 12 + 3),
-                ],
-                vertices[12].normal,
-            ),
-            Quad::new_with_normal(
-                [
-                    (start_index + 16 + 0),
-                    (start_index + 16 + 1),
-                    (start_index + 16 + 2),
-                    (start_index + 16 + 3),
-                ],
-                vertices[16].normal,
-            ),
-        ];
+        //Initializing all needed values.
+        let top_corner_0 = positions[0];
+        let top_corner_1 = positions[1];
+        let top_corner_2 = positions[2];
+        let top_corner_3 = positions[3];
+        let bottom_corner_0 = top_corner_0 - Vector3::new(0.1, -0.2, 0.1);
+        let bottom_corner_1 = top_corner_1 - Vector3::new(0.1, -0.2, -0.1);
+        let bottom_corner_2 = top_corner_2 - Vector3::new(-0.1, -0.2, -0.1);
+        let bottom_corner_3 = top_corner_3 - Vector3::new(-0.1, -0.2, 0.1);
 
+        //Creating each quad (5 in total)
+        //Each quad will have it's own vertices in order to have edges in render. (4 * 5 = 20 vertices in total)
+        //Start index is increasing by 4 after each quad.
+        let (mut top_quad_vertices, top_quad) = Mesh::quad(
+            [top_corner_0, top_corner_1, top_corner_2, top_corner_3],
+            color,
+            start_index,
+        );
+        let (mut side_quad_0_vertices, side_quad_0) = Mesh::quad(
+            [top_corner_0, bottom_corner_0, bottom_corner_1, top_corner_1],
+            color,
+            start_index + 4,
+        );
+        let (mut side_quad_1_vertices, side_quad_1) = Mesh::quad(
+            [top_corner_1, bottom_corner_1, bottom_corner_2, top_corner_2],
+            color,
+            start_index + 8,
+        );
+        let (mut side_quad_2_vertices, side_quad_2) = Mesh::quad(
+            [top_corner_2, bottom_corner_2, bottom_corner_3, top_corner_3],
+            color,
+            start_index + 12,
+        );
+        let (mut side_quad_3_vertices, side_quad_3) = Mesh::quad(
+            [top_corner_3, bottom_corner_3, bottom_corner_0, top_corner_0],
+            color,
+            start_index + 16,
+        );
+        //End of quad creation
+
+        //We chain all 20 vertices of the 5 quads together
+        let mut vertices = Vec::with_capacity(20);
+        vertices.append(&mut top_quad_vertices);
+        vertices.append(&mut side_quad_0_vertices);
+        vertices.append(&mut side_quad_1_vertices);
+        vertices.append(&mut side_quad_2_vertices);
+        vertices.append(&mut side_quad_3_vertices);
+
+        //We chain all 5 quads together.
+        let quads = vec![top_quad, side_quad_0, side_quad_1, side_quad_2, side_quad_3];
+
+        //We return the chained quads.
         return (vertices, quads);
     }
 }

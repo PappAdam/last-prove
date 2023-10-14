@@ -1,3 +1,5 @@
+use std::arch::x86_64::_MM_SET_EXCEPTION_MASK;
+
 use nalgebra::Vector3;
 use objects::{mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
 
@@ -14,11 +16,12 @@ use super::{
 impl<'a> App<'a> {
     #[inline]
     pub fn main_loop(&mut self) {
-        if let Some((clicked_object, click_position)) = self.click_detection() {
+        if let Some((clicked_object, click_position)) = self.world_mouse_intersection_point() {
             // if clicked_object.has_tag(&objects::tags::ObjectTag::Map) {
             //     let map_coordinates = self.map.world_coordinate_to_tile_center(&click_position);
             //     self.gameobjects[1].transform.set_position(map_coordinates);
             // }
+            dbg!(click_position);
             self.gameobjects[1].transform.set_position(click_position);
         }
 
@@ -33,8 +36,8 @@ impl<'a> App<'a> {
         self.load_meshes(meshes);
 
         self.create_obj(
-            &meshes[_HOUSE_MESH_INDEX],
-            &GameObjectCreateInfo::position(Vector3::new(250., 0., 250.)),
+            &meshes[_MAP_MESH_INDEX],
+            &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
         // self.gameobjects[0].add_tag(objects::tags::ObjectTag::Map);
         self.create_obj(
@@ -42,6 +45,6 @@ impl<'a> App<'a> {
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
         self.gameobjects[1].set_flag(objects::GameObjectFlag::NotClickable);
-        self.gameobjects[1].transform.scale_object(0.01);
+        self.gameobjects[1].transform.scale_object(0.1);
     }
 }
