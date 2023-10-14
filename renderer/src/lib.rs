@@ -20,6 +20,7 @@ pub struct Renderer {
     meshes_buffers: Vec<[Buffer; 2]>,
 
     pub current_frame_index: usize,
+    pub current_pipeline_index: usize,
     pub rebuild_swapchain: bool,
 
     pub image_index: usize,
@@ -34,6 +35,7 @@ impl Renderer {
             base,
             data,
             current_frame_index: 0,
+            current_pipeline_index: 0,
             rebuild_swapchain: true,
             image_index: 0,
             meshes_buffers: Vec::with_capacity(MAX_WORLD_OBJECTS),

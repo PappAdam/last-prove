@@ -23,7 +23,7 @@ use super::{base::RenderBase, utils::MAX_FRAME_DRAWS};
 pub struct RenderData {
     pub pipeline_layout: vk::PipelineLayout,
     pub render_pass: vk::RenderPass,
-    pub pipeline: vk::Pipeline,
+    pub pipelines: [vk::Pipeline; 2],
     pub viewport: vk::Viewport,
     pub scissor: vk::Rect2D,
     pub framebuffers: Vec<vk::Framebuffer>,
@@ -74,13 +74,24 @@ impl RenderData {
         let render_pass =
             setup::create_render_pass(&base.device, base.surface_format.format, base.depth_format)?;
 
-        let pipeline = setup::create_pipelines(
+        let pipelines = [
+            setup::create_pipelines(
             &base.device,
             vertex_shader_module,
             fragment_shader_module,
             pipeline_layout,
             render_pass,
-        )?;
+            vk::PolygonMode::FILL
+        )?,
+            setup::create_pipelines(
+            &base.device,
+            vertex_shader_module,
+            fragment_shader_module,
+            pipeline_layout,
+            render_pass,
+            vk::PolygonMode::LINE
+        )?];
+
 
         let viewport = vk::Viewport {
             x: 0.0,
@@ -210,7 +221,7 @@ impl RenderData {
         Ok(Self {
             pipeline_layout,
             render_pass,
-            pipeline,
+            pipelines,
             viewport,
             scissor,
             framebuffers,
@@ -278,7 +289,9 @@ impl RenderData {
 
             device.destroy_render_pass(self.render_pass, None);
 
-            device.destroy_pipeline(self.pipeline, None);
+            self.pipelines.iter().for_each(|p| {
+                device.destroy_pipeline(*p, None);
+            });
 
             for &framebuffer in &self.framebuffers {
                 device.destroy_framebuffer(framebuffer, None);

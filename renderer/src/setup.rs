@@ -34,6 +34,7 @@ pub fn create_pipelines(
     fragment_shader_module: vk::ShaderModule,
     pipeline_layout: vk::PipelineLayout,
     render_pass: vk::RenderPass,
+    mode: vk::PolygonMode,
 ) -> Result<vk::Pipeline, String> {
     let shader_entry_name = std::ffi::CString::new("main").unwrap();
 
@@ -54,7 +55,7 @@ pub fn create_pipelines(
         .build();
 
     let raster_state = vk::PipelineRasterizationStateCreateInfo::builder()
-        .polygon_mode(vk::PolygonMode::FILL)
+        .polygon_mode(mode)
         .cull_mode(vk::CullModeFlags::NONE)
         .front_face(vk::FrontFace::COUNTER_CLOCKWISE)
         .line_width(1.0f32)
@@ -165,10 +166,10 @@ pub fn create_pipelines(
 
     let pipeline = pipelines[0];
 
-    unsafe {
-        device.destroy_shader_module(vertex_shader_module, None);
-        device.destroy_shader_module(fragment_shader_module, None);
-    }
+    // unsafe {
+    //     device.destroy_shader_module(vertex_shader_module, None);
+    //     device.destroy_shader_module(fragment_shader_module, None);
+    // }
 
     Ok(pipeline)
 }

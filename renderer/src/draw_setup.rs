@@ -13,7 +13,7 @@ impl Renderer {
             self.base.device.cmd_bind_pipeline(
                 current_command_buffer,
                 vk::PipelineBindPoint::GRAPHICS,
-                self.data.pipeline,
+                self.data.pipelines[self.current_pipeline_index],
             );
 
             self.base
