@@ -10,7 +10,7 @@ use crate::{
     GameObject,
 };
 
-use self::ray::Ray;
+use self::ray::{Ray, IntersectableWithRay};
 
 pub mod ray;
 
@@ -103,10 +103,10 @@ impl Hitbox {
     // }
 }
 
-impl GameObject<'_> {
+impl IntersectableWithRay for GameObject<'_> {
     ///Checks if a given screen position collides with the object or not.
     /// Returns the global coordinate with the screen Z coordinate of the collision if yes
-    pub fn ray_object_intersection_point(&self, ray: &Ray) -> Option<(Vector3<f32>, f32)> {
+    fn intersection_point(&self, ray: &Ray) -> Option<(Vector3<f32>, f32)> {
         //Intead of transforming the vertices with the model transform, we only tranform the ray
         //The relative positions of the vertices and the ray will be the same this way. 
         let ray = self.transform.try_inverse().unwrap() * ray;

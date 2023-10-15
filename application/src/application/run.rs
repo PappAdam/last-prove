@@ -1,15 +1,8 @@
-use std::arch::x86_64::_MM_SET_EXCEPTION_MASK;
-
 use nalgebra::Vector3;
 use objects::{mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
 
-use crate::application::load::_PLANE_MESH_INDEX;
-
 use super::{
-    load::{
-        _EMPTY_MESH_INDEX, _HOUSE_MESH_INDEX, _MAPSELECTION_MESH_INDEX, _MAP_MESH_INDEX,
-        _SPHERE_MESH_INDEX,
-    },
+    load::{_HOUSE_MESH_INDEX, _MAPSELECTION_MESH_INDEX, _MAP_MESH_INDEX, _SPHERE_MESH_INDEX},
     App,
 };
 
@@ -17,11 +10,10 @@ impl<'a> App<'a> {
     #[inline]
     pub fn main_loop(&mut self) {
         if let Some((clicked_object, click_position)) = self.world_mouse_intersection_point() {
-            // if clicked_object.has_tag(&objects::tags::ObjectTag::Map) {
-            //     let map_coordinates = self.map.world_coordinate_to_tile_center(&click_position);
-            //     self.gameobjects[1].transform.set_position(map_coordinates);
-            // }
-            self.gameobjects[1].transform.set_position(click_position);
+            if clicked_object.has_tag(&objects::tags::ObjectTag::Map) {
+                // let map_coordinates = self.map.world_coordinate_to_tile_center(&click_position);
+            }
+            self.gameobjects[2].transform.set_position(click_position);
         }
 
         // self.game_controller
@@ -38,12 +30,16 @@ impl<'a> App<'a> {
             &meshes[_MAP_MESH_INDEX],
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
-        // self.gameobjects[0].add_tag(objects::tags::ObjectTag::Map);
+        self.gameobjects[0].add_tag(objects::tags::ObjectTag::Map);
+        self.create_obj(
+            &meshes[_HOUSE_MESH_INDEX],
+            &GameObjectCreateInfo::position(Vector3::new(250.5, 0., 250.5)),
+        );
         self.create_obj(
             &meshes[_SPHERE_MESH_INDEX],
             &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
         );
-        self.gameobjects[1].set_flag(objects::GameObjectFlag::NotClickable);
-        self.gameobjects[1].transform.scale_object(0.1);
+        self.gameobjects[2].set_flag(objects::GameObjectFlag::NotClickable);
+        self.gameobjects[2].transform.scale_object(0.1);
     }
 }

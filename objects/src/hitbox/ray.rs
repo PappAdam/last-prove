@@ -12,6 +12,10 @@ pub struct Ray {
     direction: Vector3<f32>,
 }
 
+pub trait IntersectableWithRay {
+    fn intersection_point(&self, ray: &Ray) -> Option<(Vector3<f32>, f32)>;
+}
+
 impl Ray {
     #[inline]
     ///Creates a new ray with a specified origin, and direction.
@@ -22,7 +26,7 @@ impl Ray {
     #[inline]
     ///Returns the closest collision point of the hitbox and the ray.
     ///Returns *None* if no intersection point was found.
-    pub fn hitbox_intersection_point(&self, hitbox: &Hitbox) -> Option<(Vector3<f32>, f32)> {
+    pub(super) fn hitbox_intersection_point(&self, hitbox: &Hitbox) -> Option<(Vector3<f32>, f32)> {
         //Setting None as default, modifying it as we find one.
         let mut intersection_point = None;
 
@@ -130,7 +134,7 @@ impl Ray {
     ///Returns the intersection point with a plane.
     ///Returns *None* if the plane is paralell with the ray.
     ///Takes the plane **equation of a plane** as a parameter (a, b, c, d) as a Vector4<f32>
-    fn plane_intersection_point(&self, plane: Vector4<f32>) -> Option<(Vector3<f32>, f32)> {
+    pub fn plane_intersection_point(&self, plane: Vector4<f32>) -> Option<(Vector3<f32>, f32)> {
         //Extracting normal vector and d from parameter.
         let plane_normal = plane.xyz();
         let plane_d = plane.w;

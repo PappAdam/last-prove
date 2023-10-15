@@ -1,3 +1,6 @@
+use super::Map;
+use crate::MAP_SIZE;
+
 #[derive(Clone)]
 pub struct Tile {
     flags: u8,
@@ -36,4 +39,13 @@ pub enum TileFlag {
     Solid = 0b10000000,
     BuildingOnTop = 0b01000000,
     TroopOnTop = 0b00100000,
+}
+
+impl Map {
+    pub fn get_tile_at(&self, x: usize, y: usize) -> Option<&Tile> {
+        if x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE {
+            return None;
+        }
+        return Some(&self.matrix[y][x]);
+    }
 }
