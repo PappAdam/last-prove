@@ -1,3 +1,5 @@
+use nalgebra::Vector2;
+
 use super::Map;
 use crate::MAP_SIZE;
 
@@ -42,10 +44,19 @@ pub enum TileFlag {
 }
 
 impl Map {
-    pub fn get_tile_at(&self, x: usize, y: usize) -> Option<&Tile> {
-        if x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE {
+    #[inline]
+    ///Returns the tile reference at the coordinates, if they aren't out of bounds.
+    pub fn get_tile_at(&self, coordinates: &Vector2<usize>) -> Option<&Tile> {
+        if coordinates.x < 0 || coordinates.x > MAP_SIZE || coordinates.y < 0 || coordinates.y > MAP_SIZE {
             return None;
         }
-        return Some(&self.matrix[y][x]);
+        return Some(&self.matrix[coordinates.y][coordinates.x]);
+    }
+    #[inline]
+    ///Returns the tile reference at the coordinates.
+    ///Crashes if index is out of bounds
+    pub unsafe fn get_tile_at_unchecked(&self, coordinates: &Vector2<usize>) -> &Tile {
+        debug_assert!(coordinates.x < 0 || coordinates.x > MAP_SIZE || coordinates.y < 0 || coordinates.y > MAP_SIZE, "Cannot get tile at invalid coordinates!");
+        return &self.matrix[coordinates.y][coordinates.x];
     }
 }

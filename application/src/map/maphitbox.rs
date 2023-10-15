@@ -21,8 +21,10 @@ impl IntersectableWithRay for Map {
             grass_level_intersection_point.0.x as usize,
             grass_level_intersection_point.0.z as usize,
         );
+
+        let grass_level_tile = self.get_tile_at(&grass_level_map_coordinates);
         //If there is a solid tile at the intersection point at grass level, we clicked on the top of a tile, we can reutrn it instantly.
-        if self.matrix[grass_level_map_coordinates.y][grass_level_map_coordinates.x].is_solid() {
+        if grass_level_tile.is_some() && unsafe { grass_level_tile.unwrap_unchecked().is_solid() } {
             return Some((
                 Vector3::new(
                     grass_level_map_coordinates.x as f32 + 0.5,
