@@ -1,9 +1,11 @@
-use std::{f32::consts::PI, time::Duration, mem::size_of};
+use std::{f32::consts::PI, mem::size_of, time::Duration};
 
 use nalgebra::{Matrix4, Vector2};
-use objects::{hitbox::Hitbox, mesh::Mesh, GameObject, GameObjectCreateInfo};
+use objects::{
+    hitbox::Hitbox, mesh::Mesh, GameObject, GameObjectCreateInfo, GameObjectTransform, MeshPreset,
+};
 use renderer::{
-    engine::{aligned_array::AlignedArray, object_vector::ObjVec, aligned_array_implementations},
+    engine::{aligned_array::AlignedArray, aligned_array_implementations, object_vector::ObjVec},
     utils::MAX_WORLD_OBJECTS,
     Renderer,
 };
@@ -11,10 +13,11 @@ use winit::window::Window;
 
 use crate::{input::Input, map::Map};
 
-use self::{camera::Camera, gamecontroller::GameController, load::MeshPreset};
+use self::{camera::Camera, gamecontroller::GameController};
 
 mod camera;
 pub mod click;
+mod event_handler;
 mod gamecontroller;
 pub mod load;
 pub mod run;
@@ -67,12 +70,8 @@ impl<'a> App<'a> {
 
     /// # Gameobject creation
     /// returns the index of the created gameobject
-    pub fn create_obj(
-        &mut self,
-        preset: MeshPreset,
-        create_info: &GameObjectCreateInfo,
-    ) -> usize {
-        let mesh = self.get_mesh(preset);
+    pub fn create_obj(&mut self, create_info: &GameObjectCreateInfo) -> usize {
+        let mesh = self.get_mesh(create_info.preset);
         let obj = GameObject::create(&mut self.transform_array, mesh, create_info)
             .expect("Failed to create gameObject");
 
@@ -84,12 +83,13 @@ impl<'a> App<'a> {
     #[inline]
     pub fn get_mesh(&self, preset: MeshPreset) -> &'a Mesh {
         unsafe {
-            &*(((*self.p_meshes_vec).as_ptr() as usize + preset as usize * size_of::<Mesh>()) as *mut Mesh)
+            &*(((*self.p_meshes_vec).as_ptr() as usize + preset as usize * size_of::<Mesh>())
+                as *mut Mesh)
         }
     }
 
     #[inline]
     pub fn get_meshes_as_vec(&self) -> &'a mut Vec<Mesh> {
-       unsafe { &mut (*self.p_meshes_vec) }
+        unsafe { &mut (*self.p_meshes_vec) }
     }
 }

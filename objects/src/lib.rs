@@ -1,3 +1,5 @@
+use std::default;
+
 use ash::vk;
 use hitbox::Hitbox;
 use mesh::Mesh;
@@ -9,11 +11,22 @@ use renderer::{
 use tags::ObjectTag;
 use transformations::Transformations;
 
-pub mod tags;
 pub mod getters;
 pub mod hitbox;
 pub mod mesh;
+pub mod tags;
 pub mod transformations;
+
+#[derive(Default, Clone, Copy)]
+pub enum MeshPreset {
+    #[default]
+    Empty = 0,
+    Map,
+    House,
+    MapSelection,
+    Plane,
+    Sphere,
+}
 
 #[derive(Clone, Copy)]
 pub enum GameObjectFlag {
@@ -38,7 +51,8 @@ impl<'a> GameObject<'a> {
         let transform_index = transform_buf
             .push(Matrix4::identity())
             .map_err(|_| ObjectCreationError::NotEnoughSpace)?;
-        let transform = *Matrix4::new_translation(&create_info.position).scale_object(create_info.scale);
+        let transform = *Matrix4::new_translation(&create_info.transform.position)
+            .scale_object(create_info.transform.scale);
         let transform_ptr = unsafe { &mut *(transform_buf.get_data_pointer(transform_index)) };
         *transform_ptr = transform;
         Ok(Self {
@@ -46,7 +60,7 @@ impl<'a> GameObject<'a> {
             tags: vec![],
             transform: transform_ptr,
             transform_index,
-            mesh
+            mesh,
         })
     }
 
@@ -75,24 +89,38 @@ impl<'a> GameObject<'a> {
 pub enum ObjectCreationError {
     NotEnoughSpace,
 }
-#[derive(Default)]
-pub struct GameObjectCreateInfo {
-    position: Vector3<f32>,
+
+pub struct GameObjectTransform {
+    pub position: Vector3<f32>,
     //We don't need rotation for now, add later if needed
-    scale: f32,
+    pub scale: f32,
 }
-impl GameObjectCreateInfo {
-    #[inline]
-    pub fn position(position: Vector3<f32>) -> Self {
+
+impl Default for GameObjectTransform {
+    fn default() -> Self {
         Self {
-            position,
             scale: 1.,
+            position: Vector3::default(),
         }
+    }
+}
+
+impl GameObjectTransform {
+    #[inline]
+    pub fn new(position: Vector3<f32>, scale: f32) -> Self {
+        Self { position, scale }
     }
 
     #[inline]
-    pub fn position_scale(position: Vector3<f32>, scale: f32) -> Self {
-        Self { position, scale }
+    pub fn position(mut self, position: Vector3<f32>) -> Self {
+        self.position = position;
+        self
+    }
+
+    #[inline]
+    pub fn scale(mut self, scale: f32) -> Self {
+        self.scale = scale;
+        self
     }
 }
 
@@ -103,5 +131,27 @@ impl<'a> NoneValue for GameObject<'a> {
 
     fn set_to_none(&mut self) {
         self.set_flag(GameObjectFlag::None)
+    }
+}
+
+#[derive(Default)]
+pub struct GameObjectCreateInfo {
+    pub transform: GameObjectTransform,
+    pub preset: MeshPreset,
+}
+
+impl GameObjectCreateInfo {
+    pub fn new(transform: GameObjectTransform, preset: MeshPreset) -> Self {
+        Self { transform, preset }
+    }
+
+    pub fn transform(mut self, transform: GameObjectTransform) -> Self {
+        self.transform = transform;
+        self
+    }
+
+    pub fn mesh_preset(mut self, preset: MeshPreset) -> Self {
+        self.preset = preset;
+        self
     }
 }

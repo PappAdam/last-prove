@@ -6,15 +6,6 @@ use super::App;
 pub const MAX_VERTEX_DISTANCE: f32 = 1.1;
 //True value is 1, add .1 to account for any floating point inaccuracies
 
-pub enum MeshPreset {
-    Empty = 0,
-    Map,
-    House,
-    MapSelection,
-    Plane,
-    Sphere,
-}
-
 //WHEN ADDING MORE OBJECTS, BE CAREFUL TO UPDATE MAX_VERTEX_DISTANCE IF NEEDED
 
 impl<'a> App<'a> {
@@ -24,7 +15,7 @@ impl<'a> App<'a> {
             &mut self.renderer,
             vec![Vertex::default()],
             vec![0, 0, 0],
-            Hitbox::new(vec![], vec![])
+            Hitbox::new(vec![], vec![]),
         ));
         //Map
         let map_mesh = self.map.convert_to_mesh(&mut self.renderer);

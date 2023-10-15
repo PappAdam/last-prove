@@ -5,7 +5,7 @@ mod map;
 use std::time::Instant;
 
 use application::App;
-use objects::{mesh::Mesh, hitbox::Hitbox};
+use objects::{hitbox::Hitbox, mesh::Mesh};
 use winit::{
     dpi::PhysicalSize,
     event::{Event, KeyboardInput, MouseScrollDelta, WindowEvent},
@@ -17,8 +17,6 @@ use winit::{
 use constants::make_answer;
 
 make_answer!("application/src/constants.const");
-
-
 
 use renderer::msg;
 fn main() {
@@ -49,7 +47,8 @@ fn main() {
 
     let mut meshes: Vec<Mesh> = vec![];
     let mut app = App::init(&window, MAP_SIZE, &meshes);
-    app.setup(&mut meshes);
+    app.load_meshes(&mut meshes);
+    app.setup();
 
     app.renderer.data.push_const.wh_ratio = app.renderer.base.surface_extent.width as f32
         / app.renderer.base.surface_extent.height as f32;
@@ -112,7 +111,8 @@ fn main() {
             );
 
             app.renderer.data.world_view.view = *app.camera.get_transform();
-            app.camera.camera_move(&app.input, app.delta_time.as_secs_f32());
+            app.camera
+                .camera_move(&app.input, app.delta_time.as_secs_f32());
             app.main_loop();
 
             if let Err(msg) = app.renderer.flush() {
