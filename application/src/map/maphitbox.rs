@@ -1,7 +1,10 @@
-use nalgebra::{Vector2, Vector3, Vector4};
-use objects::hitbox::ray::{IntersectableWithRay, Ray};
+use nalgebra::{coordinates::X, Vector2, Vector3, Vector4};
+use objects::{
+    hitbox::ray::{IntersectableWithRay, Ray},
+    mesh::Mesh,
+};
 
-use super::Map;
+use super::{tile, Map};
 
 impl IntersectableWithRay for Map {
     ///Returns the intersection point of a ray and the map.
@@ -34,18 +37,45 @@ impl IntersectableWithRay for Map {
                 grass_level_intersection_point.1,
             ));
         }
+        let mut vertices = vec![];
+        let mut quads = vec![];
+        for x in -1..2 {
+            for y in -1..2 {
+                let tile_coordinates = Vector3::new(
+                    grass_level_map_coordinates.x as f32 + x as f32,
+                    0.,
+                    grass_level_map_coordinates.y as f32 + y as f32,
+                );
+                let mut rounded_quad = Mesh::rounded_quad(
+                    [
+                        tile_coordinates,
+                        tile_coordinates + Vector3::z(),
+                        tile_coordinates + Vector3::x() + Vector3::z(),
+                        tile_coordinates + Vector3::z(),
+                    ],
+                    Vector3::zeros(),
+                    0,
+                );
+                vertices.append(&mut rounded_quad.0.iter().map(|v| v.pos).collect());
+                quads.append(&mut rounded_quad.1);
+            }
+        }
+        dbg!(&vertices[0..20]);
+        let mut closest_intersection_point = None;
+        for quad in quads {
+            let possible_new_intersection_point = ray.polygon_intersection_point(&quad, &vertices);
+            if closest_intersection_point.is_none() {
+                closest_intersection_point = possible_new_intersection_point;
+                continue;
+            }
+            if let Some(new_intersection_point) = possible_new_intersection_point {
+                if new_intersection_point.1 > unsafe { closest_intersection_point.unwrap_unchecked().1 } {
+                    closest_intersection_point = possible_new_intersection_point;
+                }
+            }
+        }
 
-        let water_level_plane_equation = Vector4::new(0., -1., 0., -0.2);
-        let water_level_intersection_point = unsafe {
-            ray.plane_intersection_point(water_level_plane_equation)
-                .unwrap_unchecked()
-        };
-        let water_level_map_coordinates = Vector2::new(
-            water_level_intersection_point.0.x as usize,
-            water_level_intersection_point.0.z as usize,
-        );
-
-        None
+        closest_intersection_point
     }
 }
 

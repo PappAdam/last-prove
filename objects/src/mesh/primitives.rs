@@ -95,7 +95,7 @@ impl Mesh {
     }
     #[inline]
     ///Returns with 5 quads that round down the first one
-    ///Uses right-handed normal calculation, CW order of positions is advised.
+    ///Uses left-handed normal calculation, CW order of positions is advised.
     pub fn rounded_quad(
         positions: [Vector3<f32>; 4],
         color: Vector3<f32>,

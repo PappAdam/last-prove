@@ -8,8 +8,8 @@ use super::Hitbox;
 
 #[derive(Debug)]
 pub struct Ray {
-    origin: Vector3<f32>,
-    direction: Vector3<f32>,
+    pub origin: Vector3<f32>,
+    pub direction: Vector3<f32>,
 }
 
 pub trait IntersectableWithRay {
@@ -88,7 +88,7 @@ impl Ray {
     #[inline]
     ///Returns the intersection point with a polygon.
     ///Returns *None* if no intersection point was found.
-    fn polygon_intersection_point<const CORNER_COUNT: usize>(
+    pub fn polygon_intersection_point<const CORNER_COUNT: usize>(
         &self,
         polygon: &Polygon<CORNER_COUNT>,
         vertices: &Vec<Vector3<f32>>,
