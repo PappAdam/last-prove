@@ -25,9 +25,8 @@ impl IntersectableWithRay for Map {
             grass_level_intersection_point.0.z as usize,
         );
 
-        let grass_level_tile = self.get_tile_at(&grass_level_map_coordinates);
         //If there is a solid tile at the intersection point at grass level, we clicked on the top of a tile, we can reutrn it instantly.
-        if grass_level_tile.is_some() && unsafe { grass_level_tile.unwrap_unchecked().is_solid() } {
+        if self.is_tile_solid_at(&grass_level_map_coordinates) {
             return Some((
                 Vector3::new(
                     grass_level_map_coordinates.x as f32 + 0.5,
@@ -41,26 +40,36 @@ impl IntersectableWithRay for Map {
         let mut quads = vec![];
         for x in -1..2 {
             for y in -1..2 {
-                let tile_coordinates = Vector3::new(
+                // if x == 0 && y == 0 {
+                //     continue;
+                // }
+                let tile_coordinates_f32 = Vector3::new(
                     grass_level_map_coordinates.x as f32 + x as f32,
                     0.,
                     grass_level_map_coordinates.y as f32 + y as f32,
                 );
+                let tile_coordinates_usize = Vector2::new(
+                    (grass_level_map_coordinates.x as i32 + x) as usize,
+                    (grass_level_map_coordinates.y as i32 + y) as usize,
+                );
+                let tile = self.get_tile_at(&tile_coordinates_usize);
+                if tile.is_none() || unsafe { !tile.unwrap_unchecked().is_solid() } {
+                    continue;
+                }
                 let mut rounded_quad = Mesh::rounded_quad(
                     [
-                        tile_coordinates,
-                        tile_coordinates + Vector3::z(),
-                        tile_coordinates + Vector3::x() + Vector3::z(),
-                        tile_coordinates + Vector3::z(),
+                        tile_coordinates_f32,
+                        tile_coordinates_f32 + Vector3::z(),
+                        tile_coordinates_f32 + Vector3::x() + Vector3::z(),
+                        tile_coordinates_f32 + Vector3::x(),
                     ],
                     Vector3::zeros(),
-                    0,
+                    vertices.len(),
                 );
                 vertices.append(&mut rounded_quad.0.iter().map(|v| v.pos).collect());
                 quads.append(&mut rounded_quad.1);
             }
         }
-        dbg!(&vertices[0..20]);
         let mut closest_intersection_point = None;
         for quad in quads {
             let possible_new_intersection_point = ray.polygon_intersection_point(&quad, &vertices);
@@ -69,7 +78,9 @@ impl IntersectableWithRay for Map {
                 continue;
             }
             if let Some(new_intersection_point) = possible_new_intersection_point {
-                if new_intersection_point.1 > unsafe { closest_intersection_point.unwrap_unchecked().1 } {
+                if new_intersection_point.1
+                    < unsafe { closest_intersection_point.unwrap_unchecked().1 }
+                {
                     closest_intersection_point = possible_new_intersection_point;
                 }
             }

@@ -47,7 +47,7 @@ impl Map {
     #[inline]
     ///Returns the tile reference at the coordinates, if they aren't out of bounds.
     pub fn get_tile_at(&self, coordinates: &Vector2<usize>) -> Option<&Tile> {
-        if coordinates.x < 0 || coordinates.x > MAP_SIZE || coordinates.y < 0 || coordinates.y > MAP_SIZE {
+        if coordinates.x > MAP_SIZE || coordinates.y > MAP_SIZE {
             return None;
         }
         return Some(&self.matrix[coordinates.y][coordinates.x]);
@@ -56,7 +56,19 @@ impl Map {
     ///Returns the tile reference at the coordinates.
     ///Crashes if index is out of bounds
     pub unsafe fn get_tile_at_unchecked(&self, coordinates: &Vector2<usize>) -> &Tile {
-        debug_assert!(coordinates.x < 0 || coordinates.x > MAP_SIZE || coordinates.y < 0 || coordinates.y > MAP_SIZE, "Cannot get tile at invalid coordinates!");
+        debug_assert!(
+            coordinates.x > MAP_SIZE || coordinates.y > MAP_SIZE,
+            "Cannot get tile at invalid coordinates!"
+        );
         return &self.matrix[coordinates.y][coordinates.x];
+    }
+    #[inline]
+    ///Checks wether 
+    ///
+    pub fn is_tile_solid_at(&self, coordinates: &Vector2<usize>) -> bool {
+        if coordinates.x > MAP_SIZE || coordinates.y > MAP_SIZE {
+            return false;
+        }
+        return unsafe { self.get_tile_at_unchecked(coordinates).is_solid() };
     }
 }
