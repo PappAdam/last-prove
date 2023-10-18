@@ -10,11 +10,10 @@ impl IntersectableWithRay for Map {
     ///Returns the intersection point of a ray and the map.
     ///This function has special functionality for Map only, to speed up mouse-world intersection point search.
     fn intersection_point(&self, ray: &Ray) -> Option<(Vector3<f32>, f32)> {
-        //Creating the two plane equations
         let grass_level_plane_equation = Vector4::new(0., -1., 0., 0.);
 
-        //Getting the intersection points with the two planes.
-        //Because of the camera tilt restrictions, the two planes cannot be paralell to the camera direction
+        //Getting the intersection points with the grass plane.
+        //Because of the camera tilt restrictions, the plane cannot be paralell to the camera direction
         //  -> there will be always an intersection point, we can use unwrap_unchecked()
         let grass_level_intersection_point = unsafe {
             ray.plane_intersection_point(grass_level_plane_equation)
@@ -25,7 +24,7 @@ impl IntersectableWithRay for Map {
             grass_level_intersection_point.0.z as usize,
         );
 
-        //If there is a solid tile at the intersection point at grass level, we clicked on the top of a tile, we can reutrn it instantly.
+        //If there is a solid tile at the intersection point at grass level, we clicked on the top of a tile, we can return it instantly.
         if self.is_tile_solid_at(&grass_level_map_coordinates) {
             return Some((
                 Vector3::new(
@@ -36,13 +35,18 @@ impl IntersectableWithRay for Map {
                 grass_level_intersection_point.1,
             ));
         }
+
+        //We recreate the surrounding quads to test intersection with them
         let mut vertices = vec![];
         let mut quads = vec![];
+        //We check a 3x3 area with the mouse at the center
         for x in -1..2 {
             for y in -1..2 {
-                // if x == 0 && y == 0 {
-                //     continue;
-                // }
+                //We don't have to check the one that the mouse is on, because we checked that earlier.
+                if x == 0 && y == 0 {
+                    continue;
+                }
+                //These are the rounded forms of the 
                 let tile_coordinates_f32 = Vector3::new(
                     grass_level_map_coordinates.x as f32 + x as f32,
                     0.,
@@ -52,11 +56,10 @@ impl IntersectableWithRay for Map {
                     (grass_level_map_coordinates.x as i32 + x) as usize,
                     (grass_level_map_coordinates.y as i32 + y) as usize,
                 );
-                let tile = self.get_tile_at(&tile_coordinates_usize);
-                if tile.is_none() || unsafe { !tile.unwrap_unchecked().is_solid() } {
+                if !self.is_tile_solid_at(&tile_coordinates_usize) {
                     continue;
                 }
-                let mut rounded_quad = Mesh::rounded_quad(
+                let (rounded_quad_vertices, mut rounded_quad_indidicies) = Mesh::rounded_quad(
                     [
                         tile_coordinates_f32,
                         tile_coordinates_f32 + Vector3::z(),
@@ -66,12 +69,15 @@ impl IntersectableWithRay for Map {
                     Vector3::zeros(),
                     vertices.len(),
                 );
-                vertices.append(&mut rounded_quad.0.iter().map(|v| v.pos).collect());
-                quads.append(&mut rounded_quad.1);
+                vertices.append(&mut rounded_quad_vertices.iter().map(|v| v.pos).collect());
+                quads.append(&mut rounded_quad_indidicies);
             }
         }
         let mut closest_intersection_point = None;
         for quad in quads {
+            if quad.normal == -Vector3::y() {
+                continue;
+            }
             let possible_new_intersection_point = ray.polygon_intersection_point(&quad, &vertices);
             if closest_intersection_point.is_none() {
                 closest_intersection_point = possible_new_intersection_point;

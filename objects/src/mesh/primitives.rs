@@ -8,7 +8,7 @@ pub type Quad = Polygon<4>;
 pub type Pentagon = Polygon<5>;
 pub type Hexagon = Polygon<6>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 ///A shape that can have CORNER_COUNT amount of corners.
 ///Does not store the vertex positions, just the indicies.
 ///Doesn't check if the points are on one plane or not *(TODO if needed later)*

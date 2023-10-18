@@ -56,9 +56,10 @@ impl Map {
     ///Returns the tile reference at the coordinates.
     ///Crashes if index is out of bounds
     pub unsafe fn get_tile_at_unchecked(&self, coordinates: &Vector2<usize>) -> &Tile {
+        
         debug_assert!(
-            coordinates.x > MAP_SIZE || coordinates.y > MAP_SIZE,
-            "Cannot get tile at invalid coordinates!"
+            coordinates.x < MAP_SIZE || coordinates.y < MAP_SIZE,
+            "Cannot get tile at invalid coordinates! {}", coordinates
         );
         return &self.matrix[coordinates.y][coordinates.x];
     }
