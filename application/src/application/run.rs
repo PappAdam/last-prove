@@ -2,7 +2,7 @@ use nalgebra::Vector3;
 use objects::{mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
 
 use super::{
-    load::{_HOUSE_MESH_INDEX, _MAPSELECTION_MESH_INDEX, _MAP_MESH_INDEX, _SPHERE_MESH_INDEX},
+    load::{_HOUSE_MESH_INDEX, _MAPSELECTION_MESH_INDEX, _MAP_MESH_INDEX, _SPHERE_MESH_INDEX, _EMPTY_MESH_INDEX},
     App,
 };
 

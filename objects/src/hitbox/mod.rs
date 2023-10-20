@@ -6,11 +6,12 @@ use std::{
 use nalgebra::{Vector2, Vector3, Vector4};
 
 use crate::{
+    getters::Getters,
     mesh::primitives::{Quad, Triangle},
     GameObject,
 };
 
-use self::ray::{Ray, IntersectableWithRay};
+use self::ray::{IntersectableWithRay, Ray};
 
 pub mod ray;
 
@@ -108,7 +109,12 @@ impl IntersectableWithRay for GameObject<'_> {
     /// Returns the global coordinate with the screen Z coordinate of the collision if yes
     fn intersection_point(&self, ray: &Ray) -> Option<(Vector3<f32>, f32)> {
         //Intead of transforming the vertices with the model transform, we only tranform the ray
-        //The relative positions of the vertices and the ray will be the same this way. 
+        //The relative positions of the vertices and the ray will be the same this way.
+        if (self.transform.get_position().x - ray.origin.x).abs() > 4.
+            || (self.transform.get_position().x - ray.origin.x).abs() > 4.
+        {
+            return None;
+        }
         let ray = self.transform.try_inverse().unwrap() * ray;
         let untransformed_intersection_point = ray.hitbox_intersection_point(&self.mesh.hitbox);
 
@@ -128,33 +134,4 @@ impl IntersectableWithRay for GameObject<'_> {
         .xyz();
         Some((intersection_point, t))
     }
-}
-#[inline]
-fn mouse_inside_triangle(
-    triangle_points: [Vector3<f32>; 3],
-    relative_mouse_position: Vector2<f32>,
-) -> Option<Vector3<f32>> {
-    //PLEASE DONT MODIFY THIS IDK WHAT IT DOES
-    let v0 = triangle_points[1].xy() - triangle_points[0].xy();
-    let v1 = triangle_points[2].xy() - triangle_points[0].xy();
-    let v2 = relative_mouse_position - triangle_points[0].xy();
-    let d00 = v0.dot(&v0);
-    let d01 = v0.dot(&v1);
-    let d11 = v1.dot(&v1);
-    let d20 = v2.dot(&v0);
-    let d21 = v2.dot(&v1);
-    let denominator = d00 * d11 - d01 * d01;
-    let v = (d11 * d20 - d01 * d21) / denominator;
-    let w = (d00 * d21 - d01 * d20) / denominator;
-    let u = 1. - v - w;
-    if ((v + w + u) - 1.).abs() < 1e-7 && v >= 0. && w >= 0. && u >= 0. {
-        let clicked_z =
-            triangle_points[0].z * u + triangle_points[1].z * v + triangle_points[2].z * w;
-        return Some(Vector3::new(
-            relative_mouse_position.x,
-            relative_mouse_position.y,
-            clicked_z,
-        ));
-    }
-    None
 }
