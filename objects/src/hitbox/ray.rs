@@ -145,7 +145,6 @@ impl Ray {
         if dot_direction_normal.abs() < 1e-3 {
             return None;
         }
-        //If the plane isn't paralell to the ray, there is an intersection point.
 
         //This is just maths, cannot really explain it.
         let dot_origin_normal = plane_normal.dot(&self.origin);

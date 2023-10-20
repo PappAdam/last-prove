@@ -43,6 +43,7 @@ pub trait Transformations<'a> {
     fn look_at(&'a mut self, target: Vector3<f32>) -> &'a mut Self;
     fn set_transform(&'a mut self, matrix: &Self) -> &'a mut Self;
 }
+
 impl<'a> Transformations<'a> for Matrix4<f32> {
     fn global_to_local_coordinate(&self, global_coordinate: Vector3<f32>) -> Vector3<f32> {
         let inverse_transform = self.try_inverse().unwrap_or_else(Matrix4::identity);

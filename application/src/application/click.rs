@@ -5,6 +5,8 @@ use objects::{
     GameObject,
 };
 
+use crate::input::EventState;
+
 use super::App;
 
 impl<'a> App<'a> {
@@ -48,6 +50,7 @@ impl<'a> App<'a> {
                     final_intersection_point = Some((object, intersection_point));
                     final_intersection_distance = intersection_distance;
                 }
+
             }
         }
 
