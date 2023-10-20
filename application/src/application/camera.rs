@@ -112,9 +112,9 @@ impl Camera {
         //CAMERA SCALING
         let scale_factor = 1.2_f32.powi(input.get_mouse_wheel() as i32);
         //Scaling constaints
-        // if (self.scale > 0.02 && scale_factor < 1.) || (self.scale < 0.5 && scale_factor > 1.) {
+        if (self.scale > 0.02 && scale_factor < 1.) || (self.scale < 0.5 && scale_factor > 1.) {
         //Applying scaling
         self.scale_camera(scale_factor);
-        // }
+        }
     }
 }
