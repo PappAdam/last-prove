@@ -1,8 +1,8 @@
+use proc_macro::TokenStream;
 use std::{fs, path::Path};
 
-use proc_macro::TokenStream;
 #[proc_macro]
-pub fn make_answer(item: TokenStream) -> TokenStream {
+pub fn load_consts(item: TokenStream) -> TokenStream {
     let file_path = item.to_string().replace('"', "");
 
     let file_content = fs::read_to_string(&file_path).expect("Failed to read file content");

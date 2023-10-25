@@ -30,15 +30,19 @@ impl<'a> App<'a> {
         let mouse_ray = Ray::new(ray_origin, ray_direction);
 
         let grass_level_tile = Vector4::new(0., -1., 0., 0.);
-        let (grass_level_intersection, _) = unsafe { mouse_ray.plane_intersection_point(grass_level_tile).unwrap_unchecked() };
+        let (grass_level_intersection, _) = unsafe {
+            mouse_ray
+                .plane_intersection_point(grass_level_tile)
+                .unwrap_unchecked()
+        };
         let mouse_ray = Ray::new(grass_level_intersection, ray_direction);
 
         //Iterating over each object, checking intersections with each object
         for object in &self.gameobjects {
             //If object is not clickable, we ignore it, and continue with the next object.
-            if object.flag_active(objects::GameObjectFlag::NotClickable) {
-                continue;
-            }
+            // if object.flag_active(objects::GameObjectFlag::NotClickable) {
+            //     continue;
+            // }
             //We check if there's an intersection point with the object
             if let Some((intersection_point, intersection_distance)) =
                 object.intersection_point(&mouse_ray)
@@ -50,7 +54,6 @@ impl<'a> App<'a> {
                     final_intersection_point = Some((object, intersection_point));
                     final_intersection_distance = intersection_distance;
                 }
-
             }
         }
 

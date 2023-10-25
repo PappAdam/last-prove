@@ -74,7 +74,6 @@ impl<'a> App<'a> {
         let mesh = self.get_mesh(create_info.preset);
         let obj = GameObject::create(&mut self.transform_array, mesh, create_info)
             .expect("Failed to create gameObject");
-
         self.gameobjects.push(obj)
     }
 

@@ -5,7 +5,11 @@ mod map;
 use std::time::Instant;
 
 use application::App;
-use objects::{hitbox::Hitbox, mesh::Mesh};
+use objects::{
+    flags::{GameObjectFlag},
+    hitbox::Hitbox,
+    mesh::Mesh,
+};
 use winit::{
     dpi::PhysicalSize,
     event::{Event, KeyboardInput, MouseScrollDelta, WindowEvent},
@@ -14,9 +18,9 @@ use winit::{
     window::Fullscreen,
 };
 
-use constants::make_answer;
+use macros::load_consts;
 
-make_answer!("application/src/constants.const");
+load_consts!("application/src/constants.const");
 
 use renderer::msg;
 fn main() {

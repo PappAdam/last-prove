@@ -6,7 +6,8 @@ use crate::{
         self,
         buffer::{Buffer, DynamicUniformBuffer, UniformBuffer},
         desriptors::{
-            create_descriptor_pool, create_descriptor_set_layout, create_descriptor_sets, update_descriptor_sets,
+            create_descriptor_pool, create_descriptor_set_layout, create_descriptor_sets,
+            update_descriptor_sets,
         },
         image::Image,
     },
@@ -76,22 +77,22 @@ impl RenderData {
 
         let pipelines = [
             setup::create_pipelines(
-            &base.device,
-            vertex_shader_module,
-            fragment_shader_module,
-            pipeline_layout,
-            render_pass,
-            vk::PolygonMode::FILL
-        )?,
+                &base.device,
+                vertex_shader_module,
+                fragment_shader_module,
+                pipeline_layout,
+                render_pass,
+                vk::PolygonMode::FILL,
+            )?,
             setup::create_pipelines(
-            &base.device,
-            vertex_shader_module,
-            fragment_shader_module,
-            pipeline_layout,
-            render_pass,
-            vk::PolygonMode::LINE
-        )?];
-
+                &base.device,
+                vertex_shader_module,
+                fragment_shader_module,
+                pipeline_layout,
+                render_pass,
+                vk::PolygonMode::LINE,
+            )?,
+        ];
 
         let viewport = vk::Viewport {
             x: 0.0,
@@ -180,11 +181,8 @@ impl RenderData {
             1,
         )?;
 
-        let descriptor_sets = create_descriptor_sets(
-            &base.device,
-            descriptor_pool,
-            descriptor_set_layout,
-        )?;
+        let descriptor_sets =
+            create_descriptor_sets(&base.device, descriptor_pool, descriptor_set_layout)?;
 
         let uniform_buffer_descriptor = vk::DescriptorBufferInfo {
             buffer: uniform_buffer.buf,
@@ -217,6 +215,13 @@ impl RenderData {
 
         update_descriptor_sets(&base.device, &descriptor_sets, &mut write_desc_sets);
         uniform_buffer.update(&base.device, world_view.as_void_ptr(), &descriptor_sets);
+
+        unsafe {
+            base.device
+                .destroy_shader_module(vertex_shader_module, None);
+            base.device
+                .destroy_shader_module(fragment_shader_module, None);
+        }
 
         Ok(Self {
             pipeline_layout,

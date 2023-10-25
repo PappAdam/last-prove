@@ -1,6 +1,7 @@
 use std::default;
 
 use ash::vk;
+use flags::GameObjectFlag;
 use hitbox::Hitbox;
 use mesh::Mesh;
 use nalgebra::{Matrix4, Vector3};
@@ -8,13 +9,12 @@ use renderer::{
     engine::aligned_array::{AlignedArray, NoneValue},
     Renderer,
 };
-use tags::ObjectTag;
 use transformations::Transformations;
 
+pub mod flags;
 pub mod getters;
 pub mod hitbox;
 pub mod mesh;
-pub mod tags;
 pub mod transformations;
 
 #[derive(Default, Clone, Copy)]
@@ -28,17 +28,10 @@ pub enum MeshPreset {
     Sphere,
 }
 
-#[derive(Clone, Copy)]
-pub enum GameObjectFlag {
-    None = 0b00000001,
-    NotClickable = 0b00000010,
-}
-
 pub struct GameObject<'a> {
     pub transform: &'a mut Matrix4<f32>,
     transform_index: usize,
     mesh: &'a Mesh,
-    pub tags: Vec<ObjectTag>,
     flags: u8,
 }
 
@@ -57,7 +50,6 @@ impl<'a> GameObject<'a> {
         *transform_ptr = transform;
         Ok(Self {
             flags: 0,
-            tags: vec![],
             transform: transform_ptr,
             transform_index,
             mesh,

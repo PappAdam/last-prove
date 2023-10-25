@@ -1,5 +1,5 @@
 use nalgebra::Vector2;
-use winit::event::{ElementState, ModifiersState, MouseButton, VirtualKeyCode, Event};
+use winit::event::{ElementState, Event, ModifiersState, MouseButton, VirtualKeyCode};
 
 use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
@@ -45,10 +45,10 @@ impl Input {
             match state {
                 ElementState::Pressed => {
                     self.keys[key as usize] = EventState::Pressed;
-                },
+                }
                 ElementState::Released => {
                     self.keys[key as usize] = EventState::Released;
-                },
+                }
             }
             self.last_modified_keys.push(key as u8)
         }
@@ -64,14 +64,12 @@ impl Input {
 
     #[inline]
     pub fn handle_mouse_press(&mut self, button: MouseButton, state: ElementState) {
-        unsafe {
-            match state {
-                ElementState::Pressed => {
-                    self.mouse.buttons[Self::get_mouse_button_index(button)] = EventState::Pressed;
-                },
-                ElementState::Released => {
-                    self.mouse.buttons[Self::get_mouse_button_index(button)] = EventState::Released;
-                },
+        match state {
+            ElementState::Pressed => {
+                self.mouse.buttons[Self::get_mouse_button_index(button)] = EventState::Pressed;
+            }
+            ElementState::Released => {
+                self.mouse.buttons[Self::get_mouse_button_index(button)] = EventState::Released;
             }
         }
     }
@@ -87,40 +85,52 @@ impl Input {
         self.mouse.delta_move.y = 0.;
         self.mouse.wheel = 0.;
 
-        self.last_modified_keys.iter().for_each(|k| {
-            match self.keys[*k as usize] {
+        self.last_modified_keys
+            .iter()
+            .for_each(|k| match self.keys[*k as usize] {
                 EventState::Pressed => self.keys[*k as usize] = EventState::Down,
                 EventState::Released => self.keys[*k as usize] = EventState::Up,
-                _ => ()
-            }
-        });
+                _ => (),
+            });
 
         self.last_modified_keys.clear();
 
-        self.mouse.buttons.iter_mut().for_each(|mut b| {
-            match b {
-                EventState::Pressed => {*b = EventState::Down},
-                EventState::Released => {*b = EventState::Up},
-                _ => ()
-            }
+        self.mouse.buttons.iter_mut().for_each(|mut b| match b {
+            EventState::Pressed => *b = EventState::Down,
+            EventState::Released => *b = EventState::Up,
+            _ => (),
         });
     }
 
     #[inline]
     pub fn key_state(&self, key: VirtualKeyCode, state: EventState) -> bool {
         match state {
-            EventState::Pressed | EventState::Released=> self.keys[key as usize] == state,
-            EventState::Up => self.keys[key as usize] == EventState::Up || self.keys[key as usize] == EventState::Released,
-            EventState::Down => self.keys[key as usize] == EventState::Down || self.keys[key as usize] == EventState::Pressed,
+            EventState::Pressed | EventState::Released => self.keys[key as usize] == state,
+            EventState::Up => {
+                self.keys[key as usize] == EventState::Up
+                    || self.keys[key as usize] == EventState::Released
+            }
+            EventState::Down => {
+                self.keys[key as usize] == EventState::Down
+                    || self.keys[key as usize] == EventState::Pressed
+            }
         }
     }
 
     #[inline]
     pub fn mouse_button_state(&self, button: MouseButton, state: EventState) -> bool {
         match state {
-            EventState::Pressed | EventState::Released=> self.get_mouse_button_state(button) == state,
-            EventState::Up => self.get_mouse_button_state(button) == EventState::Up || self.get_mouse_button_state(button) == EventState::Released,
-            EventState::Down => self.get_mouse_button_state(button) == EventState::Down || self.get_mouse_button_state(button) == EventState::Pressed,
+            EventState::Pressed | EventState::Released => {
+                self.get_mouse_button_state(button) == state
+            }
+            EventState::Up => {
+                self.get_mouse_button_state(button) == EventState::Up
+                    || self.get_mouse_button_state(button) == EventState::Released
+            }
+            EventState::Down => {
+                self.get_mouse_button_state(button) == EventState::Down
+                    || self.get_mouse_button_state(button) == EventState::Pressed
+            }
         }
     }
 
@@ -138,15 +148,12 @@ impl Input {
     }
 
     fn get_mouse_button_state(&self, button: MouseButton) -> EventState {
-        unsafe {
-            self.mouse.buttons[*(&button as *const _ as *const u8) as usize]
-        }
+        unsafe { self.mouse.buttons[*(&button as *const _ as *const u8) as usize] }
     }
 
     pub fn get_mouse_button_index(button: MouseButton) -> usize {
         unsafe { *(&button as *const _ as *const u8) as usize }
     }
-
 }
 
 pub struct Mouse {
@@ -155,4 +162,3 @@ pub struct Mouse {
     pub delta_move: Vector2<f32>,
     pub wheel: f32,
 }
-

@@ -2,7 +2,7 @@ use crate::input::EventState;
 use nalgebra::Vector3;
 
 use objects::{
-    hitbox::{self, Hitbox, Triangle},
+    hitbox::{self, Hitbox},
     mesh::Mesh,
     transformations::Transformations,
     GameObjectCreateInfo, GameObjectTransform, MeshPreset,
@@ -15,11 +15,8 @@ impl<'a> App<'a> {
     #[inline]
     pub fn main_loop(&mut self) {
         if let Some((clicked_object, click_position)) = self.world_mouse_intersection_point() {
-            if clicked_object.has_tag(&objects::tags::ObjectTag::Map) {
-                // let map_coordinates = self.map.world_coordinate_to_tile_center(&click_position);
-            }
-            self.gameobjects[2].transform.set_position(click_position);
-      }
+            self.gameobjects[1].transform.set_position(click_position);
+        }
         if self
             .input
             .key_state(VirtualKeyCode::Space, EventState::Pressed)
@@ -33,12 +30,8 @@ impl<'a> App<'a> {
         }
     }
 
-
     pub fn setup(&mut self) {
-        self.create_obj(
-            &GameObjectCreateInfo::default()
-                .mesh_preset(MeshPreset::House)
-                .transform(GameObjectTransform::default().scale(100.)),
-        );
+        self.create_obj(&GameObjectCreateInfo::default().mesh_preset(MeshPreset::Map));
+        self.create_obj(&GameObjectCreateInfo::default().mesh_preset(MeshPreset::MapSelection));
     }
 }
