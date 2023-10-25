@@ -1,7 +1,7 @@
 use std::default;
 
 use ash::vk;
-use flags::GameObjectFlag;
+use flags::{Flags, Flag};
 use hitbox::Hitbox;
 use mesh::Mesh;
 use nalgebra::{Matrix4, Vector3};
@@ -32,7 +32,7 @@ pub struct GameObject<'a> {
     pub transform: &'a mut Matrix4<f32>,
     transform_index: usize,
     mesh: &'a Mesh,
-    flags: u8,
+    flags: Flags<{ GameObjectFlag::SIZE }>,
 }
 
 impl<'a> GameObject<'a> {
@@ -49,7 +49,7 @@ impl<'a> GameObject<'a> {
         let transform_ptr = unsafe { &mut *(transform_buf.get_data_pointer(transform_index)) };
         *transform_ptr = transform;
         Ok(Self {
-            flags: 0,
+            flags: Flags::default(),
             transform: transform_ptr,
             transform_index,
             mesh,
@@ -68,12 +68,6 @@ impl<'a> GameObject<'a> {
     #[inline]
     pub fn renderable_form(&self) -> (vk::Buffer, vk::Buffer, u32, usize) {
         self.get_mesh().into_tuple(self.transform_index)
-    }
-    pub fn flag_active(&self, flag: GameObjectFlag) -> bool {
-        self.flags & flag as u8 == flag as u8
-    }
-    pub fn set_flag(&mut self, flag: GameObjectFlag) {
-        self.flags |= flag as u8
     }
 }
 
@@ -118,11 +112,11 @@ impl GameObjectTransform {
 
 impl<'a> NoneValue for GameObject<'a> {
     fn is_none(&self) -> bool {
-        self.flag_active(GameObjectFlag::None)
+        self.flags.has_flag(GameObjectFlag::None)
     }
 
     fn set_to_none(&mut self) {
-        self.set_flag(GameObjectFlag::None)
+        self.flags.add_flag(GameObjectFlag::None)
     }
 }
 
@@ -146,4 +140,11 @@ impl GameObjectCreateInfo {
         self.preset = preset;
         self
     }
+}
+
+#[derive(derive_flags::Flag, Default, Clone, Copy)]
+enum GameObjectFlag {
+    #[default]
+    None,
+
 }
