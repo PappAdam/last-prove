@@ -5,11 +5,7 @@ mod map;
 use std::time::Instant;
 
 use application::App;
-use objects::{
-    flags::{GameObjectFlag},
-    hitbox::Hitbox,
-    mesh::Mesh,
-};
+use objects::{hitbox::Hitbox, mesh::Mesh};
 use winit::{
     dpi::PhysicalSize,
     event::{Event, KeyboardInput, MouseScrollDelta, WindowEvent},

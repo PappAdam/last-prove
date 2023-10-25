@@ -12,4 +12,4 @@ byteorder = "*"
 renderer = { path = "../renderer" }
 ash = { version = "0.37.2", features = ["linked"] }
 log = "0.4"
-derive = { path = "./derive" }
+derive_flags = { path = "derive_flags" }
