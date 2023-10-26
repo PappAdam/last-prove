@@ -1,37 +1,52 @@
-use nalgebra::Vector3;
-use objects::{mesh::Mesh, transformations::Transformations, GameObjectCreateInfo};
+use crate::input::EventState;
+
+use objects::{
+    transformations::Transformations, GameObjectCreateInfo, GameObjectFlag, GameObjectTransform,
+    MeshPreset,
+};
+use winit::event::VirtualKeyCode;
 
 use super::App;
 
 impl<'a> App<'a> {
     #[inline]
     pub fn main_loop(&mut self) {
-        self.gameobjects[0].render(&self.renderer);
+        if let Some((clicked_object, click_position)) = self.world_mouse_intersection_point() {
+            if clicked_object.has_flag(GameObjectFlag::Map) {
+                if self
+                    .input
+                    .mouse_button_state(winit::event::MouseButton::Left, EventState::Pressed)
+                {
+                    self.create_obj(
+                        &GameObjectCreateInfo::default()
+                            .mesh_preset(MeshPreset::House)
+                            .transform(GameObjectTransform::default().position(click_position)),
+                    );
+                }
+                self.gameobjects[1].transform.set_position(click_position);
+                
+            }
+        }
 
-        //gameobjects[1] is a ball tracking the camera
-        // self.gameobjects[1].transform.set_position(Vector3::new(
-        //     -self.camera.get_position().x,
-        //     0.,
-        //     -self.camera.get_position().y,
-        // ));
-        // self.gameobjects[1].render(&self.renderer);
+        if self
+            .input
+            .key_state(VirtualKeyCode::Space, EventState::Pressed)
+        {
+            self.renderer.current_pipeline_index =
+                (self.renderer.current_pipeline_index as i8 - 1).abs() as usize;
+        }
 
-        // self.game_controller
-        //     .add_time_elapsed(self.delta_time.as_secs_f32(), &mut self.renderer);
+        for gameobject in &self.gameobjects {
+            gameobject.render(&self.renderer);
+        }
     }
 
-    pub fn setup(&mut self, meshes: &'a mut Vec<Mesh>) {
-        meshes.push(self.map.convert_to_mesh(&mut self.renderer));
-        self.load_mesh("resources/models/Basic_house", meshes);
-        // self.load_mesh("resources/models/az", meshes);
-        // self.load_mesh("resources/models/az", meshes);
+    pub fn setup(&mut self) {
+        self.create_obj(&GameObjectCreateInfo::default().mesh_preset(MeshPreset::Map).flags(&[GameObjectFlag::Map]));
         self.create_obj(
-            &meshes[0],
-            &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
-        );
-        self.create_obj(
-            &meshes[1],
-            &GameObjectCreateInfo::position(Vector3::new(0., 0., 0.)),
+            &GameObjectCreateInfo::default()
+                .mesh_preset(MeshPreset::MapSelection)
+                .flags(&[GameObjectFlag::NotClickable]),
         );
     }
 }

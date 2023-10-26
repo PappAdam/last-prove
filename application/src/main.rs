@@ -5,7 +5,7 @@ mod map;
 use std::time::Instant;
 
 use application::App;
-use objects::mesh::Mesh;
+use objects::{hitbox::Hitbox, mesh::Mesh};
 use winit::{
     dpi::PhysicalSize,
     event::{Event, KeyboardInput, MouseScrollDelta, WindowEvent},
@@ -14,7 +14,9 @@ use winit::{
     window::Fullscreen,
 };
 
-pub const MAP_SIZE: usize = 500;
+use macros::load_consts;
+
+load_consts!("application/src/constants.const");
 
 use renderer::msg;
 fn main() {
@@ -37,15 +39,16 @@ fn main() {
     let mut event_loop = winit::event_loop::EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_title("HAHA")
-        .with_inner_size(PhysicalSize::new(1920, 1080))
+        .with_inner_size(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT))
         .with_fullscreen(Some(Fullscreen::Borderless(None)))
         .with_resizable(false)
         .build(&event_loop)
         .unwrap();
 
     let mut meshes: Vec<Mesh> = vec![];
-    let mut app = App::init(&window, MAP_SIZE);
-    app.setup(&mut meshes);
+    let mut app = App::init(&window, MAP_SIZE, &meshes);
+    app.load_meshes(&mut meshes);
+    app.setup();
 
     app.renderer.data.push_const.wh_ratio = app.renderer.base.surface_extent.width as f32
         / app.renderer.base.surface_extent.height as f32;
@@ -108,7 +111,8 @@ fn main() {
             );
 
             app.renderer.data.world_view.view = *app.camera.get_transform();
-            app.camera.camera_move(&app.input, app.delta_time.as_secs_f32());
+            app.camera
+                .camera_move(&app.input, app.delta_time.as_secs_f32());
             app.main_loop();
 
             if let Err(msg) = app.renderer.flush() {

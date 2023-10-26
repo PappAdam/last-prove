@@ -33,8 +33,8 @@ impl<T: NoneValue> ObjVec<T> {
         let index_pushed;
         if self.first_empty_index != usize::MAX {
             self.content[self.first_empty_index] = value;
-            index_pushed = self.first_empty_index;
             self.seek_for_empty();
+            index_pushed = self.first_empty_index;
         } else {
             index_pushed = self.count();
             self.content.push(value);
@@ -56,12 +56,15 @@ impl<T: NoneValue> ObjVec<T> {
 
     fn seek_for_empty(&mut self) {
         let mut index = usize::MAX;
-        self.content.iter().enumerate().for_each(|(i, t)| {
-            if t.is_none() == true {
-                index = i;
-                return;
-            }
-        });
+        self.content[self.first_empty_index..]
+            .iter()
+            .enumerate()
+            .for_each(|(i, t)| {
+                if t.is_none() == true {
+                    index = i;
+                    return;
+                }
+            });
 
         self.first_empty_index = index;
     }

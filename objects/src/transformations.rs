@@ -18,7 +18,7 @@ pub trait Transformations<'a> {
     ) -> &'a mut Self;
     fn traslate_vec3(&'a mut self, translation: Vector3<f32>) -> &'a mut Self;
     fn set_position(&'a mut self, position: Vector3<f32>) -> &'a mut Self;
-    fn scale(&'a mut self, scale: f32) -> &'a mut Self;
+    fn scale_object(&'a mut self, scale: f32) -> &'a mut Self;
     fn rotate(&'a mut self, rotation_x: f32, rotation_y: f32, rotation_z: f32) -> &'a mut Self;
     fn rotate_local(
         &'a mut self,
@@ -43,6 +43,7 @@ pub trait Transformations<'a> {
     fn look_at(&'a mut self, target: Vector3<f32>) -> &'a mut Self;
     fn set_transform(&'a mut self, matrix: &Self) -> &'a mut Self;
 }
+
 impl<'a> Transformations<'a> for Matrix4<f32> {
     fn global_to_local_coordinate(&self, global_coordinate: Vector3<f32>) -> Vector3<f32> {
         let inverse_transform = self.try_inverse().unwrap_or_else(Matrix4::identity);
@@ -93,7 +94,7 @@ impl<'a> Transformations<'a> for Matrix4<f32> {
         self[14] = position.z;
         self
     }
-    fn scale(&'a mut self, scale: f32) -> &'a mut Self {
+    fn scale_object(&'a mut self, scale: f32) -> &'a mut Self {
         //Uniform scaling only, scaling each basis vector.
 
         //X Axis

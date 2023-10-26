@@ -8,7 +8,7 @@ use ash::vk::{self, DebugUtilsMessageSeverityFlagsEXT};
 
 pub const MAX_FRAME_DRAWS: usize = 2;
 
-pub const MAX_WORLD_OBJECTS: usize = 125;
+pub const MAX_WORLD_OBJECTS: usize = 128;
 
 pub unsafe extern "system" fn vulkan_debug_callback(
     message_severity: vk::DebugUtilsMessageSeverityFlagsEXT,

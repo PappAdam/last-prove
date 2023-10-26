@@ -11,15 +11,18 @@ use ash::vk;
 
 use renderer::{self, resources::buffer::Buffer, utils::vertex::Vertex, Renderer};
 
+use crate::hitbox::Hitbox;
+
 // #[derive(Clone)]
 pub struct Mesh {
     pub vertex_buffer: vk::Buffer,
     pub index_buffer: vk::Buffer,
+    pub hitbox: Hitbox,
     pub index_count: u32,
 }
 
 impl Mesh {
-    pub fn new(renderer: &mut Renderer, vertices: Vec<Vertex>, indicies: Vec<u32>) -> Self {
+    pub fn new(renderer: &mut Renderer, vertices: Vec<Vertex>, indicies: Vec<u32>, hitbox: Hitbox) -> Self {
         let vertex_buffer = Buffer::device_local(
             &renderer.base.device,
             vertices.as_ptr() as _,
@@ -51,6 +54,7 @@ impl Mesh {
             index_buffer: ib,
             vertex_buffer: vb,
             index_count: indicies.len() as u32,
+            hitbox
         }
     }
 
@@ -65,8 +69,8 @@ impl Mesh {
     }
 
     pub fn from_file(renderer: &mut Renderer, path: &str) -> Mesh {
-        let obj_file = BufReader::new(File::open(path.to_owned() + ".obj").unwrap());
-        let mtl_file = BufReader::new(File::open(path.to_owned() + ".mtl").unwrap());
+        let obj_file = BufReader::new(File::open(path.to_owned() + "/Object.obj").unwrap());
+        let mtl_file = BufReader::new(File::open(path.to_owned() + "/Object.mtl").unwrap());
 
         //Loading materials
         let mut materials: HashMap<String, [f32; 3]> = HashMap::new();
@@ -91,7 +95,7 @@ impl Mesh {
         }
         //A default material, if no materials are present.
         if materials.len() == 0 {
-            materials.insert("default".to_owned(), [0.9, 0.9, 0.9]);
+            materials.insert("default".to_owned(), [1.0, 0.0, 1.0]);
         }
         //Finished loading materials
 
@@ -100,7 +104,7 @@ impl Mesh {
         let mut index_buffer = vec![];
 
         //These vectors get filled up with v, vn, and vt values.
-        let mut vertices = vec![];
+        let mut positions = vec![];
         let mut normals = vec![];
         let mut textures = vec![];
 
@@ -112,7 +116,7 @@ impl Mesh {
             let splitted_line = line.split(' ').collect::<Vec<_>>();
             match splitted_line[0] {
                 //Vertex xample: v 0.0000000 1.0000000 0.5000000
-                "v" => vertices.push([
+                "v" => positions.push([
                     splitted_line[1].parse::<f32>().unwrap(),
                     -splitted_line[2].parse::<f32>().unwrap(),
                     splitted_line[3].parse::<f32>().unwrap(),
@@ -134,7 +138,7 @@ impl Mesh {
                     for segment in &splitted_line[1..] {
                         let splitted_segment = segment.split('/').collect::<Vec<_>>();
                         vertex_buffer.push(Vertex::new(
-                            vertices[splitted_segment[0].parse::<usize>().unwrap() - 1].into(),
+                            positions[splitted_segment[0].parse::<usize>().unwrap() - 1].into(),
                             materials[&current_material].into(),
                             normals[splitted_segment[2].parse::<usize>().unwrap() - 1].into(),
                         ));
@@ -152,7 +156,7 @@ impl Mesh {
                 _ => {}
             }
         }
-        Mesh::new(renderer, vertex_buffer, index_buffer)
+        Mesh::new(renderer, vertex_buffer, index_buffer, Hitbox::from_file(path))
     }
 }
 
