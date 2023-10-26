@@ -1,8 +1,5 @@
-use std::default;
-
 use ash::vk;
-use flags::{Flags, Flag};
-use hitbox::Hitbox;
+use flags::{Flag, Flags};
 use mesh::Mesh;
 use nalgebra::{Matrix4, Vector3};
 use renderer::{
@@ -49,7 +46,7 @@ impl<'a> GameObject<'a> {
         let transform_ptr = unsafe { &mut *(transform_buf.get_data_pointer(transform_index)) };
         *transform_ptr = transform;
         Ok(Self {
-            flags: Flags::default(),
+            flags: create_info.flags,
             transform: transform_ptr,
             transform_index,
             mesh,
@@ -124,11 +121,20 @@ impl<'a> NoneValue for GameObject<'a> {
 pub struct GameObjectCreateInfo {
     pub transform: GameObjectTransform,
     pub preset: MeshPreset,
+    pub flags: Flags<{ GameObjectFlag::SIZE }>,
 }
 
 impl GameObjectCreateInfo {
-    pub fn new(transform: GameObjectTransform, preset: MeshPreset) -> Self {
-        Self { transform, preset }
+    pub fn new(
+        transform: GameObjectTransform,
+        preset: MeshPreset,
+        flags: Flags<{ GameObjectFlag::SIZE }>,
+    ) -> Self {
+        Self {
+            transform,
+            preset,
+            flags,
+        }
     }
 
     pub fn transform(mut self, transform: GameObjectTransform) -> Self {
@@ -140,11 +146,39 @@ impl GameObjectCreateInfo {
         self.preset = preset;
         self
     }
+    pub fn flags(mut self, active_flags: &[GameObjectFlag]) -> Self {
+        let mut flags = Flags::default();
+        for flag in active_flags {
+            flags.add_flag(*flag);
+        }
+        self.flags = flags;
+        self
+    }
 }
 
 #[derive(derive_flags::Flag, Default, Clone, Copy)]
-enum GameObjectFlag {
+pub enum GameObjectFlag {
     #[default]
     None,
+    NotClickable,
+    Map,
+}
 
+impl GameObject<'_> {
+    #[inline]
+    pub fn add_flag(&mut self, flag: GameObjectFlag) {
+        self.flags.add_flag(flag);
+    }
+    #[inline]
+    pub fn remove_flag(&mut self, flag: GameObjectFlag) {
+        self.flags.remove_flag(flag);
+    }
+    #[inline]
+    pub fn toggle_flag(&mut self, flag: GameObjectFlag) {
+        self.flags.toggle_flag(flag);
+    }
+    #[inline]
+    pub fn has_flag(&self, flag: GameObjectFlag) -> bool {
+        self.flags.has_flag(flag)
+    }
 }

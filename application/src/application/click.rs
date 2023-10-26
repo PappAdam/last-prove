@@ -40,9 +40,9 @@ impl<'a> App<'a> {
         //Iterating over each object, checking intersections with each object
         for object in &self.gameobjects {
             //If object is not clickable, we ignore it, and continue with the next object.
-            // if object.flag_active(objects::GameObjectFlag::NotClickable) {
-            //     continue;
-            // }
+            if object.has_flag(objects::GameObjectFlag::NotClickable) {
+                continue;
+            }
             //We check if there's an intersection point with the object
             if let Some((intersection_point, intersection_distance)) =
                 object.intersection_point(&mouse_ray)

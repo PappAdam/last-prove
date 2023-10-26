@@ -1,10 +1,10 @@
-use nalgebra::{coordinates::X, ComplexField, Vector2, Vector3, Vector4};
+use nalgebra::{Vector2, Vector3, Vector4};
 use objects::{
     hitbox::ray::{IntersectableWithRay, Ray},
     mesh::Mesh,
 };
 
-use super::{tile, Map};
+use super::Map;
 
 impl IntersectableWithRay for Map {
     ///Returns the intersection point of a ray and the map. Always returns an intersection point.
