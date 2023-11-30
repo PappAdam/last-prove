@@ -84,7 +84,7 @@ fn spawn_sphere(
 
 fn spawn_directional_light(mut commands: Commands) {
     commands.spawn(DirectionalLightBundle {
-        transform: Transform::from_translation(Vec3::new(0.8, 1., 0.5))
+        transform: Transform::from_translation(Vec3::new(1.8, 1., 1.4))
             .looking_at(Vec3::ZERO, Vec3::Y),
         directional_light: DirectionalLight {
             color: Color::hex("FFFCE9").unwrap(),

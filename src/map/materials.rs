@@ -12,6 +12,7 @@ pub const GRASS_MATERIAL: StandardMaterial = StandardMaterial {
 
 pub const WATER_MATERIAL: StandardMaterial = StandardMaterial {
     base_color: Color::rgb(39. / 255., 144. / 255., 176. / 255.),
+    perceptual_roughness: 0.7,
     reflectance: 0.2,
     ..DEFAULT_MATERIAL
 };
