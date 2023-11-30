@@ -2,17 +2,17 @@ pub mod coordinate;
 mod debugmap;
 mod heightmap;
 mod mapmesh;
-pub mod tile;
 mod materials;
+pub mod tile;
 
 use std::vec;
 
 use self::{heightmap::HeightMap, mapmesh::MapMeshPlugin, tile::Tile};
 use bevy::prelude::*;
 
-pub const MAP_SIZE: usize = 100;
+pub const MAP_SIZE: usize = 400;
 const MAP_NOISE_SCALE: f64 = 30.;
-const MAP_NOISE_PERSISTENCE: f64 = 0.65;
+const MAP_NOISE_PERSISTENCE: f64 = 0.55;
 const MAP_NOISE_OCTAVES: usize = 4;
 
 pub struct MapPlugin;
@@ -24,13 +24,12 @@ impl Plugin for MapPlugin {
 }
 
 fn spawn_map(mut commands: Commands) {
-    dbg!("spawned map");
     commands.spawn(Map::new());
 }
 
 fn debug_map(query: Query<&Map>) {
     let map = query.single();
-    dbg!(map);
+    // dbg!(map);
 }
 
 #[derive(Component)]

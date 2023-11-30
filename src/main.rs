@@ -1,6 +1,7 @@
 mod camera;
-mod testscene;
+pub mod lerp;
 mod map;
+mod testscene;
 use bevy::prelude::*;
 use camera::CameraPlugin;
 use map::MapPlugin;
