@@ -1,7 +1,9 @@
 mod camera;
 mod testscene;
+mod map;
 use bevy::prelude::*;
 use camera::CameraPlugin;
+use map::MapPlugin;
 use testscene::TestScenePlugin;
 
 fn main() {
@@ -11,6 +13,7 @@ fn main() {
             brightness: 0.1,
         })
         .add_plugins(DefaultPlugins)
+        .add_plugins(MapPlugin)
         .add_plugins(TestScenePlugin)
         .add_plugins(CameraPlugin)
         .run()
