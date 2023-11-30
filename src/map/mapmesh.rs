@@ -3,20 +3,19 @@ use std::ops::Range;
 use bevy::{prelude::*, render::render_resource::PrimitiveTopology};
 
 use super::{
-    debug_map,
     materials::{GRASS_MATERIAL, WATER_MATERIAL},
-    Map, MAP_SIZE,
+    spawn_map, Map, MAP_SIZE,
 };
 
 pub struct MapMeshPlugin;
 
 impl Plugin for MapMeshPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, add_mesh_to_map.after(debug_map));
+        app.add_systems(Startup, add_mesh_to_map);
     }
 }
 
-fn add_mesh_to_map(
+pub fn add_mesh_to_map(
     mut commands: Commands,
     mut query: Query<(Entity, &Map)>,
     mut meshes: ResMut<Assets<Mesh>>,

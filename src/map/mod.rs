@@ -2,12 +2,16 @@ pub mod coordinate;
 mod debugmap;
 mod heightmap;
 mod mapmesh;
-pub mod tile;
 mod materials;
+pub mod tile;
 
 use std::vec;
 
-use self::{heightmap::HeightMap, mapmesh::MapMeshPlugin, tile::Tile};
+use self::{
+    heightmap::HeightMap,
+    mapmesh::{add_mesh_to_map, MapMeshPlugin},
+    tile::Tile,
+};
 use bevy::prelude::*;
 
 pub const MAP_SIZE: usize = 100;
@@ -18,13 +22,12 @@ const MAP_NOISE_OCTAVES: usize = 4;
 pub struct MapPlugin;
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_map, apply_deferred, debug_map).chain());
+        app.add_systems(Startup, (spawn_map, apply_deferred).before(add_mesh_to_map));
         app.add_plugins(MapMeshPlugin);
     }
 }
 
 fn spawn_map(mut commands: Commands) {
-    dbg!("spawned map");
     commands.spawn(Map::new());
 }
 

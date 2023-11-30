@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use bevy::{
     input::mouse::{MouseMotion, MouseScrollUnit, MouseWheel},
     prelude::*,
