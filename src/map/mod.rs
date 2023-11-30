@@ -3,13 +3,14 @@ mod debugmap;
 mod heightmap;
 mod mapmesh;
 pub mod tile;
+mod materials;
 
 use std::vec;
 
 use self::{heightmap::HeightMap, mapmesh::MapMeshPlugin, tile::Tile};
 use bevy::prelude::*;
 
-const MAP_SIZE: usize = 100;
+pub const MAP_SIZE: usize = 100;
 const MAP_NOISE_SCALE: f64 = 30.;
 const MAP_NOISE_PERSISTENCE: f64 = 0.65;
 const MAP_NOISE_OCTAVES: usize = 4;

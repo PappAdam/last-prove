@@ -5,6 +5,8 @@ use bevy::{
     prelude::*,
 };
 
+use crate::map::MAP_SIZE;
+
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
@@ -22,10 +24,7 @@ fn move_camera(
     let mut camera_transform = query.single_mut();
     let camera_position = camera_transform.translation;
     if keys.pressed(KeyCode::A) {
-        camera_transform.rotate_around(
-            camera_position,
-            Quat::from_rotation_y(-PI * time.delta_seconds()),
-        )
+        camera_transform.translation.
     }
     if keys.pressed(KeyCode::D) {
         camera_transform.rotate_around(
@@ -50,32 +49,44 @@ fn move_camera(
 }
 
 fn zoom_camera(
-    mut query: Query<&mut Transform, With<Camera>>,
+    mut query: Query<&mut Projection, With<Camera>>,
     mut scroll_evr: EventReader<MouseWheel>,
 ) {
-    let mut camera = query.single_mut();
+    let projection = {
+        if let Projection::Orthographic(ortographic_projection) = (query.single_mut()).into_inner()
+        {
+            ortographic_projection
+        } else {
+            panic!("Persepective camera zoom isn't supported!")
+        }
+    };
     for ev in scroll_evr.read() {
         match ev.unit {
             MouseScrollUnit::Line => {
-                camera.scale *= 1.2_f32.powi(-ev.y as i32);
+                projection.scale *= 1.2_f32.powi(-ev.y as i32);
             }
             MouseScrollUnit::Pixel => {
-                camera.scale *= 1.2_f32.powi(-ev.y as i32);
+                projection.scale *= 1.2_f32.powi(ev.y as i32);
             }
         }
     }
 }
 
 fn spawn_camera(mut commands: Commands) {
+    let map_center = (MAP_SIZE / 2) as f32;
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_translation(Vec3::new(50., 4., 50.))
-            .looking_at(Vec3::new(50., 0., 50.), Vec3::Y),
-        projection: Projection::Orthographic(OrthographicProjection {
-            scale: 1.,
-            near: -100000000.,
-            far: 100000000.,
-            ..Default::default()
-        }),
+        transform: Transform::from_translation(Vec3::new(map_center - 1., 1., map_center - 1.))
+            .looking_at(Vec3::new(map_center, 0., map_center), Vec3::Y),
+        projection: ortographinc_projection(0.1),
         ..Default::default()
     });
+}
+
+fn ortographinc_projection(camera_scale: f32) -> Projection {
+    Projection::Orthographic(OrthographicProjection {
+        scale: camera_scale,
+        near: -1000.,
+        far: 1000.,
+        ..Default::default()
+    })
 }

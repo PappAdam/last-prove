@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::map::MAP_SIZE;
+
 const CIRCLE_COLOR: Color = Color::Rgba {
     red: 229. / 255.,
     green: 170. / 255.,
@@ -20,7 +22,7 @@ impl Plugin for TestScenePlugin {
         app.add_systems(Startup, spawn_circle)
             .add_systems(Startup, spawn_cube)
             .add_systems(Startup, spawn_sphere)
-            .add_systems(Startup, spawn_point_light);
+            .add_systems(Startup, spawn_directional_light);
     }
 }
 
@@ -50,12 +52,14 @@ fn spawn_cube(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.spawn(PbrBundle {
-        transform: Transform::from_xyz(1.0, 0.5, 0.3),
-        mesh: meshes.add(shape::Cube::new(1.).into()),
-        material: materials.add(CUBE_COLOR.into()),
-        ..default()
-    });
+    for x in 0..MAP_SIZE {
+        commands.spawn(PbrBundle {
+            transform: Transform::from_xyz(x as f32, 0.25, 50.),
+            mesh: meshes.add(shape::Cube::new(0.5).into()),
+            material: materials.add(CUBE_COLOR.into()),
+            ..default()
+        });
+    }
 }
 
 fn spawn_sphere(
@@ -78,14 +82,16 @@ fn spawn_sphere(
     });
 }
 
-fn spawn_point_light(mut commands: Commands) {
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
-            intensity: 1500.0,
+fn spawn_directional_light(mut commands: Commands) {
+    commands.spawn(DirectionalLightBundle {
+        transform: Transform::from_translation(Vec3::new(0.8, 1., 0.5))
+            .looking_at(Vec3::ZERO, Vec3::Y),
+        directional_light: DirectionalLight {
+            color: Color::hex("FFFCE9").unwrap(),
+            illuminance: 32000.,
             shadows_enabled: true,
-            ..default()
+            ..Default::default()
         },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
-        ..default()
+        ..Default::default()
     });
 }
