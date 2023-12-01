@@ -6,7 +6,7 @@ pub const LIGHTING_NIGHT_LENGTH: u8 = 5;
 pub const LIGHTING_TEMPORARY_TURN_TIME_SECONDS: f32 = 1.;
 
 //Normalized version of (1.8, 1., 1.4)
-pub const LIGHT_LOCATION: Vec3 = Vec3::new(0.722897, 0.40161, 0.562254);
+pub const LIGHT_DIRECTION: Vec3 = Vec3::new(-0.722897, -0.40161, -0.562254);
 
 pub struct LightingPlugin;
 
@@ -46,50 +46,40 @@ fn temporary_timer_update(mut query: Query<&mut DayNightCycleManager>, time: Res
 
 fn spawn_day_night_cycle_manager(mut commands: Commands) {
     commands
-        .spawn((DayNightCycleManager {
-            day_state: LIGHTING_STARTING_DAYSTATE,
-            day_length: LIGHTING_DAY_LENGTH,
-            night_length: LIGHTING_NIGHT_LENGTH,
-            turns_since_last_day_state_change: 0,
-            temporary_timer: Timer::from_seconds(
-                LIGHTING_TEMPORARY_TURN_TIME_SECONDS,
-                TimerMode::Repeating,
-            ),
-        }, Transform::default()))
-        .with_children(|parent| {
-            // parent.spawn(DirectionalLightBundle {
-            //     transform: Transform::default()
-            //         .looking_to(-Vec3::Y, Vec3::X),
-            //     directional_light: DirectionalLight {
-            //         color: Color::hex("FFFCE9").unwrap(),
-            //         illuminance: 32000.,
-            //         shadows_enabled: true,
-            //         ..Default::default()
-            //     },
-            //     ..Default::default()
-            // });
-            // parent.spawn(DirectionalLightBundle {
-            //     transform: Transform::from_translation(-LIGHT_LOCATION)
-            //         .looking_at(Vec3::ZERO, Vec3::Y),
-            //     directional_light: DirectionalLight {
-            //         color: Color::hex("D1E8EF").unwrap(),
-            //         illuminance: 0.1,
-            //         shadows_enabled: true,
-            //         ..Default::default()
-            //     },
-            //     ..Default::default()
-            // });
-        });
-        commands.spawn(DirectionalLightBundle {
-            transform: Transform::default()
-                .looking_to(-Vec3::Y, Vec3::X),
-            directional_light: DirectionalLight {
-                color: Color::hex("FFFCE9").unwrap(),
-                illuminance: 32000.,
-                shadows_enabled: true,
-                ..Default::default()
+        .spawn((
+            DayNightCycleManager {
+                day_state: LIGHTING_STARTING_DAYSTATE,
+                day_length: LIGHTING_DAY_LENGTH,
+                night_length: LIGHTING_NIGHT_LENGTH,
+                turns_since_last_day_state_change: 0,
+                temporary_timer: Timer::from_seconds(
+                    LIGHTING_TEMPORARY_TURN_TIME_SECONDS,
+                    TimerMode::Repeating,
+                ),
             },
-            ..Default::default()
+            TransformBundle::default(),
+        ))
+        .with_children(|parent| {
+            parent.spawn(DirectionalLightBundle {
+                transform: Transform::default().looking_to(LIGHT_DIRECTION, Vec3::Y),
+                directional_light: DirectionalLight {
+                    color: Color::hex("FFFCE9").unwrap(),
+                    illuminance: 32000.,
+                    shadows_enabled: true,
+                    ..Default::default()
+                },
+                ..Default::default()
+            });
+            parent.spawn(DirectionalLightBundle {
+                transform: Transform::default().looking_to(-LIGHT_DIRECTION, Vec3::Y),
+                directional_light: DirectionalLight {
+                    color: Color::hex("D1E8EF").unwrap(),
+                    illuminance: 0.1,
+                    shadows_enabled: true,
+                    ..Default::default()
+                },
+                ..Default::default()
+            });
         });
 }
 
@@ -119,7 +109,5 @@ fn slerp_sun_moon_locations(
     manager_query: Query<(&DayNightCycleManager, &Children)>,
 ) {
     let (day_night_cycle_manager, manager_children) = manager_query.single();
-    for (light_transform, directional_light, light_parent) in light_query.iter_mut() {
-
-    }
+    for (light_transform, directional_light, light_parent) in light_query.iter_mut() {}
 }

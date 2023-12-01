@@ -19,20 +19,21 @@ pub struct TestScenePlugin;
 
 impl Plugin for TestScenePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_directional_light);
+        app.add_systems(Startup, spawn_cubes);
     }
 }
 
-fn spawn_directional_light(mut commands: Commands) {
-    // commands.spawn(DirectionalLightBundle {
-    //     transform: Transform::from_translation(Vec3::new(1.8, 1., 1.4))
-    //         .looking_at(Vec3::ZERO, Vec3::Y),
-    //     directional_light: DirectionalLight {
-    //         color: Color::hex("FFFCE9").unwrap(),
-    //         illuminance: 32000.,
-    //         shadows_enabled: true,
-    //         ..Default::default()
-    //     },
-    //     ..Default::default()
-    // });
+fn spawn_cubes(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for x in 0..MAP_SIZE {
+        commands.spawn(PbrBundle {
+            transform: Transform::from_xyz(x as f32, 0.25, 50.),
+            mesh: meshes.add(shape::Cube::new(0.5).into()),
+            material: materials.add(CUBE_COLOR.into()),
+            ..default()
+        });
+    }
 }
