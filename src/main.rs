@@ -1,4 +1,5 @@
 mod camera;
+pub mod lerp;
 mod lighting;
 mod map;
 mod testscene;
