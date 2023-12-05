@@ -1,13 +1,7 @@
 use bevy::prelude::*;
 
-use crate::map::MAP_SIZE;
+use crate::{lerp::lerp, map::MAP_SIZE};
 
-const CIRCLE_COLOR: Color = Color::Rgba {
-    red: 229. / 255.,
-    green: 170. / 255.,
-    blue: 141. / 255.,
-    alpha: 1.,
-};
 const CUBE_COLOR: Color = Color::Rgba {
     red: 141. / 255.,
     green: 200. / 255.,
