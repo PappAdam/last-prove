@@ -126,7 +126,7 @@ fn map_to_mesh(map: &Map) -> Vec<Mesh> {
         vec::from_elem(vec::from_elem(vec![], CHUNK_ROW_COUNT), CHUNK_ROW_COUNT);
     for trinagle_index in 0..vertices.len() / 3 {
         let first_vertex = vertices[trinagle_index * 3];
-        dbg!(first_vertex);
+        // dbg!(first_vertex);
         let x_chunk_index = (first_vertex.x / CHUNK_SIZE as f32).floor() as usize;
         let z_chunk_index = (first_vertex.z / CHUNK_SIZE as f32).floor() as usize;
         chunks[x_chunk_index][z_chunk_index].push(vertices[trinagle_index + 0]);
