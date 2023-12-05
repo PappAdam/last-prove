@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PresentMode};
 
 use crate::map::MAP_SIZE;
 
@@ -15,12 +15,17 @@ const CUBE_COLOR: Color = Color::Rgba {
     alpha: 1.,
 };
 
-pub struct TestScenePlugin;
+pub struct TestPlugin;
 
-impl Plugin for TestScenePlugin {
+impl Plugin for TestPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_cubes);
+        app.add_systems(Startup, modify_window_present_mode);
     }
+}
+
+fn modify_window_present_mode(mut query: Query<&mut Window>) {
+    let window = query.single_mut().into_inner();
+    window.present_mode = PresentMode::Immediate;
 }
 
 fn spawn_cubes(

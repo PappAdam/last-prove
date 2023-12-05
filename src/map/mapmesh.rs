@@ -1,18 +1,31 @@
-use std::ops::Range;
+use std::{ops::Range, vec};
 
-use bevy::{prelude::*, render::render_resource::PrimitiveTopology};
+use bevy::{
+    math::Vec3A,
+    prelude::*,
+    render::{primitives::Aabb, render_resource::PrimitiveTopology},
+};
 
 use super::{
     materials::{GRASS_MATERIAL, WATER_MATERIAL},
     spawn_map, Map, MAP_SIZE,
 };
 
+const CHUNK_SIZE: usize = 20;
+const CHUNK_ROW_COUNT: usize = MAP_SIZE / CHUNK_SIZE;
+
 pub struct MapMeshPlugin;
 
 impl Plugin for MapMeshPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, add_mesh_to_map);
+        // .add_systems(Startup, (apply_deferred, calculate_bounds, apply_deferred, dbg_mesh_bounding_box).chain().after(add_mesh_to_map));
     }
+}
+
+pub fn dbg_mesh_bounding_box(mut query: Query<&mut Aabb, With<Map>>) {
+    let bounding_box = query.single_mut().into_inner();
+    bounding_box.half_extents = Vec3A::new(10., 10., 10.);
 }
 
 pub fn add_mesh_to_map(
@@ -23,11 +36,18 @@ pub fn add_mesh_to_map(
 ) {
     let (map_entity, map) = query.single_mut();
     let mut map_entity = commands.entity(map_entity);
-    map_entity.insert(PbrBundle {
-        mesh: meshes.add(map_to_mesh(map)),
-        material: materials.add(GRASS_MATERIAL),
-        ..default()
+
+    // for chunk in map_to_mesh(map) {
+    map_entity.with_children(|parent| {
+        for chunk_mesh in map_to_mesh(map) {
+            parent.spawn(PbrBundle {
+                mesh: meshes.add(chunk_mesh),
+                material: materials.add(GRASS_MATERIAL),
+                ..default()
+            });
+        }
     });
+    // }
 
     map_entity.with_children(|parent| {
         parent.spawn(PbrBundle {
@@ -38,9 +58,8 @@ pub fn add_mesh_to_map(
     });
 }
 
-fn map_to_mesh(map: &Map) -> Mesh {
+fn map_to_mesh(map: &Map) -> Vec<Mesh> {
     let mut tile_quads: Vec<Vec<Range<usize>>> = vec![];
-
     let mut vertices = vec![];
     let mut indicies = vec![];
     let mut tile_index = 0;
@@ -100,9 +119,31 @@ fn map_to_mesh(map: &Map) -> Mesh {
         }
         y += 1;
     }
-    Mesh::new(PrimitiveTopology::TriangleList)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-        .with_computed_flat_normals()
+
+    vertices = vertices[0..12].to_vec();
+
+    let mut chunks: Vec<Vec<Vec<Vec3>>> =
+        vec::from_elem(vec::from_elem(vec![], CHUNK_ROW_COUNT), CHUNK_ROW_COUNT);
+    for trinagle_index in 0..vertices.len() / 3 {
+        let first_vertex = vertices[trinagle_index * 3];
+        dbg!(first_vertex);
+        let x_chunk_index = (first_vertex.x / CHUNK_SIZE as f32).floor() as usize;
+        let z_chunk_index = (first_vertex.z / CHUNK_SIZE as f32).floor() as usize;
+        chunks[x_chunk_index][z_chunk_index].push(vertices[trinagle_index + 0]);
+        chunks[x_chunk_index][z_chunk_index].push(vertices[trinagle_index + 1]);
+        chunks[x_chunk_index][z_chunk_index].push(vertices[trinagle_index + 2]);
+    }
+
+    let mut meshes = Vec::with_capacity(CHUNK_ROW_COUNT.pow(2));
+    for chunk_row in chunks {
+        for chunk_vertices in chunk_row {
+            let mesh = Mesh::new(PrimitiveTopology::TriangleList)
+                .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, chunk_vertices)
+                .with_computed_flat_normals();
+            meshes.push(mesh);
+        }
+    }
+    meshes
 }
 
 fn water_mesh() -> Mesh {

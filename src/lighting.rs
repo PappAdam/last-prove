@@ -75,7 +75,7 @@ fn spawn_day_night_cycle_manager(mut commands: Commands) {
                 directional_light: DirectionalLight {
                     color: Color::hex("D1E8EF").unwrap(),
                     illuminance: 0.1,
-                    shadows_enabled: true,
+                    shadows_enabled: false,
                     ..Default::default()
                 },
                 ..Default::default()

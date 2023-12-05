@@ -134,7 +134,7 @@ fn update_camera(
     ).powi(2);
 
     projection.scale = zoom;
-
+    
     transform.translation = transform
         .translation
         .lerp(target.pos, CAMERA_LERP_SPEED * time.delta_seconds() * 2.5);

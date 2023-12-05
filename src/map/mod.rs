@@ -14,7 +14,7 @@ use self::{
 };
 use bevy::prelude::*;
 
-pub const MAP_SIZE: usize = 400;
+pub const MAP_SIZE: usize = 100;
 const MAP_NOISE_SCALE: f64 = 30.;
 const MAP_NOISE_PERSISTENCE: f64 = 0.55;
 const MAP_NOISE_OCTAVES: usize = 4;
@@ -22,13 +22,16 @@ const MAP_NOISE_OCTAVES: usize = 4;
 pub struct MapPlugin;
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_map, apply_deferred).before(add_mesh_to_map));
+        app.add_systems(
+            Startup,
+            (spawn_map, apply_deferred).chain().before(add_mesh_to_map),
+        );
         app.add_plugins(MapMeshPlugin);
     }
 }
 
 fn spawn_map(mut commands: Commands) {
-    commands.spawn(Map::new());
+    commands.spawn((Map::new(), TransformBundle::default(), VisibilityBundle::default()));
 }
 
 fn debug_map(query: Query<&Map>) {
