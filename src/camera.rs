@@ -2,7 +2,7 @@ use bevy::{
     input::mouse::{MouseMotion, MouseScrollUnit, MouseWheel},
     prelude::*,
 };
-use std::f32::consts::PI;
+
 use crate::{lerp::lerp, map::MAP_SIZE};
 
 const CAMERA_SPEED: f32 = 1000.;
@@ -131,9 +131,9 @@ fn update_camera(
         projection.scale.sqrt(),
         target.scale.sqrt(),
         CAMERA_LERP_SPEED * time.delta_seconds(),
-    ).powi(2);
+    );
 
-    projection.scale = zoom;
+    projection.scale += zoom;
 
     transform.translation = transform
         .translation
