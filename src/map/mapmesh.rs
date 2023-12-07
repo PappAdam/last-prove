@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::{ops::Range, vec};
 
 use bevy::{prelude::*, render::render_resource::PrimitiveTopology};
 
@@ -8,6 +8,9 @@ use super::{
 };
 
 pub struct MapMeshPlugin;
+
+const CHUNK_SIZE: usize = 100;
+const CHUNK_ROW_COUNT: usize = MAP_SIZE / CHUNK_SIZE;
 
 impl Plugin for MapMeshPlugin {
     fn build(&self, app: &mut App) {
@@ -23,11 +26,11 @@ pub fn add_mesh_to_map(
 ) {
     let (map_entity, map) = query.single_mut();
     let mut map_entity = commands.entity(map_entity);
-    map_entity.insert(PbrBundle {
-        mesh: meshes.add(map_to_mesh(map)),
-        material: materials.add(GRASS_MATERIAL),
-        ..default()
-    });
+    // map_entity.insert(PbrBundle {
+    //     mesh: meshes.add(map_to_mesh(map)),
+    //     material: materials.add(GRASS_MATERIAL),
+    //     ..default()
+    // });
 
     map_entity.with_children(|parent| {
         parent.spawn(PbrBundle {
@@ -38,7 +41,7 @@ pub fn add_mesh_to_map(
     });
 }
 
-fn map_to_mesh(map: &Map) -> Mesh {
+fn map_to_mesh(map: &Map) -> Vec<Mesh> {
     let mut tile_quads: Vec<Vec<Range<usize>>> = vec![];
 
     let mut vertices = vec![];
