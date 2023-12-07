@@ -79,6 +79,7 @@ fn rotate_camera(
     mut mouse_motion: EventReader<MouseMotion>,
 ) {
     if !mouse_buttons.pressed(MouseButton::Middle) {
+        mouse_motion.clear();
         return;
     }
     let (mut camera_transform, mut target) = query.single_mut();

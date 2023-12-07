@@ -26,11 +26,15 @@ pub fn add_mesh_to_map(
 ) {
     let (map_entity, map) = query.single_mut();
     let mut map_entity = commands.entity(map_entity);
-    // map_entity.insert(PbrBundle {
-    //     mesh: meshes.add(map_to_mesh(map)),
-    //     material: materials.add(GRASS_MATERIAL),
-    //     ..default()
-    // });
+    map_entity.with_children(|paremt| {
+        for chunk_mesh in map_to_mesh(map) {
+            paremt.spawn(PbrBundle {
+                mesh: meshes.add(chunk_mesh),
+                material: materials.add(GRASS_MATERIAL),
+                ..default()
+            });
+        }
+    });
 
     map_entity.with_children(|parent| {
         parent.spawn(PbrBundle {
@@ -104,18 +108,16 @@ fn map_to_mesh(map: &Map) -> Vec<Mesh> {
         y += 1;
     }
 
-    vertices = vertices[0..12].to_vec();
-
     let mut chunks: Vec<Vec<Vec<Vec3>>> =
         vec::from_elem(vec::from_elem(vec![], CHUNK_ROW_COUNT), CHUNK_ROW_COUNT);
     for trinagle_index in 0..vertices.len() / 3 {
-        let first_vertex = vertices[trinagle_index * 3];
-        // dbg!(first_vertex);
+        let first_vetrex_index = trinagle_index * 3;
+        let first_vertex = vertices[first_vetrex_index];
         let x_chunk_index = (first_vertex.x / CHUNK_SIZE as f32).floor() as usize;
         let z_chunk_index = (first_vertex.z / CHUNK_SIZE as f32).floor() as usize;
-        chunks[x_chunk_index][z_chunk_index].push(vertices[trinagle_index + 0]);
-        chunks[x_chunk_index][z_chunk_index].push(vertices[trinagle_index + 1]);
-        chunks[x_chunk_index][z_chunk_index].push(vertices[trinagle_index + 2]);
+        chunks[x_chunk_index][z_chunk_index].push(vertices[first_vetrex_index + 0]);
+        chunks[x_chunk_index][z_chunk_index].push(vertices[first_vetrex_index + 1]);
+        chunks[x_chunk_index][z_chunk_index].push(vertices[first_vetrex_index + 2]);
     }
 
     let mut meshes = Vec::with_capacity(CHUNK_ROW_COUNT.pow(2));
